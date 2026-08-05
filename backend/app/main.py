@@ -1,7 +1,7 @@
 """AKAAR FastAPI app entrypoint.
 
 Startup (lifespan): create all tables on the Supabase engine, ensure the MinIO bucket exists.
-No routers yet — just /health.
+Registers auth/crafts/jobs routers.
 """
 from contextlib import asynccontextmanager
 
@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models  # noqa: F401  (register tables on Base.metadata)
 from .config import settings
 from .db import Base, engine
+from .routers import auth, crafts, jobs
 
 
 @asynccontextmanager
@@ -38,3 +39,8 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+app.include_router(auth.router)
+app.include_router(crafts.router)
+app.include_router(jobs.router)

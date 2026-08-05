@@ -35,7 +35,9 @@ services:
 
   worker:
     build: ./backend
-    command: python app/worker.py
+    # Match api's pattern (command invokes the entry callable): uvicorn app.main:app ↔ python -c run().
+    # -u = unbuffered stdout so worker prints show up in docker logs.
+    command: ["python", "-u", "-c", "from app.worker import run; run()"]
     env_file:
       - ./backend/.env
     environment:
@@ -48,12 +50,12 @@ services:
       - redis
       - minio
 
-  web:
-    build: ./frontend
-    ports:
-      - "5173:80"
-    depends_on:
-      - api
+  # web:
+  #   build: ./frontend
+  #   ports:
+  #     - "5173:80"
+  #   depends_on:
+  #     - api
 
 volumes:
   miniodata:

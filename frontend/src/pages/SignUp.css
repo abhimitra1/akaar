@@ -1,0 +1,163 @@
+.signup {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--surface-container-high);
+}
+
+.signup__card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #fff;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+/* Header bar: terracotta gradient with a frosted-glass overlay layer. */
+.signup__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--space-margin-horizontal);
+  color: #fff;
+  background: linear-gradient(180deg, var(--terracotta-800), var(--terracotta-900));
+}
+
+.signup__header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.signup__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.signup__title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Error banner near the top of the form. */
+.signup__error {
+  margin: 12px var(--space-margin-horizontal) 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--error);
+  color: var(--on-error);
+  font-size: 14px;
+}
+
+.signup__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--space-section) var(--space-margin-horizontal);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.field input,
+.field select {
+  position: relative;
+  z-index: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--outline-cream);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: #fff;
+  width: 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--terracotta-900);
+}
+
+.signup__submit {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signup__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.signup__footer {
+  text-align: center;
+  padding: 12px var(--space-margin-horizontal) 20px;
+  font-size: 14px;
+}
+
+.signup__footer a {
+  color: var(--terracotta-900);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Wide screens (tablet/desktop): mirrors the Welcome breakpoint exactly — a centered
+   fixed-width card on the surface-container-high tone. */
+@media (min-width: 768px) {
+  .signup {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--surface-container-high);
+  }
+
+  .signup__card {
+    width: 100%;
+    max-width: 420px;
+    min-height: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 8px 32px rgba(60, 30, 10, 0.18);
+  }
+}

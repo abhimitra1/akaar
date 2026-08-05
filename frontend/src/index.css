@@ -1,3 +1,33 @@
+/* AKAAR design tokens.
+   NOTE: DESIGN.md is not yet in the repo; values below are taken from the approved Welcome
+   mockup (colors) + spacing/shape conventions described in the design brief. */
+:root {
+  /* terracotta palette */
+  --terracotta-800: #bb5808; /* gradient start */
+  --terracotta-900: #974400; /* gradient end / primary button */
+
+  /* neutrals */
+  --outline-cream: #ddc1b3; /* secondary button outline */
+  --bg-cream: #fff1eb; /* tertiary button background */
+  --text-muted: #564338; /* tertiary button text / secondary button text */
+  --text-faint: #8a7266; /* footer */
+  --surface-container-high: #e7d2c1; /* wide-screen page bg behind floating cards
+                                        (DESIGN.md token name; exact value pending DESIGN.md) */
+
+  /* error (DESIGN.md error/on-error tokens; values pending DESIGN.md — Material defaults) */
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+
+  /* shapes */
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px; /* rounded.full */
+
+  /* spacing */
+  --space-margin-horizontal: 16px;
+  --space-section: 24px; /* section-spacing */
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,6 +40,8 @@ body,
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  /* TODO: add SF Pro (self-hosted or @import) per DESIGN.md when available;
+     -apple-system/BlinkMacSystemFont already resolve to SF Pro on Apple devices. */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
