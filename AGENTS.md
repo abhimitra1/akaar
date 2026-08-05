@@ -411,6 +411,94 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
   in api/worker (from an earlier step) — compose env will need rewiring to `SUPABASE_DB_URL` in a
   later backend step for the API to boot in Docker. `pydantic-settings==2.4.0` already in
   `requirements.txt`, so this imports once installed.
-- **In progress:** — (awaiting next command + Supabase connection string from user)
+- **In progress:** — (awaiting next command)
 - **Next:** Rest of backend (models, security, storage, queue, worker, routers) → boot + verify
   (health/tables/MinIO), wiring compose env to `SUPABASE_DB_URL`.
+
+### 2026-08-05 — Step: Connect to real Supabase (diagnosis + .env)
+- **Done:** User's direct connection string (`postgres:...@db.wscoledoqdsamtlprepc.supabase.co`)
+  did NOT work from this Linux dev box: that host resolves to **IPv6 only** in DNS and the box has
+  **no IPv6 default route** (`Network is unreachable`). Diagnosed the project's region by probing
+  Supabase IPv4 session-pooler endpoints (`aws-0-<region>.pooler.supabase.com`): project lives in
+  **ap-northeast-1 (Tokyo)**. Verified connect as `postgres.wscoledoqdsamtlprepc` → PostgreSQL
+  17.6, db `postgres`, SSL OK. `backend/.env` now holds the working pooler URL (with `%40`-encoded
+  `@` in the password; SQLAlchemy unquotes it) — file is gitignored, never committed. `.env.example`
+  updated to the pooler format (user `postgres.<PROJECT_REF>`, host `aws-0-<REGION>.pooler...`).
+- **Notes:** Raw `urllib.parse.urlsplit(...).password` does NOT unquote `%40`; SQLAlchemy's
+  `make_url` does. Direct Supabase host may be IPv6-only — prefer the session pooler on this box.
+- **In progress:** — (awaiting next command)
+- **Next:** Rest of backend (models, security, storage, queue, worker, routers) → boot + verify
+  (health/tables/MinIO), wiring compose env to `SUPABASE_DB_URL`.
+
+### 2026-08-05 — Step: Implement `backend/app/models.py` (ORM only)
+- **Done:** Built SQLAlchemy 2.0 models (`from __future__ import annotations`, `Mapped[]` +
+  `mapped_column`, importing `Base` from `.db` — db.py untouched):
+  - `User` (`users`): id, email (**unique** + index, not-null), hashed_password, full_name,
+    `role` enum (`UserRole`: visitor/student/artisan/faculty/researcher/designer), institution,
+    department, email_verified(bool), created_at. Has `crafts` relationship.
+  - `Craft` (`crafts`): id, owner_id (**FK→users.id**, index), title, craft_type, material,
+    technique, story, dimensions, weight, location, year, commercial_status, license,
+    is_public(bool), **photos** (JSON — MinIO object keys), **model_key** (String — MinIO object
+    key), created_at, updated_at. Extra PHASE-2 fields kept per §12: keywords, version_history,
+    related_designs (JSON lists), est_build_time. Has `owner` + `jobs` relationships.
+  - `Job` (`jobs`): id, craft_id (**FK→crafts.id**, index), `status` enum (`JobStatus`:
+    queued/processing/completed/failed), progress int (default 0 + `ck_progress_range`
+    CheckConstraint 0–100), error_message, created_at, completed_at. Has `craft` relationship.
+- **Notes:** No startup `create_all()` added (separate step once main.py exists). Nothing else
+  touched. VERIFIED by mapping metadata under a temp venv with SQLAlchemy (system Python is 3.14;
+  project deploys Python 3.11 + sqlalchemy==2.0.32 where the `Optional[X]` pattern is standard).
+  Used `Optional[X]` rather than `X | None` for cross-Python compatibility.
+- **In progress:** — (awaiting next command)
+- **Next:** Implement `security.py`, `storage.py`, `queue.py`, then `main.py` (app + CORS + startup
+  `create_all()` + MinIO bucket) + `worker.py`, then routers → boot + verify.
+
+### 2026-08-05 — Step: Implement `backend/app/security.py`
+- **Done:** bcrypt hashing (`hash_password` / `verify_password`, using `bcrypt` lib directly to
+  avoid the passlib+bcrypt-4.x warning — no new dependency; `bcrypt==4.1.3` + `python-jose`
+  already in requirements.txt). JWT: `create_access_token` (default 15 min), `create_refresh_token`
+  (default 7 days), `decode_token` (raises 401 on invalid/expired), HS256. FastAPI dependency
+  `get_current_user` via `HTTPBearer(auto_error=False)` → returns decoded `user_id` int only (no DB
+  lookup yet), 401 "Sign in to continue" when no/invalid token.
+- **Config additions:** `config.py` Settings gained **required** `secret_key` (env). `.env.example`
+  gained `SECRET_KEY=change-me-to-a-long-random-string`; `backend/.env` got a generated
+  `SECRET_KEY` (gitignored). Caught a bug while testing: an earlier append had glued `SECRET_KEY=`
+  onto the end of the `SUPABASE_DB_URL` line (missing newline) — rewrote `.env` to 2 clean lines.
+- **Verified** in temp venv (fastapi+bcrypt+jose): hash/verify roundtrip, token payloads, 15-min &
+  7-day lifetimes exact (900s / 604800s), invalid/expired/missing → 401, `get_current_user` returns
+  the id. No files outside `security.py`/`config.py`/`.env`/`.env.example` touched.
+- **In progress:** — (awaiting next command)
+- **Next:** `storage.py` (MinIO) → `queue.py` (Redis) → `main.py` + `worker.py` → routers → boot.
+
+### 2026-08-05 — Step: Implement `backend/app/storage.py`
+- **Done:** MinIO helpers using **boto3** (`boto3==1.34.150` already in requirements; minio-py is
+  NOT a dep — per task, used the existing one, no new dependency). `get_minio_client()` (boto3 S3
+  client, `endpoint_url=http://{MINIO_ENDPOINT}` = secure=False, s3v4 sig, region us-east-1),
+  `ensure_bucket_exists()` (idempotent; 404→create, 403→exists), `upload_file(bytes,key,ct)->key`,
+  `get_presigned_url(key, expires=3600)`, `delete_file(key)`. No validation/size limits (phase-2).
+- **Config additions:** `config.py` Settings gained `minio_endpoint`, `minio_access_key`,
+  `minio_secret_key` (required) + `minio_bucket` (default `"akaar"`). `.env.example` and
+  `backend/.env` gained MINIO_ENDPOINT=localhost:9000, MINIO_ACCESS_KEY=akaar,
+  MINIO_SECRET_KEY=akaar12345678, MINIO_BUCKET=akaar — matching docker-compose minio service
+  (root creds akaar/akaar12345678, API port 9000; api/worker pass MINIO_ACCESS_KEY etc.).
+- **Verified end-to-end** against a real `minio/minio` docker container (same creds, port 9000):
+  client created, bucket created idempotently (head→404→create, second call no-op), upload
+  returned key, presigned URL contained X-Amz-Signature, content roundtripped, delete removed the
+  object. Test container removed after.
+- **In progress:** — (awaiting next command)
+- **Next:** `queue.py` (Redis) → `main.py` + `worker.py` → routers → boot + verify.
+
+### 2026-08-05 — Step: Implement `backend/app/queue.py`
+- **Done:** redis-py helpers (`redis==5.0.7` already in requirements — no new dependency).
+  `get_redis_client()` (host/port from settings, db 0, decode_responses=True), `enqueue_job`
+  (RPUSH JSON `{job_id, craft_id}` to `akaar:reconstruction_jobs`), `dequeue_job(timeout=5)`
+  (BLPOP; returns parsed dict or None on timeout), `get_queue_length()` (LLEN). No priority/retry/
+  DLQ (phase-2).
+- **Config additions:** `config.py` gained `redis_host: str = "redis"` and `redis_port: int = 6379`
+  — defaults match docker-compose's redis service (service name `redis`, port 6379, db 0).
+  `.env.example` documents REDIS_HOST/REDIS_PORT. `.env` not modified (defaults cover it).
+- **Verified** against a real `redis:7-alpine` container (port 6379): empty-queue BLPOP returns
+  None after 1s timeout; two enqueues → length 2 → dequeued in FIFO order with exact payloads →
+  length 0. Test container removed after.
+- **In progress:** — (awaiting next command)
+- **Next:** `main.py` (FastAPI app + CORS + startup create_all() + ensure MinIO bucket) + `worker.py`
+  (stub loop) → routers → boot + verify.
