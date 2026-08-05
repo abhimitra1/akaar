@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     minio_bucket: str = "akaar"
     redis_host: str = "redis"
     redis_port: int = 6379
+    allowed_origins: str = ""
+    instantmesh_mode: str = "stub"
 
     model_config = SettingsConfigDict(env_file=".env")
 
