@@ -1,0 +1,10 @@
+{
+  "name": "AKAAR",
+  "short_name": "AKAAR",
+  "description": "Every Craft Has a Digital Twin.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": []
+}

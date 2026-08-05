@@ -1,0 +1,57 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: akaar
+      MINIO_ROOT_PASSWORD: akaar12345678
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  api:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql://akaar:akaar@postgres:5432/akaar
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: akaar
+      MINIO_SECRET_KEY: akaar12345678
+      INSTANTMESH_MODE: stub
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - minio
+
+  worker:
+    build: ./backend
+    command: python app/worker.py
+    environment:
+      DATABASE_URL: postgresql://akaar:akaar@postgres:5432/akaar
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: akaar
+      MINIO_SECRET_KEY: akaar12345678
+      INSTANTMESH_MODE: stub
+    depends_on:
+      - redis
+      - minio
+
+  web:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  miniodata:
