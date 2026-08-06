@@ -18,7 +18,7 @@ from .config import settings
 from .db import SessionLocal
 from .models import Craft, Job, JobStatus
 from .queue import dequeue_job, enqueue_job
-from .storage import upload_file
+from .storage import get_presigned_url, upload_file
 
 
 def _placeholder_glb() -> bytes:
@@ -29,6 +29,42 @@ def _placeholder_glb() -> bytes:
     header = b"glTF" + struct.pack("<II", 2, total)  # magic, version=2, length
     chunk_header = struct.pack("<II", len(json_chunk), 0x4E4F534A)  # len, "JSON" chunk type
     return header + chunk_header + json_chunk
+
+
+def _call_instantmesh(craft: Craft) -> str:
+    """POST a craft's photos to the InstantMesh GPU API and store the returned model.
+
+    The API contract is not documented yet: we send the photos as multipart/form-data
+    and assume the response body IS the generated model file bytes (written generically).
+    # TODO: adjust based on the actual API response format once known — may return JSON
+    with a download URL / job id, or a non-GLB format (OBJ) instead of raw bytes.
+    """
+    import requests  # lazy: only imported when real mode is actually used
+
+    if not craft.photos:
+        raise RuntimeError("craft has no photos to send to InstantMesh")
+
+    files = []
+    for i, photo_key in enumerate(craft.photos):
+        # Pull each photo out of MinIO (presigned GET) and forward it to the GPU box.
+        with requests.get(get_presigned_url(photo_key), timeout=30) as photo_resp:
+            photo_resp.raise_for_status()
+            filename = photo_key.rsplit("/", 1)[-1]
+            files.append((f"photo_{i}", (filename, photo_resp.content, "image/jpeg")))
+
+    try:
+        resp = requests.post(settings.instantmesh_api_url, files=files, timeout=600)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        raise RuntimeError(f"InstantMesh API call failed: {exc}") from exc
+
+    model_bytes = resp.content
+    if not model_bytes:
+        raise RuntimeError("InstantMesh returned an empty model response")
+
+    model_key = f"real/{craft.id}.glb"
+    upload_file(model_bytes, model_key, "model/gltf-binary")
+    return model_key
 
 
 def run() -> None:
@@ -81,9 +117,30 @@ def run() -> None:
                 craft.model_key = model_key
                 print(f"  [stub] Uploaded placeholder {model_key}")
             else:
-                # TODO: real InstantMesh integration (requires the GPU workstation; out of
-                # scope for this dev environment). Not implemented — see AGENTS.md §5.
-                raise NotImplementedError("INSTANTMESH_MODE != stub not implemented")
+                if mode == "real":
+                    if not settings.instantmesh_api_url:
+                        # Enabled prematurely: no API endpoint configured yet, so fall back to
+                        # stub behavior rather than failing every job.
+                        print("  [real] WARNING: INSTANTMESH_API_URL not set — falling back to stub behavior")
+                        time.sleep(4)
+                        model_key = f"stub/{craft_id}.glb"
+                        upload_file(_placeholder_glb(), model_key, "model/gltf-binary")
+                        craft.model_key = model_key
+                        print(f"  [stub] Uploaded placeholder {model_key}")
+                    else:
+                        # Real InstantMesh: POST photos, store returned model. Any failure
+                        # (timeout/bad response/upload) raises and is caught below, which
+                        # marks the job failed without crashing the worker loop.
+                        print(f"  [real] Calling InstantMesh API {settings.instantmesh_api_url} for job {job_id}...")
+                        craft.model_key = _call_instantmesh(craft)
+                        print(f"  [real] Uploaded model {craft.model_key}")
+                else:
+                    print(f"  WARNING: unknown INSTANTMESH_MODE={mode!r} — falling back to stub behavior")
+                    time.sleep(4)
+                    model_key = f"stub/{craft_id}.glb"
+                    upload_file(_placeholder_glb(), model_key, "model/gltf-binary")
+                    craft.model_key = model_key
+                    print(f"  [stub] Uploaded placeholder {model_key}")
 
             job.status = JobStatus.completed
             job.progress = 100

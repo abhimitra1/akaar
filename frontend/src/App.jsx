@@ -38,11 +38,7 @@ function App() {
         />
         <Route
           path="/explore"
-          element={
-            <ProtectedRoute>
-              <ExplorePage />
-            </ProtectedRoute>
-          }
+          element={<ExplorePage />}
         />
         <Route
           path="/create"

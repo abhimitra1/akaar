@@ -1,0 +1,355 @@
+/* My Library screen (AGENTS.md Phase 5): frosted header, All/Processing tabs,
+   2-column square craft grid with pill status badges, Home-matching empty state.
+
+   NOTE: the nav (.home__sidebar / .home__tab-bar) reuses the exact class names
+   defined in Home.css — that CSS is global once HomePage imports it, so the
+   sidebar + tab bar here are pixel-identical to Home without touching Home.
+   ponytail: if Home ever stops importing Home.css, copy the nav styles here. */
+
+.library {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  position: relative;
+}
+
+/* Frosted-glass header, consistent with Create/Processing/View screens. */
+.library__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--space-margin-horizontal);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  z-index: 10;
+}
+
+.library__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.library__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.library__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px var(--space-margin-horizontal) 96px;
+}
+
+/* Error + retry. */
+.library__error-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: 20px 16px;
+  margin-bottom: 16px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+}
+
+.library__error {
+  margin: 0;
+  color: var(--error);
+  font-size: 15px;
+  text-align: center;
+}
+
+.library__retry {
+  padding: 8px 24px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--terracotta-900);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Segmented tab row: All / Processing. */
+.library__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.library__tab {
+  padding: 8px 20px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.library__tab--active {
+  background: var(--terracotta-900);
+  border-color: var(--terracotta-900);
+  color: #fff;
+}
+
+/* 2-column square grid (DESIGN.md Library/Explore layout, 12px gutter). */
+.library__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.library__card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.library__card:hover {
+  transform: translateY(-2px);
+}
+
+.library__thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--surface-container-low);
+}
+
+.library__thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.library__thumb-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+}
+
+/* Per-card three-dot menu (opens a small dropdown with "Delete"). Sits inside the
+   relative .library__thumb, top-right (the status badge owns top-left). */
+.library__menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+}
+
+.library__menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.library__card-menu {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  min-width: 124px;
+  padding: 4px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(60, 30, 10, 0.18);
+  z-index: 7;
+}
+
+.library__menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.library__menu-item:hover {
+  background: var(--bg-cream);
+}
+
+.library__menu-item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Transient delete-failure banner (error tone). */
+.library__delete-error {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: var(--error);
+  color: var(--on-error);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+
+/* Status badges (DESIGN.md "Status Badges"): pill, completed in primary,
+   processing neutral/warning, failed in error tone. */
+.library__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.library__badge--processing {
+  background: var(--surface-container-high);
+  color: var(--text-muted);
+}
+
+.library__badge--completed {
+  background: var(--terracotta-900);
+  color: #fff;
+}
+
+.library__badge--failed {
+  background: var(--error);
+  color: var(--on-error);
+}
+
+.library__card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 10px 12px 2px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.library__card-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 12px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty state: same circular box-icon pattern as Home. */
+.library__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.library__empty-icon-circle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--bg-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 20px;
+}
+
+.library__empty-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--text-faint);
+}
+
+.library__empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.library__empty-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+}
+
+.library__empty-btn {
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (min-width: 768px) {
+  /* Desktop: left sidebar (class from Home.css) replaces the tab bar.
+     Header pins to the top of the content area, content shifts right. */
+  .library__header {
+    position: fixed;
+    left: 280px;
+    right: 0;
+    top: 0;
+    padding: 16px 28px;
+    z-index: 30;
+  }
+
+  .library__title {
+    font-size: 24px;
+  }
+
+  .library__content {
+    margin-left: 280px;
+    padding: 84px 28px 40px;
+  }
+
+  .library__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .library__tabs {
+    margin-bottom: 24px;
+  }
+}

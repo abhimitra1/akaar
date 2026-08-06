@@ -1,0 +1,150 @@
+/* Account Center (AGENTS.md Phase 6, read-only slice): frosted header with back
+   arrow, inset-grouped profile card, Log out pill. Nav classes (.home__sidebar,
+   .home__tab-bar) are global via Home.css once HomePage imports it. */
+
+.account {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  position: relative;
+}
+
+/* Frosted-glass header, consistent with Library/Create/View screens. */
+.account__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--space-margin-horizontal);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  z-index: 10;
+}
+
+.account__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.account__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.account__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px var(--space-margin-horizontal) 96px;
+}
+
+/* Error + retry. */
+.account__error-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: 20px 16px;
+  margin-bottom: 16px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+}
+
+.account__error {
+  margin: 0;
+  color: var(--error);
+  font-size: 15px;
+  text-align: center;
+}
+
+.account__retry {
+  padding: 8px 24px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--terracotta-900);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Inset-grouped profile card (DESIGN.md "Grouped Lists"). */
+.account__card {
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+  overflow: hidden;
+}
+
+.account__row {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+}
+
+.account__row + .account__row {
+  border-top: 1px solid var(--outline-cream);
+}
+
+/* Deference in Type: caption-size label, larger value. */
+.account__row-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.account__row-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Log out: pill in the error tone (DESIGN.md error/on-error). */
+.account__logout {
+  margin-top: 24px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--error);
+  color: var(--on-error);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.account__logout:hover {
+  opacity: 0.9;
+}
+
+@media (min-width: 768px) {
+  .account__header {
+    position: fixed;
+    left: 280px;
+    right: 0;
+    top: 0;
+    padding: 16px 28px;
+    z-index: 30;
+  }
+
+  .account__content {
+    margin-left: 280px;
+    padding: 84px 28px 40px;
+  }
+}

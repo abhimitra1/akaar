@@ -14,6 +14,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [failedThumbs, setFailedThumbs] = useState(() => new Set())
 
   useEffect(() => {
     const fetchCrafts = async () => {
@@ -41,12 +42,26 @@ export default function HomePage() {
   const featuredCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 3)
   const recentCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 5)
 
-  const getCraftThumbnail = craft => {
-    if (craft.photos && craft.photos.length > 0) {
-      return `${API_BASE_URL}/api/crafts/${craft.id}/photos/${craft.photos[0]}`
-    }
-    return null
-  }
+  // Backend list endpoint returns a browser-reachable presigned thumbnail_url per
+  // craft (craft.thumbnail_url). Use it directly — the old dead
+  // `/api/crafts/{id}/photos/{key}` pattern has no backend route and 404s, which
+  // showed as broken-image icons. If it's missing or fails to load, show a neutral
+  // placeholder icon instead of a broken image.
+  const markThumbFailed = id => setFailedThumbs(prev => { const n = new Set(prev); n.add(id); return n })
+  const thumbImg = (craft, imgClass) =>
+    craft.thumbnail_url && !failedThumbs.has(craft.id)
+      ? <img src={craft.thumbnail_url} alt={craft.title} className={imgClass} loading="lazy"
+           onError={() => markThumbFailed(craft.id)} />
+      : null
+
+  // Shared neutral placeholder (shown when a craft has no thumbnail or it errors).
+  const ThumbPlaceholder = ({ type }) => (
+    <div data-placeholder type={type} className={`home__thumb-placeholder home__thumb-placeholder--${type}`}>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+      </svg>
+    </div>
+  )
 
   if (loading) {
     return <LoadingScreen message="Loading crafts..." />
@@ -91,11 +106,6 @@ export default function HomePage() {
       </nav>
 
       <header className="home__top-bar">
-        <button className="home__icon-btn" aria-label="Menu">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
         <div className="home__brand">AKAAR</div>
         <button className="home__icon-btn" aria-label="Search">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -115,13 +125,9 @@ export default function HomePage() {
             </div>
             <div className="home__featured-row">
               {featuredCrafts.map(craft => (
-                <article key={craft.id} className="home__featured-card" onClick={() => navigate(`/crafts/${craft.id}`)}>
+                <article key={craft.id} className="home__featured-card" onClick={() => navigate(`/craft/${craft.id}`)}>
                   <div className="home__featured-image-wrapper">
-                    {getCraftThumbnail(craft) ? (
-                      <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__featured-image" loading="lazy" />
-                    ) : (
-                      <div className="home__featured-placeholder" />
-                    )}
+                    {thumbImg(craft, 'home__featured-image') || <ThumbPlaceholder type="featured" />}
                     <span className="home__featured-badge">Featured</span>
                   </div>
                   <div className="home__featured-body">
@@ -157,21 +163,12 @@ export default function HomePage() {
             {recentCrafts.map(craft => (
               <article key={craft.id} className="home__recent-row">
                 <div className="home__recent-thumbnail-wrapper">
-                  {getCraftThumbnail(craft) ? (
-                    <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__recent-thumbnail" loading="lazy" />
-                  ) : (
-                    <div className="home__recent-placeholder" />
-                  )}
+                  {thumbImg(craft, 'home__recent-thumbnail') || <ThumbPlaceholder type="recent" />}
                 </div>
                 <div className="home__recent-body">
                   <h3 className="home__recent-title">{craft.title}</h3>
                   <p className="home__recent-subtitle">By {craft.owner_id}</p>
                 </div>
-                <button className="home__recent-menu-btn" aria-label="More options">
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
-                  </svg>
-                </button>
               </article>
             ))}
           </div>

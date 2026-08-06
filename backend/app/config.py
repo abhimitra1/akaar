@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     redis_port: int = 6379
     allowed_origins: str = ""
     instantmesh_mode: str = "stub"
+    instantmesh_api_url: str = ""  # GPU workstation's InstantMesh API endpoint; empty = not configured yet
 
     model_config = SettingsConfigDict(env_file=".env")
 

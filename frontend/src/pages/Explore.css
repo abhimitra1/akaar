@@ -1,0 +1,254 @@
+/* Explore / Public Gallery (AGENTS.md Phase 5 Website side): frosted header
+   with title, category chips, 2-column square craft grid of all public crafts.
+   Nav classes (.home__sidebar, .home__tab-bar, .home__tab-item--active) come
+   from Home.css (imported via HomePage); this screen imports it too for safety. */
+
+.explore {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  position: relative;
+}
+
+/* Frosted-glass header (title only — Explore is a top-level tab, no back). */
+.explore__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 16px var(--space-margin-horizontal);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  z-index: 10;
+}
+
+.explore__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.explore__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0 96px;
+}
+
+/* Category chips (same tokens/behaviour as Home). */
+.explore__filter-row {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 0 var(--space-margin-horizontal);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  margin-bottom: 16px;
+}
+
+.explore__filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.explore__chip {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border: 1px solid var(--outline-cream);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  scroll-snap-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.explore__chip--active {
+  background: var(--terracotta-900);
+  border-color: var(--terracotta-900);
+  color: #fff;
+}
+
+/* Error + retry. */
+.explore__error-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: 20px 16px;
+  margin: 0 16px 16px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+}
+
+.explore__error {
+  margin: 0;
+  color: var(--error);
+  font-size: 15px;
+  text-align: center;
+}
+
+.explore__retry {
+  padding: 8px 24px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--terracotta-900);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* 2-column grid shared with the Library layout (DESIGN.md, 12px gutter). */
+.explore__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 var(--space-margin-horizontal);
+}
+
+.explore__card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.explore__card:hover {
+  transform: translateY(-2px);
+}
+
+.explore__thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--surface-container-low);
+}
+
+.explore__thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.explore__thumb-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+}
+
+.explore__card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 10px 12px 2px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.explore__card-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 12px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty state: same circular box-icon pattern as Home/Library. */
+.explore__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.explore__empty-icon-circle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--bg-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 20px;
+}
+
+.explore__empty-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--text-faint);
+}
+
+.explore__empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.explore__empty-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+}
+
+.explore__empty-btn {
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (min-width: 768px) {
+  .explore__header {
+    position: fixed;
+    left: 280px;
+    right: 0;
+    top: 0;
+    padding: 16px 28px;
+    z-index: 30;
+  }
+
+  .explore__title {
+    font-size: 24px;
+  }
+
+  .explore__content {
+    margin-left: 280px;
+    padding: 84px 28px 40px;
+  }
+
+  .explore__filter-row {
+    padding: 0;
+  }
+
+  .explore__grid {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0;
+  }
+}

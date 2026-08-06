@@ -11,8 +11,11 @@ export default function CreatePage() {
   const { accessToken } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
+  const modelInputRef = useRef(null)
 
+  const [mode, setMode] = useState('photos') // 'photos' | 'model'
   const [photos, setPhotos] = useState([]) // [{ file, previewUrl }]
+  const [modelFile, setModelFile] = useState(null) // single .glb/.obj/.usdz File
   const [form, setForm] = useState({
     title: '',
     craft_type: '',
@@ -27,7 +30,10 @@ export default function CreatePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const canSubmit = photos.length > 0 && form.title.trim() !== '' && !submitting
+  const canSubmit =
+    form.title.trim() !== '' &&
+    !submitting &&
+    (mode === 'photos' ? photos.length > 0 : modelFile !== null)
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -43,26 +49,50 @@ export default function CreatePage() {
   }
 
   const removePhoto = (index) => {
+    const target = photos[index]
+    if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl)
     setPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const handleModelFile = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-selecting the same file
+    if (!file) return
+    const ext = `.${(file.name.split('.').pop() || '').toLowerCase()}`
+    if (!['.glb', '.obj', '.usdz'].includes(ext)) {
+      setError('Unsupported model type — allowed: .glb, .obj, .usdz')
+      return
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      setError('Model file too large (max 100 MB)')
+      return
+    }
+    setError('')
+    setModelFile(file)
+  }
+
+  const buildCraftBody = () => {
+    const body = { title: form.title.trim() }
+    if (form.craft_type) body.craft_type = form.craft_type
+    if (form.material) body.material = form.material
+    if (form.technique) body.technique = form.technique
+    if (form.story) body.story = form.story
+    if (form.dimensions) body.dimensions = form.dimensions
+    if (form.weight !== '') body.weight = parseFloat(form.weight)
+    if (form.location) body.location = form.location
+    if (form.year !== '') body.year = parseInt(form.year, 10)
+    return body
+  }
+
   const handleSubmit = async () => {
-    if (!canSubmit) return
+    if (mode !== 'photos' || !canSubmit) return
     setError('')
     setSubmitting(true)
     try {
       const authHeaders = { Authorization: `Bearer ${accessToken}` }
 
       // a. Create the craft record -> craft_id
-      const body = { title: form.title.trim() }
-      if (form.craft_type) body.craft_type = form.craft_type
-      if (form.material) body.material = form.material
-      if (form.technique) body.technique = form.technique
-      if (form.story) body.story = form.story
-      if (form.dimensions) body.dimensions = form.dimensions
-      if (form.weight !== '') body.weight = parseFloat(form.weight)
-      if (form.location) body.location = form.location
-      if (form.year !== '') body.year = parseInt(form.year, 10)
+      const body = buildCraftBody()
 
       const createRes = await fetch(`${API_BASE_URL}/api/crafts`, {
         method: 'POST',
@@ -102,6 +132,44 @@ export default function CreatePage() {
     }
   }
 
+  const handleSave = async () => {
+    if (mode !== 'model' || !canSubmit || !modelFile) return
+    setError('')
+    setSubmitting(true)
+    try {
+      const authHeaders = { Authorization: `Bearer ${accessToken}` }
+      const body = buildCraftBody()
+
+      // a. Create the craft record -> craft_id
+      const createRes = await fetch(`${API_BASE_URL}/api/crafts`, {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const createData = await createRes.json().catch(() => ({}))
+      if (!createRes.ok) throw new Error(createData.detail || 'Failed to create craft')
+      const craftId = createData.id
+
+      // b. Upload the model file directly (no AI job — completed immediately)
+      const fd = new FormData()
+      fd.append('file', modelFile, modelFile.name)
+      const uploadRes = await fetch(`${API_BASE_URL}/api/crafts/${craftId}/model`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: fd,
+      })
+      const uploadData = await uploadRes.json().catch(() => ({}))
+      if (!uploadRes.ok) throw new Error(uploadData.detail || 'Failed to upload model')
+
+      // c. Skip Processing entirely — the craft is ready now.
+      navigate(`/craft/${craftId}`)
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <div className="create">
       <div className="create__card">
@@ -135,6 +203,28 @@ export default function CreatePage() {
         )}
 
         <div className="create__content">
+          <div className="create__tabs" role="tablist" aria-label="Create method">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'photos'}
+              className={`create__tab${mode === 'photos' ? ' create__tab--active' : ''}`}
+              onClick={() => setMode('photos')}
+            >
+              Generate from Photos
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'model'}
+              className={`create__tab${mode === 'model' ? ' create__tab--active' : ''}`}
+              onClick={() => setMode('model')}
+            >
+              Upload Existing Model
+            </button>
+          </div>
+
+          {mode === 'photos' && (
           <section className="create__section">
             <div className="create__photo-header">
               <span className="create__section-label">Photos</span>
@@ -198,6 +288,52 @@ export default function CreatePage() {
               </button>
             )}
           </section>
+          )}
+
+          {mode === 'model' && (
+          <section className="create__section">
+            <div className="create__photo-header">
+              <span className="create__section-label">Model file</span>
+            </div>
+
+            <input
+              ref={modelInputRef}
+              type="file"
+              accept=".glb,.obj,.usdz"
+              hidden
+              onChange={handleModelFile}
+            />
+
+            {modelFile ? (
+              <div className="create__model-file">
+                <span className="create__model-name" title={modelFile.name}>
+                  {modelFile.name}
+                </span>
+                <button
+                  type="button"
+                  className="create__model-remove"
+                  onClick={() => setModelFile(null)}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="create__upload"
+                onClick={() => modelInputRef.current?.click()}
+              >
+                <svg className="create__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3v12" />
+                  <path d="M8 8l4-4 4 4" />
+                  <rect x="4" y="14" width="16" height="7" rx="2" />
+                </svg>
+                <span className="create__upload-text">Upload model file</span>
+                <span className="create__upload-sub">.glb, .obj, or .usdz · up to 100 MB</span>
+              </button>
+            )}
+          </section>
+          )}
 
           <section className="create__section">
             <span className="create__section-label">Details</span>
@@ -277,8 +413,19 @@ export default function CreatePage() {
             </div>
           </section>
 
-          <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>
-            {submitting ? 'Creating…' : 'Generate 3D Model'}
+          <button
+            type="button"
+            className="create__submit"
+            disabled={!canSubmit}
+            onClick={mode === 'photos' ? handleSubmit : handleSave}
+          >
+            {submitting
+              ? mode === 'photos'
+                ? 'Creating…'
+                : 'Saving…'
+              : mode === 'photos'
+                ? 'Generate 3D Model'
+                : 'Save'}
           </button>
         </div>
       </div>
