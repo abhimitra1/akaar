@@ -56,6 +56,31 @@ def get_presigned_url(object_key: str, expires_seconds: int = 3600) -> str:
     )
 
 
+def get_browser_url(object_key: str, expires_seconds: int = 3600) -> str:
+    """Presigned URL signed for the browser-reachable MinIO endpoint.
+
+    Presigned URLs must be signed with the Host the browser will actually use
+    (otherwise the signature won't match and MinIO returns 403). MINIO_PUBLIC_ENDPOINT
+    is the externally-visible address (dev: localhost:9000). generate_presigned_url is
+    pure signing (no network call), so building the client against the public endpoint
+    is safe from inside the api container. ponytail: dev-only convenience; production
+    would serve files through the API instead.
+    """
+    client = boto3.client(
+        "s3",
+        endpoint_url=f"http://{settings.minio_public_endpoint}",
+        aws_access_key_id=settings.minio_access_key,
+        aws_secret_access_key=settings.minio_secret_key,
+        region_name="us-east-1",
+        config=Config(signature_version="s3v4"),
+    )
+    return client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.minio_bucket, "Key": object_key},
+        ExpiresIn=expires_seconds,
+    )
+
+
 def delete_file(object_key: str) -> None:
     client = get_minio_client()
     client.delete_object(Bucket=settings.minio_bucket, Key=object_key)

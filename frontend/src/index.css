@@ -9,8 +9,11 @@
   /* neutrals */
   --outline-cream: #ddc1b3; /* secondary button outline */
   --bg-cream: #fff1eb; /* tertiary button background */
+  --text-primary: #231914; /* DESIGN.md on-surface */
   --text-muted: #564338; /* tertiary button text / secondary button text */
   --text-faint: #8a7266; /* footer */
+  --surface: #fff8f6; /* DESIGN.md surface (warm peach page background) */
+  --surface-container-low: #fff1eb; /* DESIGN.md surface-container-low (light tan) */
   --surface-container-high: #e7d2c1; /* wide-screen page bg behind floating cards
                                         (DESIGN.md token name; exact value pending DESIGN.md) */
 
@@ -19,6 +22,7 @@
   --on-error: #ffffff;
 
   /* shapes */
+  --radius-md: 12px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px; /* rounded.full */

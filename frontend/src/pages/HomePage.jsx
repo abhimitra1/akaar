@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../api.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import LoadingScreen from '../components/LoadingScreen.jsx'
 import './Home.css'
 
 const CATEGORY_CHIPS = ['Pottery', 'Textiles', 'Wood', 'Metal']
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { accessToken } = useAuth()
   const [crafts, setCrafts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -15,9 +18,9 @@ export default function HomePage() {
   useEffect(() => {
     const fetchCrafts = async () => {
       try {
-        const url = new URL(`${API_BASE_URL}/api/crafts`)
-        if (selectedCategory) url.searchParams.set('craft_type', selectedCategory)
-        const res = await fetch(url)
+        // Guests: no header. Signed-in: Bearer token so owned/private crafts are included.
+        const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+        const res = await fetch(`${API_BASE_URL}/api/crafts`, { headers })
         if (!res.ok) throw new Error('Failed to load crafts')
         const data = await res.json()
         setCrafts(data)
@@ -28,10 +31,15 @@ export default function HomePage() {
       }
     }
     fetchCrafts()
-  }, [selectedCategory])
+  }, [accessToken])
 
-  const featuredCrafts = crafts.filter(c => c.is_public).slice(0, 3)
-  const recentCrafts = crafts.filter(c => c.is_public).slice(0, 5)
+  // ponytail: craft_type filtering is done client-side (backend list endpoint
+  // has no craft_type param).
+  const visibleCrafts = selectedCategory
+    ? crafts.filter(c => c.craft_type === selectedCategory)
+    : crafts
+  const featuredCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 3)
+  const recentCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 5)
 
   const getCraftThumbnail = craft => {
     if (craft.photos && craft.photos.length > 0) {
@@ -41,23 +49,59 @@ export default function HomePage() {
   }
 
   if (loading) {
-    return <div className="home loading">Loading…</div>
+    return <LoadingScreen message="Loading crafts..." />
   }
 
   return (
     <div className="home">
-      <header className="home__top-bar" style={{ background: 'var(--surface-container-high)' }}>
+      <nav className="home__sidebar">
+        <div className="home__sidebar-brand">AKAAR</div>
+        <div className="home__sidebar-nav">
+          <Link to="/" className="home__sidebar-item home__sidebar-item--active">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Home</span>
+          </Link>
+          <Link to="/explore" className="home__sidebar-item">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" y1="3" x2="9" y2="18" /><line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            <span>Explore</span>
+          </Link>
+          <Link to="/create" className="home__sidebar-item">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" /><path d="M17 21v-8" /><path d="M5 9h14V5H5v4" /><path d="M12 3v18" />
+            </svg>
+            <span>Create</span>
+          </Link>
+          <Link to="/library" className="home__sidebar-item">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5L4 5.5A2.5 2.5 0 0 1 6.5 3z" />
+            </svg>
+            <span>Library</span>
+          </Link>
+          <Link to="/account" className="home__sidebar-item">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Profile</span>
+          </Link>
+        </div>
+      </nav>
+
+      <header className="home__top-bar">
         <button className="home__icon-btn" aria-label="Menu">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
         <div className="home__brand">AKAAR</div>
-        <Link to="/search" className="home__icon-btn" aria-label="Search">
+        <button className="home__icon-btn" aria-label="Search">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-        </Link>
+        </button>
       </header>
 
       <section className="home__content">
@@ -133,7 +177,17 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="home__empty-state">
-            <p>No crafts uploaded yet.</p>
+            <div className="home__empty-icon-circle">
+              <svg className="home__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5.5 3l1.1 2.2L8.8 6.3 6.6 7.4 5.5 9.6 4.4 7.4 2.2 6.3l2.2-1.1L5.5 3z" />
+                <path d="M18.5 5.5l.9 1.7 1.7.8-1.7.8-.9 1.7-.9-1.7-1.7-.8 1.7-.8.9-1.7z" />
+                <path d="M3.5 10.2l8.5-3.8 8.5 3.8" />
+                <path d="M3.5 10.2v6.8l8.5 3.8 8.5-3.8v-6.8" />
+                <path d="M3.5 10.2l8.5 3.8 8.5-3.8" />
+                <path d="M12 14v6.8" />
+              </svg>
+            </div>
+            <p className="home__empty-title">No crafts uploaded yet.</p>
             <p className="home__empty-sub">Be the first to share your creation!</p>
           </div>
         )}
@@ -145,7 +199,7 @@ export default function HomePage() {
         </svg>
       </Link>
 
-      <nav className="home__tab-bar" style={{ background: 'var(--surface-container-high)' }}>
+      <nav className="home__tab-bar">
         <Link to="/" className="home__tab-item home__tab-item--active">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />

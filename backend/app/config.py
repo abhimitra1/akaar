@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     supabase_db_url: str
     secret_key: str
     minio_endpoint: str
+    minio_public_endpoint: str = "localhost:9000"
     minio_access_key: str
     minio_secret_key: str
     minio_bucket: str = "akaar"

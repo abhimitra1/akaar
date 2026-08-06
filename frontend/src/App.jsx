@@ -2,10 +2,12 @@ import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import AccountPage from './pages/AccountPage.jsx'
+import CraftPage from './pages/CraftPage.jsx'
 import CreatePage from './pages/CreatePage.jsx'
 import ExplorePage from './pages/ExplorePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
+import ProcessingPage from './pages/ProcessingPage.jsx'
 import SignInPage from './pages/SignInPage.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
 import WelcomePage from './pages/WelcomePage.jsx'
@@ -47,6 +49,22 @@ function App() {
           element={
             <ProtectedRoute>
               <CreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/processing/:jobId"
+          element={
+            <ProtectedRoute>
+              <ProcessingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/craft/:craftId"
+          element={
+            <ProtectedRoute>
+              <CraftPage />
             </ProtectedRoute>
           }
         />

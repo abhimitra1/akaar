@@ -14,7 +14,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--surface-container-high);
+  background: var(--surface);
   position: relative;
 }
 
@@ -25,7 +25,8 @@
   padding: 12px 16px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  background: rgba(231, 210, 193, 0.8);
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   z-index: 10;
 }
 
@@ -44,14 +45,16 @@
 .home__brand {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--terracotta-900);
   letter-spacing: 0.5px;
 }
 
 .home__title {
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 700;
+  line-height: 41px;
+  letter-spacing: 0.37px;
   color: var(--text-primary);
   margin: 24px 0 16px;
   padding: 0 16px;
@@ -59,6 +62,8 @@
 
 .home__content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding-bottom: 80px;
   overflow-y: auto;
 }
@@ -289,16 +294,7 @@
   cursor: pointer;
 }
 
-.home__empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 16px;
-  text-align: center;
-}
-
-.home__empty-state p:first-child {
+.home__empty-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
@@ -309,6 +305,38 @@
   font-size: 14px;
   color: var(--text-muted);
   margin: 0;
+}
+
+/* Sidebar is desktop-only; hidden on mobile so the <768px layout is unchanged. */
+.home__sidebar {
+  display: none;
+}
+
+.home__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.home__empty-icon-circle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--bg-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 20px;
+}
+
+.home__empty-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--text-faint);
 }
 
 .home__fab {
@@ -345,7 +373,8 @@
   height: 72px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  background: rgba(231, 210, 193, 0.8);
+  background: rgba(255, 255, 255, 0.72);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
   z-index: 30;
 }
 
@@ -367,62 +396,140 @@
   margin-bottom: 4px;
 }
 
+/* Short underline indicator beneath the label on the active tab item. */
+.home__tab-item::after {
+  content: '';
+  width: 24px;
+  height: 3px;
+  border-radius: 9999px;
+  background: transparent;
+  margin-top: 4px;
+}
+
 .home__tab-item--active {
   color: var(--terracotta-900);
 }
 
+.home__tab-item--active::after {
+  background: var(--terracotta-900);
+}
+
 @media (min-width: 768px) {
+  /* Left sidebar replaces the bottom tab bar on desktop. Same page
+     background token as mobile (var(--surface)) for consistency. */
+  .home__sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    background: var(--surface);
+    padding: 28px 20px;
+    z-index: 40;
+  }
+
+  .home__sidebar-brand {
+    color: var(--terracotta-900);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 0.5px;
+    margin: 0 0 40px 8px;
+  }
+
+  .home__sidebar-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home__sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .home__sidebar-item:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .home__sidebar-item--active {
+    background: #ffffff;
+    color: var(--terracotta-900);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Top bar becomes a right-aligned action group (menu + search) in the
+     content area; hide the centered brand. */
+  .home__top-bar {
+    position: fixed;
+    left: 280px;
+    right: 0;
+    top: 0;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 16px 28px;
+    background: transparent !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    z-index: 30;
+  }
+
+  .home__brand {
+    display: none;
+  }
+
+  .home__content {
+    margin-left: 280px;
+    padding-top: 84px;
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
   .home__title {
-    font-size: 36px;
-    max-width: 800px;
-    margin: 32px auto 16px;
+    font-size: 40px;
+    text-align: left;
+    margin: 0 0 24px;
     padding: 0;
-    text-align: center;
   }
 
   .home__section-header {
     padding: 0;
-    max-width: 800px;
-    margin: 0 auto 12px;
+    margin-bottom: 12px;
   }
 
-  .home__featured-row,
   .home__filter-row {
     padding: 0;
-    max-width: 800px;
-    margin: 0 auto;
   }
 
-  .home__featured-card {
-    width: 160px;
-  }
-
-  .home__featured-image-wrapper {
-    height: 120px;
+  .home__featured-row {
+    padding: 0;
   }
 
   .home__recent-list {
-    max-width: 800px;
-    margin: 0 auto;
     padding: 0;
   }
 
-  .home__empty-state {
-    max-width: 800px;
-    margin: 0 auto;
-  }
-
+  /* Tab bar replaced by the sidebar on desktop. */
   .home__tab-bar {
-    justify-content: center;
-    gap: 32px;
-    max-width: 800px;
-    margin: 0 auto;
-    border-radius: 20px 20px 0 0;
-    bottom: 0;
+    display: none;
   }
 
   .home__fab {
-    bottom: 100px;
-    right: 32px;
+    bottom: 24px;
+    right: 28px;
+  }
+
+  .home__empty-state {
+    width: 100%;
   }
 }

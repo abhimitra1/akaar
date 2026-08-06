@@ -1,0 +1,175 @@
+.processing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.processing__container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Header bar: terracotta gradient + frosted-glass overlay (matches Create/auth screens). */
+.processing__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--space-margin-horizontal);
+  color: #fff;
+  background: linear-gradient(180deg, var(--terracotta-800), var(--terracotta-900));
+}
+
+.processing__header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.processing__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.processing__title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.processing__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px var(--space-margin-horizontal) 32px;
+}
+
+/* Rounded card holding the status + progress. */
+.processing__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(60, 30, 10, 0.14);
+  text-align: center;
+}
+
+/* Simple animated spinner (primary color) shown while queued/processing. */
+.processing__spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--surface-container-high);
+  border-top-color: var(--terracotta-900);
+  border-radius: 50%;
+  animation: processing-spin 0.9s linear infinite;
+}
+
+@keyframes processing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.processing__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 600;
+  min-height: 24px;
+}
+
+.processing__check {
+  color: var(--terracotta-900);
+}
+
+/* Progress bar: filled portion grows to progress%. */
+.processing__bar {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-container-high);
+  overflow: hidden;
+}
+
+.processing__bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--terracotta-900);
+  transition: width 0.4s ease;
+}
+
+.processing__meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.processing__error {
+  margin: 0;
+  color: var(--error);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* "Try again" pill (shown on failure) navigates back to /create. */
+.processing__retry {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media (min-width: 768px) {
+  .processing {
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+  }
+
+  .processing__container {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(60, 30, 10, 0.14);
+  }
+
+  .processing__content {
+    background: #fff;
+  }
+}

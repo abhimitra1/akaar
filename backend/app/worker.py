@@ -12,10 +12,12 @@ import time
 import traceback
 from datetime import datetime
 
+from sqlalchemy.exc import OperationalError
+
 from .config import settings
 from .db import SessionLocal
 from .models import Craft, Job, JobStatus
-from .queue import dequeue_job
+from .queue import dequeue_job, enqueue_job
 from .storage import upload_file
 
 
@@ -42,7 +44,22 @@ def run() -> None:
         craft_id = job_data.get("craft_id")
         print(f"Picked up job {job_id} (craft {craft_id})")
 
-        db = SessionLocal()
+        # ponytail: the dev-box Supabase pooler DNS is flaky (transient EAI_AGAIN), so
+        # creating a session can fail. Retry briefly instead of crash-looping; if it
+        # still fails, re-enqueue the job so it isn't lost.
+        db = None
+        for attempt in range(4):
+            try:
+                db = SessionLocal()
+                break
+            except OperationalError as exc:
+                print(f"  DB connect failed (attempt {attempt + 1}/4): {exc}")
+                time.sleep(3)
+        if db is None:
+            print(f"  DB unavailable for job {job_id} — re-enqueueing and retrying later")
+            enqueue_job(str(job_id), str(craft_id))
+            continue
+
         job = None
         try:
             job = db.get(Job, job_id) if job_id is not None else None
