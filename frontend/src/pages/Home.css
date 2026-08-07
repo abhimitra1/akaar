@@ -70,7 +70,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: 80px;
+  /* Bottom padding clears the fixed FAB (bottom:100px, height 56px => top ~156px
+     above the viewport bottom) so the last Recent Uploads card is never covered. */
+  padding-bottom: 200px;
   overflow-y: auto;
 }
 
@@ -137,13 +139,28 @@
 .home__featured-image {
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
 }
 
-.home__featured-placeholder {
+/* Neutral placeholder (craft has no thumbnail, or the image failed to load):
+   a soft gradient/cream panel with a small photo icon — never a broken image. */
+.home__thumb-placeholder {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home__thumb-placeholder--featured {
   background: linear-gradient(135deg, var(--terracotta-800), var(--terracotta-900));
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.home__thumb-placeholder--recent {
+  background: var(--outline-cream);
+  color: var(--text-faint);
 }
 
 .home__featured-badge {
@@ -171,9 +188,11 @@
   margin: 0 0 4px;
   line-height: 1.3;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .home__featured-subtitle {
@@ -257,13 +276,8 @@
 .home__recent-thumbnail {
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
-}
-
-.home__recent-placeholder {
-  width: 100%;
-  height: 100%;
-  background: var(--outline-cream);
 }
 
 .home__recent-body {
@@ -286,18 +300,6 @@
   font-weight: 500;
   color: var(--text-muted);
   margin: 0;
-}
-
-.home__recent-menu-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
 }
 
 .home__empty-title {
@@ -503,6 +505,8 @@
     padding-top: 84px;
     padding-left: 28px;
     padding-right: 28px;
+    /* Desktop FAB sits at bottom:24px, so the large mobile clearance is not needed. */
+    padding-bottom: 40px;
   }
 
   .home__title {
