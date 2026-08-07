@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import './Welcome.css'
 
 export default function WelcomePage() {
+  const navigate = useNavigate()
   const { loginWithGoogle } = useAuth()
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,6 +24,25 @@ export default function WelcomePage() {
     <div className="welcome">
       <div className="welcome__card">
         <header className="welcome__header">
+        <button
+          type="button"
+          className="welcome__back"
+          onClick={() => navigate('/')}
+          aria-label="Back to home"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
         <span className="welcome__badge" aria-hidden="true">
           <svg
             viewBox="0 0 24 24"

@@ -20,10 +20,25 @@
 
 /* Header: terracotta gradient (#bb5808 → #974400) */
 .welcome__header {
+  position: relative;
   background: linear-gradient(180deg, var(--terracotta-800), var(--terracotta-900));
   color: #fff;
   padding: var(--space-section) var(--space-margin-horizontal);
   text-align: center;
+}
+
+.welcome__back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
 }
 
 .welcome__badge {
