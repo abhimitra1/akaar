@@ -175,9 +175,19 @@ Story · Keywords · Est. Build Time · Commercial Status.
 - Superseded: the client-side placeholder-GLB stub (`stubReconstruction.js`, matched the old
   `worker.py`'s `INSTANTMESH_MODE=stub`) — deleted, no longer needed now that real reconstruction
   is wired in.
-- **Caveat:** requires the browser to reach the GPU box's address (ZeroTier network membership,
-  or `localhost:43839` if running on the GPU host itself) — out of scope to fix here (the GPU
-  engine/network is explicitly not this deliverable, AGENTS.md §2).
+- **Production deployment (`instantmesh-proxy/`, added 2026-08-07):** InstantMesh itself stays
+  private (bound to the GPU box, reachable only over ZeroTier — no public exposure, no auth of
+  its own). A small standalone Node proxy (`instantmesh-proxy/server.js`) runs alongside it on the
+  same box and is the only thing made public, via a Cloudflare Tunnel. It (1) fixes the CORS bug
+  by setting proper headers on every response, (2) requires a valid Supabase access token (the
+  signed-in user's JWT, verified against `SUPABASE_JWT_SECRET`) before forwarding to InstantMesh,
+  rejecting anonymous requests, and (3) rate-limits job submissions per user (`RATE_LIMIT_PER_HOUR`,
+  default 20/hr) since each one consumes real GPU time. `frontend/src/instantMesh.js` sends the
+  caller's Supabase access token as `Authorization: Bearer <token>` in production (skipped in dev,
+  where the Vite proxy talks to InstantMesh directly on a trusted box). Deployed frontend's
+  `VITE_INSTANTMESH_URL` must point at the tunnel's public URL, not InstantMesh's raw port.
+- **Caveat:** local dev still requires the dev machine to reach the GPU box's address (ZeroTier
+  network membership, or `localhost:43839` if running on the GPU host itself).
 
 ## 6. Tech stack
 - **No backend.** Frontend talks directly to Supabase (Auth + Postgres w/ RLS + Storage) via
@@ -205,6 +215,9 @@ akaar/
   AGENTS.md              # this file
   supabase/
     schema.sql            # profiles/crafts/jobs DDL + RLS policies + storage bucket (source of truth)
+  instantmesh-proxy/      # runs on the GPU box: CORS fix + Supabase-auth gate + rate limit (§5a)
+    server.js
+    .env.example
   frontend/
     package.json, vite.config.js, index.html
     .env                  # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_INSTANTMESH_URL (gitignored)
