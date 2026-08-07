@@ -7,6 +7,7 @@ import CreatePage from './pages/CreatePage.jsx'
 import ExplorePage from './pages/ExplorePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
+import MetadataPage from './pages/MetadataPage.jsx'
 import ProcessingPage from './pages/ProcessingPage.jsx'
 import SignInPage from './pages/SignInPage.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
@@ -36,14 +37,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/explore"
-          element={
-            <ProtectedRoute>
-              <ExplorePage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Guest-accessible per AGENTS.md §3 Phase 1 (browse/search doesn't require sign-in). */}
+        <Route path="/explore" element={<ExplorePage />} />
         <Route
           path="/create"
           element={
@@ -57,6 +52,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProcessingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/craft/:craftId/metadata"
+          element={
+            <ProtectedRoute>
+              <MetadataPage />
             </ProtectedRoute>
           }
         />

@@ -1,37 +1,55 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '@google/model-viewer'
-import { API_BASE_URL } from '../api.js'
-import { useAuth } from '../context/AuthContext.jsx'
+import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import './CraftPage.css'
 
-// Real View screen: loads the craft detail (incl. model_url + owner_name from the
-// backend), renders the 3D model via <model-viewer>, and shows read-only metadata.
+// Real View screen: loads the craft detail (incl. model_url + owner_name via Supabase),
+// renders the 3D model via <model-viewer>, and shows read-only metadata.
 export default function CraftPage() {
   const { craftId } = useParams()
   const navigate = useNavigate()
-  const { accessToken } = useAuth()
 
   const [craft, setCraft] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState('')
+  const [shareCopied, setShareCopied] = useState(false)
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: craft?.title || 'AKAAR craft', url: shareUrl })
+      } catch {
+        // User cancelled the native share sheet — not an error.
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch {
+      // Clipboard API unavailable/denied — nothing more we can do without inventing UI.
+    }
+  }
 
   const handlePublish = async () => {
     if (publishing) return
     setPublishing(true)
     setPublishError('')
     try {
-      const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-      const res = await fetch(`${API_BASE_URL}/api/crafts/${craftId}/publish`, {
-        method: 'PATCH',
-        headers,
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Failed to publish')
-      setCraft((prev) => (prev ? { ...prev, is_public: data.is_public ?? true } : prev))
+      const { data, error: updateError } = await supabase
+        .from('crafts')
+        .update({ is_public: true })
+        .eq('id', craftId)
+        .select()
+        .single()
+      if (updateError) throw new Error(updateError.message)
+      setCraft((prev) => (prev ? { ...prev, is_public: data.is_public } : prev))
     } catch (err) {
       setPublishError(err.message || 'Something went wrong')
     } finally {
@@ -43,11 +61,32 @@ export default function CraftPage() {
     let cancelled = false
     const load = async () => {
       try {
-        const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-        const res = await fetch(`${API_BASE_URL}/api/crafts/${craftId}`, { headers })
-        if (!res.ok) throw new Error(res.status === 401 ? 'Sign in to continue' : 'Failed to load craft')
-        const data = await res.json()
-        if (!cancelled) setCraft(data)
+        const { data, error: dbError } = await supabase
+          .from('crafts')
+          .select('*')
+          .eq('id', craftId)
+          .single()
+        // RLS hides private crafts you don't own — a missing row here means
+        // either it doesn't exist or you're not allowed to see it.
+        if (dbError) throw new Error('Craft not found')
+
+        let ownerName = null
+        if (data.owner_id) {
+          const { data: owner } = await supabase
+            .from('public_profiles')
+            .select('full_name')
+            .eq('id', data.owner_id)
+            .single()
+          ownerName = owner?.full_name ?? null
+        }
+
+        let modelUrl = null
+        if (data.model_key) {
+          const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(data.model_key)
+          modelUrl = pub.publicUrl
+        }
+
+        if (!cancelled) setCraft({ ...data, owner_name: ownerName, model_url: modelUrl })
       } catch (err) {
         if (!cancelled) setError(err.message || 'Something went wrong')
       } finally {
@@ -58,7 +97,7 @@ export default function CraftPage() {
     return () => {
       cancelled = true
     }
-  }, [craftId, accessToken])
+  }, [craftId])
 
   if (loading) {
     return <LoadingScreen message="Loading craft details..." />
@@ -149,6 +188,9 @@ export default function CraftPage() {
                 Download
               </a>
             )}
+            <button type="button" className="craft__btn craft__btn--ghost" onClick={handleShare}>
+              {shareCopied ? 'Link copied!' : 'Share'}
+            </button>
             {publishError && <p className="craft__publish-error">{publishError}</p>}
             {craft.is_public ? (
               <button type="button" className="craft__btn craft__btn--published" disabled>

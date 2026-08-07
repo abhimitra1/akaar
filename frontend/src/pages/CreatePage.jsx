@@ -1,99 +1,71 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../api.js'
+import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
+import { runReconstruction } from '../reconstruction.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import './Create.css'
 
-const MAX_PHOTOS = 12 // AGENTS.md app flow: max 12 photos per craft
-const CRAFT_TYPES = ['Pottery', 'Bamboo', 'Textiles', 'Wood', 'Metal', 'Terracotta', 'Recycled', 'Other']
-
+// Create flow, step 1+2 of 4 (see AGENTS.md §3 Phase 2): upload a single photo, then
+// generate the 3D model. Metadata is added afterward, on the Processing → Metadata step
+// (MetadataPage.jsx), once the craft record already exists.
 export default function CreatePage() {
-  const { accessToken } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
-  const [photos, setPhotos] = useState([]) // [{ file, previewUrl }]
-  const [form, setForm] = useState({
-    title: '',
-    craft_type: '',
-    material: '',
-    technique: '',
-    story: '',
-    dimensions: '',
-    weight: '',
-    location: '',
-    year: '',
-  })
+  const [photo, setPhoto] = useState(null) // { file, previewUrl }
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const canSubmit = photos.length > 0 && form.title.trim() !== '' && !submitting
+  const canSubmit = photo !== null && !submitting
 
-  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
-
-  const handleFiles = (e) => {
-    const files = Array.from(e.target.files || [])
-    const remaining = MAX_PHOTOS - photos.length
-    const added = files.slice(0, remaining).map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }))
-    setPhotos((prev) => [...prev, ...added])
+  const handleFile = (e) => {
+    const file = (e.target.files || [])[0]
     e.target.value = '' // allow re-selecting the same file
+    if (!file) return
+    setPhoto({ file, previewUrl: URL.createObjectURL(file) })
   }
 
-  const removePhoto = (index) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index))
-  }
+  const removePhoto = () => setPhoto(null)
 
   const handleSubmit = async () => {
     if (!canSubmit) return
     setError('')
     setSubmitting(true)
     try {
-      const authHeaders = { Authorization: `Bearer ${accessToken}` }
+      // a. Create the craft record (no metadata yet) -> craft_id
+      const { data: craft, error: createError } = await supabase
+        .from('crafts')
+        .insert({ owner_id: user.id })
+        .select()
+        .single()
+      if (createError) throw new Error(createError.message)
+      const craftId = craft.id
 
-      // a. Create the craft record -> craft_id
-      const body = { title: form.title.trim() }
-      if (form.craft_type) body.craft_type = form.craft_type
-      if (form.material) body.material = form.material
-      if (form.technique) body.technique = form.technique
-      if (form.story) body.story = form.story
-      if (form.dimensions) body.dimensions = form.dimensions
-      if (form.weight !== '') body.weight = parseFloat(form.weight)
-      if (form.location) body.location = form.location
-      if (form.year !== '') body.year = parseInt(form.year, 10)
+      // b. Upload the photo directly to Storage
+      const path = `${user.id}/${craftId}/photos/0_${photo.file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(path, photo.file, { contentType: photo.file.type || 'application/octet-stream' })
+      if (uploadError) throw new Error(uploadError.message)
+      const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path)
+      const { error: photosError } = await supabase
+        .from('crafts')
+        .update({ photos: [pub.publicUrl] })
+        .eq('id', craftId)
+      if (photosError) throw new Error(photosError.message)
 
-      const createRes = await fetch(`${API_BASE_URL}/api/crafts`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      const createData = await createRes.json().catch(() => ({}))
-      if (!createRes.ok) throw new Error(createData.detail || 'Failed to create craft')
-      const craftId = createData.id
+      // c. Create the reconstruction job -> job_id, kick off generation
+      const { data: job, error: jobError } = await supabase
+        .from('jobs')
+        .insert({ craft_id: craftId, status: 'queued' })
+        .select()
+        .single()
+      if (jobError) throw new Error(jobError.message)
+      runReconstruction(job.id, craftId, user.id, photo.file)
 
-      // b. Upload the selected photos
-      const fd = new FormData()
-      photos.forEach((p) => fd.append('files', p.file, p.file.name))
-      const uploadRes = await fetch(`${API_BASE_URL}/api/crafts/${craftId}/photos`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: fd,
-      })
-      const uploadData = await uploadRes.json().catch(() => ({}))
-      if (!uploadRes.ok) throw new Error(uploadData.detail || 'Failed to upload photos')
-
-      // c. Enqueue the reconstruction job -> job_id
-      const genRes = await fetch(`${API_BASE_URL}/api/crafts/${craftId}/generate`, {
-        method: 'POST',
-        headers: authHeaders,
-      })
-      const genData = await genRes.json().catch(() => ({}))
-      if (!genRes.ok) throw new Error(genData.detail || 'Failed to start generation')
-
-      // d. Go to the (placeholder) processing screen
-      navigate(`/processing/${genData.job_id}`)
+      // d. Go to the processing screen
+      navigate(`/processing/${job.id}`)
     } catch (err) {
       // e. On failure: show error and stay on this page
       setError(err.message || 'Something went wrong')
@@ -136,51 +108,31 @@ export default function CreatePage() {
 
         <div className="create__content">
           <section className="create__section">
-            <div className="create__photo-header">
-              <span className="create__section-label">Photos</span>
-              <span className="create__counter">
-                {photos.length} / {MAX_PHOTOS} photos
-              </span>
-            </div>
+            <span className="create__section-label">Photo</span>
 
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              multiple
               hidden
-              onChange={handleFiles}
+              onChange={handleFile}
             />
 
-            {photos.length > 0 ? (
+            {photo ? (
               <div className="create__thumbs">
-                {photos.map((p, i) => (
-                  <div key={i} className="create__thumb">
-                    <img src={p.previewUrl} alt={`photo-${i + 1}`} />
-                    <button
-                      type="button"
-                      className="create__thumb-remove"
-                      aria-label="Remove photo"
-                      onClick={() => removePhoto(i)}
-                    >
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-                {photos.length < MAX_PHOTOS && (
+                <div className="create__thumb">
+                  <img src={photo.previewUrl} alt="Selected craft photo" />
                   <button
                     type="button"
-                    className="create__thumb-add"
-                    aria-label="Add more photos"
-                    onClick={() => fileInputRef.current?.click()}
+                    className="create__thumb-remove"
+                    aria-label="Remove photo"
+                    onClick={removePhoto}
                   >
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
-                )}
+                </div>
               </div>
             ) : (
               <button
@@ -193,88 +145,10 @@ export default function CreatePage() {
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <span className="create__upload-text">Add photos</span>
-                <span className="create__upload-sub">Tap to add up to {MAX_PHOTOS} photos</span>
+                <span className="create__upload-text">Add a photo</span>
+                <span className="create__upload-sub">Choose one photo of your craft</span>
               </button>
             )}
-          </section>
-
-          <section className="create__section">
-            <span className="create__section-label">Details</span>
-
-            <label className="field">
-              <span className="field__label">Title *</span>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="e.g. Hand-thrown terracotta vase"
-              />
-            </label>
-
-            {/* Not wrapped in <label> (iOS Safari picker bug) — see SignUp. */}
-            <div className="field">
-              <span className="field__label">Craft type</span>
-              <select name="craft_type" value={form.craft_type} onChange={handleChange}>
-                <option value="">Select…</option>
-                {CRAFT_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <label className="field">
-              <span className="field__label">Material</span>
-              <input name="material" value={form.material} onChange={handleChange} />
-            </label>
-
-            <label className="field">
-              <span className="field__label">Technique</span>
-              <input name="technique" value={form.technique} onChange={handleChange} />
-            </label>
-
-            <label className="field">
-              <span className="field__label">Story / description</span>
-              <textarea name="story" value={form.story} onChange={handleChange} rows={3} />
-            </label>
-
-            <div className="create__row">
-              <label className="field">
-                <span className="field__label">Dimensions</span>
-                <input name="dimensions" value={form.dimensions} onChange={handleChange} />
-              </label>
-
-              <label className="field">
-                <span className="field__label">Weight</span>
-                <input
-                  name="weight"
-                  value={form.weight}
-                  onChange={handleChange}
-                  inputMode="decimal"
-                  placeholder="kg"
-                />
-              </label>
-            </div>
-
-            <div className="create__row">
-              <label className="field">
-                <span className="field__label">Location</span>
-                <input name="location" value={form.location} onChange={handleChange} />
-              </label>
-
-              <label className="field">
-                <span className="field__label">Year</span>
-                <input
-                  name="year"
-                  value={form.year}
-                  onChange={handleChange}
-                  inputMode="numeric"
-                  placeholder="yyyy"
-                />
-              </label>
-            </div>
           </section>
 
           <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>

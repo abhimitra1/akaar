@@ -10,5 +10,8 @@ __pycache__/
 node_modules/
 dist/
 
+# local dev data
+.data/
+
 # misc
 .DS_Store

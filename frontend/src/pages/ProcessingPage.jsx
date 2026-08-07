@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { API_BASE_URL } from '../api.js'
-import { useAuth } from '../context/AuthContext.jsx'
+import { supabase } from '../supabaseClient.js'
 import './Processing.css'
 
-// Real Processing screen: polls GET /api/jobs/{job_id} every 2s, shows a progress
+// Real Processing screen: polls the jobs table every 2s, shows a progress
 // bar + status, and either routes to the view screen (completed) or offers retry (failed).
 export default function ProcessingPage() {
   const { jobId } = useParams()
   const navigate = useNavigate()
-  const { accessToken } = useAuth()
 
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState('queued')
@@ -24,23 +22,20 @@ export default function ProcessingPage() {
 
     const poll = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-        })
-        if (!res.ok) throw new Error('Failed to load job status')
-        const data = await res.json()
+        const { data, error } = await supabase.from('jobs').select('*').eq('id', jobId).single()
+        if (error) throw new Error('Failed to load job status')
 
         setProgress(data.progress || 0)
         setStatus(data.status)
-        if (data.error) setErrorMessage(data.error)
+        if (data.error_message) setErrorMessage(data.error_message)
 
         if (data.status === 'completed') {
           if (intervalId) clearInterval(intervalId)
           setDone(true)
-          navTimer = setTimeout(() => navigate(`/craft/${data.craft_id}`), 1000)
+          navTimer = setTimeout(() => navigate(`/craft/${data.craft_id}/metadata`), 1000)
         } else if (data.status === 'failed') {
           if (intervalId) clearInterval(intervalId)
-          setErrorMessage(data.error || 'The reconstruction failed.')
+          setErrorMessage(data.error_message || 'The reconstruction failed.')
         }
       } catch {
         // Network/parse error — show a generic error state, don't crash.
@@ -56,7 +51,7 @@ export default function ProcessingPage() {
       if (intervalId) clearInterval(intervalId)
       if (navTimer) clearTimeout(navTimer)
     }
-  }, [jobId, accessToken, navigate])
+  }, [jobId, navigate])
 
   const getStatusText = () => {
     if (pollError) return 'Something went wrong while checking on your model.'

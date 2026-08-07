@@ -1,0 +1,91 @@
+import { Link } from 'react-router-dom'
+
+const NAV_ITEMS = [
+  { key: 'home', to: '/', label: 'Home' },
+  { key: 'explore', to: '/explore', label: 'Explore' },
+  { key: 'create', to: '/create', label: 'Create' },
+  { key: 'library', to: '/library', label: 'Library' },
+  { key: 'account', to: '/account', label: 'Profile' },
+]
+
+// Same icon per nav item in the sidebar and tab bar, except "explore" — the tab-bar
+// version has always carried an extra crosshair line (pre-existing, kept as-is rather
+// than "fixed" while extracting this out of HomePage.jsx).
+const SIDEBAR_ICONS = {
+  home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+  explore: <><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" y1="3" x2="9" y2="18" /><line x1="15" y1="6" x2="15" y2="21" /></>,
+  create: <><path d="M12 20h9" /><path d="M17 21v-8" /><path d="M5 9h14V5H5v4" /><path d="M12 3v18" /></>,
+  library: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5L4 5.5A2.5 2.5 0 0 1 6.5 3z" /></>,
+  account: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+}
+
+const TAB_ICONS = {
+  ...SIDEBAR_ICONS,
+  explore: <><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" y1="3" x2="9" y2="18" /><line x1="15" y1="6" x2="15" y2="21" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+}
+
+const HOME_PATH_EXTRA = <polyline points="9 22 9 12 15 12 15 22" />
+
+// Shared app chrome for top-level browse screens (Home/Explore/Library/Account): desktop
+// sidebar + mobile top-bar/tab-bar/FAB. Detail/flow screens (Create, Processing, Metadata,
+// Craft view) keep their own simpler back+title header instead — matches the existing
+// pattern from before this was extracted. Reuses Home.css's `home__*` classes verbatim.
+export default function AppNav({ active }) {
+  return (
+    <>
+      <nav className="home__sidebar">
+        <div className="home__sidebar-brand">AKAAR</div>
+        <div className="home__sidebar-nav">
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.key}
+              to={item.to}
+              className={`home__sidebar-item ${active === item.key ? 'home__sidebar-item--active' : ''}`}
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {SIDEBAR_ICONS[item.key]}
+                {item.key === 'home' && HOME_PATH_EXTRA}
+              </svg>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      <header className="home__top-bar">
+        {/* Spacer matching the search button's size, so the brand stays centered
+            now that there's no hamburger button (it never opened anything).
+            Hidden on desktop, where the brand is hidden too — see Home.css. */}
+        <div className="home__topbar-spacer" aria-hidden="true" />
+        <div className="home__brand">AKAAR</div>
+        <button className="home__icon-btn" aria-label="Search">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
+      </header>
+
+      <Link to="/create" className="home__fab" aria-label="Create new craft">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </Link>
+
+      <nav className="home__tab-bar">
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.key}
+            to={item.to}
+            className={`home__tab-item ${active === item.key ? 'home__tab-item--active' : ''}`}
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {TAB_ICONS[item.key]}
+              {item.key === 'home' && HOME_PATH_EXTRA}
+            </svg>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+    </>
+  )
+}

@@ -42,6 +42,12 @@
   cursor: pointer;
 }
 
+/* Centers the brand in the mobile top-bar without a dead hamburger button. */
+.home__topbar-spacer {
+  width: 44px;
+  height: 44px;
+}
+
 .home__brand {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 18px;
@@ -485,6 +491,10 @@
   }
 
   .home__brand {
+    display: none;
+  }
+
+  .home__topbar-spacer {
     display: none;
   }
 

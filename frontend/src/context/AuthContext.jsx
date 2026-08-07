@@ -1,61 +1,82 @@
-import { createContext, useCallback, useContext, useState } from 'react'
-import { API_BASE_URL } from '../api.js'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { supabase } from '../supabaseClient.js'
 
 const AuthContext = createContext(null)
 
+async function fetchProfile(userId) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  if (error) return null
+  return data
+}
+
 export function AuthProvider({ children }) {
-  // Tokens held in memory (React state) only — no localStorage/httpOnly cookies yet.
-  const [user, setUser] = useState(null)
-  const [accessToken, setAccessToken] = useState(null)
-  const [refreshToken, setRefreshToken] = useState(null)
+  const [session, setSession] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const isAuthenticated = Boolean(accessToken)
+  useEffect(() => {
+    let cancelled = false
 
-  const applyAuth = useCallback((data) => {
-    setUser(data.user)
-    setAccessToken(data.access_token)
-    setRefreshToken(data.refresh_token)
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (cancelled) return
+      setSession(data.session)
+      if (data.session) setProfile(await fetchProfile(data.session.user.id))
+      setLoading(false)
+    })
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (cancelled) return
+      setSession(newSession)
+      setProfile(newSession ? await fetchProfile(newSession.user.id) : null)
+    })
+
+    return () => {
+      cancelled = true
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
-  const login = useCallback(
-    async (email, password, remember = false) => {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Login failed')
-      applyAuth(data)
-      return data
-    },
-    [applyAuth],
-  )
+  const isAuthenticated = Boolean(session)
 
-  const signup = useCallback(
-    async (fields) => {
-      const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.detail || 'Sign up failed')
-      applyAuth(data)
-      return data
-    },
-    [applyAuth],
-  )
-
-  const logout = useCallback(() => {
-    setUser(null)
-    setAccessToken(null)
-    setRefreshToken(null)
+  const login = useCallback(async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
+    return data
   }, [])
+
+  const signup = useCallback(async (fields) => {
+    const { email, password, full_name, role, institution, department } = fields
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name, role, institution, department } },
+    })
+    if (error) throw new Error(error.message)
+    return data
+  }, [])
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
+  }, [])
+
+  const user = profile
+    ? { ...profile, id: profile.id }
+    : session
+      ? { id: session.user.id, email: session.user.email }
+      : null
 
   return (
     <AuthContext.Provider
-      value={{ user, accessToken, refreshToken, isAuthenticated, login, logout, signup }}
+      value={{
+        user,
+        session,
+        accessToken: session?.access_token ?? null,
+        isAuthenticated,
+        loading,
+        login,
+        logout,
+        signup,
+      }}
     >
       {children}
     </AuthContext.Provider>

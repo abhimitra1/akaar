@@ -58,15 +58,23 @@ Windows RTX 5080 box), or other teammates' work unless asked.
   (tapping shows "Sign in to continue").
 
 **Phase 2 — Create a Digital Twin (logged in only)**
-- Step 1 Choose Source: upload from gallery, take photo, 360° video (future), max 12 photos,
-  10MB each, JPG/PNG/HEIC.
-- Step 2 QR-Guided Capture: overlay grid, angle indicator (0/45/90°…), "Photo N of 12",
-  auto-capture on steady hold, flash, retake.
-- Step 3 Review & Edit: grid preview, reorder, delete, caption, crop/rotate, auto-enhance.
-- Step 4 Metadata: title, craft type, material, technique, story, dimensions & weight,
-  location/year.
-- Generate: validate token → create craft record → upload photos to MinIO → push Redis job →
-  return `job_id` → open Processing screen.
+
+> **2026-08-06: step order explicitly overridden by user command** (see §15 entry same date),
+> superseding the flow-PDF order below per rule 12. Flagged per rule 9 (PDF vs. build conflict).
+> **Current build order:** (1) upload a single photo → (2) generate the 3D model (immediately,
+> before any metadata exists) → (3) add metadata (title, craft type, material, technique, story,
+> dimensions, weight, location, year) → (4) Store/Save persists it. Multi-photo capture (max 12,
+> QR-guided angles, review/reorder/crop) and metadata-before-generate are NOT built — the
+> single-photo/generate-first order below is current, not aspirational.
+
+- ~~Step 1 Choose Source: upload from gallery, take photo, 360° video (future), max 12 photos,
+  10MB each, JPG/PNG/HEIC.~~ → single photo only (`CreatePage.jsx`).
+- ~~Step 2 QR-Guided Capture~~ → not built (phase 2 per §9, was already deferred).
+- ~~Step 3 Review & Edit~~ → not built (phase 2 per §9, was already deferred).
+- ~~Step 4 Metadata~~ → now happens AFTER generation, not before (`MetadataPage.jsx`, step 3/4).
+- Generate: create craft record (no metadata yet) → upload the photo to Supabase Storage →
+  create a `jobs` row → submit to InstantMesh (`reconstruction.js`) → open Processing screen.
+  Metadata + `is_public` publish are added afterward, once the model exists.
 
 **Phase 3 — Processing & Real-Time Updates**
 - UI: animated spinner, progress bar 0–100%, stages (Uploading / Queue position / AI reconstructing
@@ -124,93 +132,131 @@ Story · Keywords · Est. Build Time · Commercial Status.
 
 ## 5. Architecture
 
+> **2026-08-06: architecture changed to backendless — see §15 entry of the same date.** The
+> diagram/stack/layout below describe the ORIGINAL FastAPI design and are kept for historical
+> reference only. Current architecture is directly below this note.
+
 ```
-[ Browser PWA: App + Website ] ──HTTPS/JSON──▶ [ FastAPI backend :8000 ]
-   model-viewer (3D/AR), camera upload                │
-                                                ┌──────┼──────────┬──────────┐
-                                                ▼      ▼          ▼          ▼
-                                           PostgreSQL MinIO   Redis    worker ──▶ InstantMesh
-                                           (users,   (photos, (queue)            (Windows RTX 5080)
-                                            crafts,  GLB/OBJ,
-                                            meta)    thumb)
+[ Browser PWA: App + Website ] ──supabase-js──▶ [ Supabase ]
+   model-viewer (3D/AR), camera upload              │
+                     │                    ┌──────────┼──────────┐
+                     │ direct fetch       ▼          ▼          ▼
+                     │ (CORS: *)      Auth       Postgres    Storage
+                     ▼               (email/pw,  (profiles,   (bucket "akaar":
+        [ InstantMesh API ]           JWT, RLS    crafts,      photos/model.glb,
+        (GPU workstation,             via         jobs; RLS     owner-scoped
+         ZeroTier, async job          auth.uid()) enforces      writes, public
+         queue — see §5a)                         visibility)   reads)
 ```
-- Edge-first: reconstruction runs on on-prem CUDA box; craft data never leaves campus.
-- PostgreSQL (Supabase) now lives OUTSIDE the Docker Compose network — reached externally over
-  the internet via a Supabase connection string (`sslmode=require`), NOT `postgres:5432` on the
-  local compose network.
-- This Linux dev box has NO GPU → worker runs `INSTANTMESH_MODE=stub` (placeholder GLB). Real
-  reconstruction wires in via `INSTANTMESH_MODE=remote` + `INSTANTMESH_URL` on the GPU box later.
+- No backend server, no Docker, no Redis/MinIO. The frontend talks to Supabase directly via
+  `@supabase/supabase-js` using the project's public anon key; row-level security (RLS) policies
+  (not application code) enforce who can read/write which rows.
+- `ponytail:` the concept note's "data never leaves campus" now applies even less directly (dev
+  photos/models live in Supabase Storage, not just Supabase Postgres) — same production-migration
+  caveat as before applies.
+
+### 5a. Reconstruction pipeline (real InstantMesh, wired 2026-08-06)
+- `frontend/src/instantMesh.js` — thin client for the InstantMesh REST API (separate FastAPI app
+  on the GPU workstation, `VITE_INSTANTMESH_URL`, default the ZeroTier address
+  `http://10.231.121.101:43839`; CORS is wildcard-enabled server-side so the browser calls it
+  directly, no proxy). `submitJob(file, opts)` → `POST /api/generate` → `job_id`;
+  `getJobStatus(jobId)` → `GET /api/jobs/{id}`; `downloadResult(jobId, fmt)` → blob.
+- `frontend/src/reconstruction.js` (`runReconstruction(jobId, craftId, ownerId, imageFile)`) —
+  invoked fire-and-forget from `CreatePage.jsx` right after the craft/photos/job rows are created.
+  Submits the craft's **first photo only** to InstantMesh (it's single-image reconstruction, not
+  multi-view), polls every 3s, mirrors InstantMesh's status into our own `jobs` row so
+  `ProcessingPage`'s existing polling UI needs no changes: `queued`→`queued`/0,
+  `working`→`processing`/50 (InstantMesh has no numeric progress, so 50 is a placeholder
+  midpoint), `done`→ downloads the GLB, uploads it to Storage at
+  `{owner_id}/{craft_id}/model.glb`, sets `crafts.model_key`, then `jobs.status=completed`/100.
+  `error`→ `jobs.status=failed` with InstantMesh's error message.
+- Defaults used (not exposed in the UI — not asked for): `remove_background=true`, `seed=42`,
+  `sample_steps=75`.
+- Superseded: the client-side placeholder-GLB stub (`stubReconstruction.js`, matched the old
+  `worker.py`'s `INSTANTMESH_MODE=stub`) — deleted, no longer needed now that real reconstruction
+  is wired in.
+- **Caveat:** requires the browser to reach the GPU box's address (ZeroTier network membership,
+  or `localhost:43839` if running on the GPU host itself) — out of scope to fix here (the GPU
+  engine/network is explicitly not this deliverable, AGENTS.md §2).
 
 ## 6. Tech stack
-- Backend: FastAPI + SQLAlchemy + PostgreSQL (hosted on Supabase), MinIO (boto3), Redis (job
-  queue), JWT (python-jose), bcrypt (passlib).
-- Frontend: React 18 + Vite + React Router, @google/model-viewer (3D/AR), plain CSS.
-- Infra: Docker Compose (redis, minio, api, worker, web) — PostgreSQL has no local service; it is
-  hosted on Supabase (external, reached over the internet).
-- **Supabase env (backend `config.py`):** the app will need a `SUPABASE_DB_URL` (or equivalent)
-  env var, and the SQLAlchemy engine must pass `connect_args={"sslmode": "require"}`.
-- 3D formats: GLB (primary), OBJ+MTL, USDZ, STL.
+- **No backend.** Frontend talks directly to Supabase (Auth + Postgres w/ RLS + Storage) via
+  `@supabase/supabase-js`, and directly to the InstantMesh API (§5a) for reconstruction.
+- Frontend: React 18 + Vite + React Router, @google/model-viewer (3D/AR), plain CSS,
+  `@supabase/supabase-js`.
+- Auth: Supabase Auth (email/password). `public.profiles` row auto-created via a
+  `handle_new_user()` trigger on `auth.users` insert, seeded from signup metadata
+  (full_name/role/institution/department).
+- DB: Supabase Postgres. Tables: `profiles`, `crafts`, `jobs` — see `supabase/schema.sql` for the
+  full DDL + RLS policies (source of truth, run once against the project via the SQL editor or
+  `psql`).
+- Storage: Supabase Storage, bucket `akaar` (public read; writes restricted per-user via
+  `storage.objects` RLS keyed on the first path segment = `auth.uid()`).
+- Reconstruction: InstantMesh REST API on a separate GPU workstation (§5a) — real reconstruction,
+  not a stub.
+- 3D formats: GLB (implemented, from InstantMesh). OBJ/video/processed-image/multiview are also
+  available from the InstantMesh API (`downloadResult(jobId, fmt)`) but not yet surfaced in the UI
+  — phase 2. USDZ/STL not produced by InstantMesh; still phase 2 per §9.
 
 ## 7. Repo layout (current)
 ```
 akaar/
-  docker-compose.yml       # services: redis, minio, api, worker, web (no local postgres — DB is on Supabase)
   PLAN.md                # build plan
   AGENTS.md              # this file
-  backend/
-    Dockerfile
-    app/
-      main.py            # FastAPI app, CORS, routers, startup (create tables + MinIO bucket)
-      config.py          # pydantic-settings (env)
-      db.py              # engine, SessionLocal, Base, get_db
-      models.py          # User, Craft, Job (SQLAlchemy)
-      security.py        # bcrypt hash/verify, JWT create/decode (access+refresh)
-      storage.py         # MinIO client helpers (put/get/presigned)
-      queue.py           # Redis enqueue/pop job
-      worker.py          # reconstruction worker (stub by default)
-      routers/
-        auth.py          # signup/signin/refresh, get_current_user, get_optional_user
-        crafts.py        # upload, create, get, public gallery, publish, download, qr
-        jobs.py          # get job status, cancel
+  supabase/
+    schema.sql            # profiles/crafts/jobs DDL + RLS policies + storage bucket (source of truth)
   frontend/
-    package.json, vite.config.js, index.html, Dockerfile
-    src/                 # NOT YET CREATED — build here
+    package.json, vite.config.js, index.html
+    .env                  # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_INSTANTMESH_URL (gitignored)
+    src/
+      supabaseClient.js   # supabase-js client (anon key)
+      instantMesh.js       # InstantMesh API client (submit/poll/download)
+      reconstruction.js    # drives a craft's reconstruction job end to end
+      context/AuthContext.jsx # Supabase Auth session + profile
+      pages/
+        CreatePage.jsx      # step 1+2: single photo -> generate
+        ProcessingPage.jsx  # poll job -> /craft/:id/metadata on completion
+        MetadataPage.jsx    # step 3+4: add metadata -> Store/Save -> /craft/:id
+        CraftPage.jsx       # view/download/publish
+        ...                 # other screens (App + Website), talk to Supabase directly
 ```
 
-## 8. API contracts (summary)
-- `POST /api/auth/signup` → `{access_token, refresh_token, user}`
-- `POST /api/auth/signin` → same
-- `POST /api/auth/refresh` (Bearer refresh token) → same
-- `POST /api/crafts/upload` (auth, multipart, ≤12 files) → `{photo_urls:[...]}`
-- `POST /api/crafts?photo_urls=` (auth, JSON metadata) → `{craft_id, public_id, job_id}`
-- `GET /api/crafts/{id}` → craft object (public = guest-ok; private = owner only)
-- `GET /api/crafts/public/gallery?craft_type=&skip=&limit=` → list (guest-ok)
-- `POST /api/crafts/{id}/publish` (auth) → `{ok, public, share_url}`
-- `GET /api/crafts/{id}/download?fmt=` (auth) → `{download_url, format}`
-- `GET /api/crafts/{id}/qr` → `{qr_png_base64}` or fallback link
-- `GET /api/jobs/{job_id}` → `{job_id, craft_id, status, stage, progress, error}`
-- `POST /api/jobs/{job_id}/cancel` (auth) → `{ok}`
-- All authed calls: `Authorization: Bearer <access_token>`.
+## 8. Data access contracts (summary)
+No REST API — the frontend queries Supabase directly. RLS enforces every rule below; the
+frontend does not re-check ownership/visibility in application code.
+- Auth: `supabase.auth.signUp({email, password, options:{data:{full_name,role,institution,department}}})`,
+  `signInWithPassword`, `signOut`, `onAuthStateChange` (session restore).
+- `crafts` table: `select` sees `is_public = true OR owner_id = auth.uid()` (guest = public only,
+  owner = public + own); `insert`/`update` require `owner_id = auth.uid()`.
+- `jobs` table: `select`/`insert`/`update` require the parent craft's `owner_id = auth.uid()`.
+- Storage bucket `akaar`: public read (via `getPublicUrl`); `insert`/`update` require the object
+  path's first segment to equal `auth.uid()`.
+- Publish/unpublish = `crafts.update({is_public})` from `CraftPage.jsx` (owner only, via RLS).
 
 ## 9. Conventions / rules
 - `ponytail:` comments mark deliberate simplifications — keep them, don't "fix" silently.
-- Guest = no token. Backend returns 401 → frontend shows "Sign in to continue" modal.
-- Poll job status every ~2s (NO WebSocket yet).
+- Guest = no Supabase session. RLS hides private rows entirely (no 401 to catch) — a missing/
+  inaccessible craft just isn't returned; frontend shows "Craft not found" / "Sign in to continue"
+  based on `isAuthenticated`, not a status code.
+- Poll job status every ~2s (NO WebSocket/Realtime yet).
 - Model conversion to OBJ/USDZ/STL is phase 2; download serves stored GLB for now.
 - Semantic search, AR polish, 2FA, voice, 360° video, LOD, push = PHASE 2. Don't pre-build.
 - Keep deps minimal. No new abstraction for a single use.
 
 ## 10. Build order (recommended)
-1. Boot backend, confirm health + tables + MinIO bucket.
+1. ~~Boot backend~~ — retired. Apply `supabase/schema.sql` once against the Supabase project
+   (SQL editor or `psql`), confirm tables/RLS/bucket exist.
 2. App frontend: nav shell + auth context + guest gate → auth screens → Create Twin
    (4 steps) → Processing (poll) → View/Download/Publish → My Library + Account.
 3. Website frontend: landing → search/explore → craft detail → public gallery → NFR states.
-4. `docker compose up --build`; walk the full loop end to end; fix until green.
+4. `npm run dev` in `frontend/`; walk the full loop end to end; fix until green.
 
 ## 11. How to verify a change
-Run `docker compose up --build`. Sign up via API or UI. Create a craft (upload photos + metadata)
-→ watch Processing → confirm model_url populated → open detail (3D renders) → publish → confirm
-it shows in Public Gallery. Any break: check api logs + worker logs.
+Run `npm run dev` in `frontend/` (needs `frontend/.env` with `VITE_SUPABASE_URL` +
+`VITE_SUPABASE_ANON_KEY`). Sign up via UI. Create a craft (upload photos + metadata) → watch
+Processing → confirm model_url populated → open detail (3D renders) → publish → confirm it shows
+in Public Gallery. Any break: check the browser console/network tab (no server logs anymore) and
+the Supabase dashboard (Table Editor / Storage / Logs).
 
 ---
 
@@ -635,3 +681,266 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
 - **Verified:** api rebuilt, `npm run build` passes. curl: publish → 200 `is_public=true` + owner; unauthed PATCH → 401; nonexistent craft → 404; fresh GET `is_public` true; craft 16 appears in the guest public list; unpublish → `false`. Browser (375×812): on `/craft/16` (unpublished) buttons = `["Download","Publish"]`; click Publish → buttons become `["Download",{Published,disabled:true}]`, no error; fresh GET + direct DB query both confirm `craft 16 is_public: True`.
 - **In progress:** — (awaiting next command)
 - **Next:** Commit this change if asked; otherwise next screen/design per user command (rule 12–13).
+
+### 2026-08-06 — Step: Go backendless (retire FastAPI; frontend talks to Supabase directly)
+- **Command:** User explicitly directed a full architecture change ("merge both frontend and
+  backend and develop a backend less project" → "do it"), overriding the fixed stack in §6 per
+  rule 12 (user's command is the authority). Flagging per rule 9: this is a real divergence from
+  the original AGENTS.md-specified FastAPI/SQLAlchemy/MinIO/Redis stack, now superseded.
+- **Blocker resolved:** Needed Supabase project API credentials (URL + anon key) not derivable
+  from the existing `SUPABASE_DB_URL` connection string — user supplied
+  `SUPABASE_BASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SERVICE_ROLE_KEY` in `backend/.env` (service
+  role key intentionally NOT used — not needed once reconstruction went client-side, and must
+  never ship to a frontend bundle).
+- **Schema (`supabase/schema.sql`, run once via psycopg2 against the Supabase project):**
+  `profiles` (mirrors old `users`, keyed by `auth.users.id` uuid, auto-populated by a
+  `handle_new_user()` trigger from signup metadata), `public_profiles` view (id + full_name only,
+  publicly readable — keeps email/institution/department private), `crafts`, `jobs` (same shape as
+  the old SQLAlchemy models, `owner_id`/ownership-chain now uuid). RLS policies replace every
+  ownership/visibility check that used to live in FastAPI route handlers: `crafts_select` (public
+  OR own), `crafts_insert`/`update` (own only), `jobs_select`/`insert`/`update` (via parent craft
+  ownership), storage bucket `akaar` (public=true; `storage.objects` insert/update restricted to
+  `(storage.foldername(name))[1] = auth.uid()::text`).
+  - **Old data dropped:** pre-existing `users`/`crafts`/`jobs` tables (6 users, 12 crafts, 12 jobs,
+    integer PKs from the custom-JWT backend) could not map to Supabase Auth's uuid `auth.uid()` —
+    confirmed with the user before `drop table ... cascade`; all dev/test data (stub GLBs), nothing
+    production-real.
+- **Frontend:** added `@supabase/supabase-js`; new `src/supabaseClient.js` (client from
+  `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`, gitignored `.env`, `.env.example` added) and
+  `src/stubReconstruction.js` (client-side port of `worker.py`'s placeholder-GLB stub — byte-for-
+  byte same minimal GLB construction — invoked fire-and-forget from `CreatePage.jsx` right before
+  navigating to Processing; updates `jobs`/`crafts` rows directly under owner RLS, no queue needed).
+  - `AuthContext.jsx` rewritten around `supabase.auth` (signUp/signInWithPassword/signOut/
+    onAuthStateChange), session persisted by supabase-js by default (behavior improvement over the
+    old memory-only tokens — no code elsewhere assumed otherwise). Added a `loading` flag +
+    `ProtectedRoute` now shows `LoadingScreen` during initial session restore instead of flashing to
+    `/welcome`.
+  - `SignInPage`/`SignUpPage` needed NO changes — their existing `login(email,password)`/
+    `signup(form)` calls already matched the new signatures.
+  - `HomePage`/`CreatePage`/`ProcessingPage`/`CraftPage` rewritten to query `supabase.from(...)`
+    directly instead of `fetch(API_BASE_URL, ...)`; visibility/ownership no longer checked in
+    frontend code — RLS does it. `photos[]` now stores public Storage URLs directly (fixes a
+    latent dead-endpoint bug in the old `getCraftThumbnail`, noted in the 2026-08-06 View-screen
+    entry, where thumbnails pointed at a route that never existed).
+  - Deleted `frontend/src/api.js` (no more `API_BASE_URL`).
+- **Removed:** `backend/` (FastAPI app, SQLAlchemy models, JWT auth, MinIO/Redis clients, worker)
+  deleted entirely — recoverable via git history if ever needed. Also removed `docker-compose.yml`
+  and both `Dockerfile`s/`.dockerignore`s/`nginx.conf` (deleted in the prior "remove container"
+  step earlier the same day) and the local dev `.data/` (MinIO storage dir, no longer used).
+  Stopped the locally-running Redis/MinIO/API/worker processes.
+- **Verified:** `npm run build` passes (no compile/import errors across all rewritten files);
+  migration applied cleanly (tables/policies/bucket confirmed via direct query); no remaining
+  `API_BASE_URL`/`api.js`/`accessToken`-as-header references in `frontend/src` (grepped). Full E2E
+  exercised directly against the live Supabase REST/Auth/Storage APIs (not just the UI): signup →
+  found "Confirm email" enabled on the project (blocks immediate-session signup — flagged to user,
+  unresolved, needs a dashboard toggle or a UI change for the "check your email" state) → confirmed
+  a test user via the admin API to continue → login → profile auto-created by trigger (correct
+  fields) → craft insert as owner succeeds, as a different `owner_id` correctly 403s → guest cannot
+  see unpublished craft → publish flips `is_public` → guest can now see it → Storage upload to own
+  path succeeds (200), to another user's path rejected (400), public GET succeeds unauthenticated →
+  jobs insert/select correctly owner-scoped, guest sees `[]`. All test rows/objects/the test auth
+  user cleaned up afterward. Real interactive-browser click-through NOT done (no browser tool
+  available this session) — build passing + direct API verification is the coverage here.
+- **Known gap (unresolved):** Supabase project has "Confirm email" ON — breaks the documented
+  "auto-verified for this sprint" immediate-login signup UX. Needs either a dashboard toggle
+  (Authentication → Providers → Email) or `SignUpPage`/`AuthContext` changes to handle the
+  no-session-yet state. Not fixed this step — flagged to the user, awaiting their call.
+- **Next:** Resolve the confirm-email gap; interactive browser walk when a browser tool is
+  available; commit this change if asked (rule 12).
+
+### 2026-08-06 — Step: Wire real InstantMesh reconstruction (replace client-side stub)
+- **Done:** User supplied the InstantMesh API's own README (separate FastAPI app on the GPU
+  workstation, async job model: `POST /api/generate` → `job_id`, poll
+  `GET /api/jobs/{id}` → queued/working/done/error, `GET /api/jobs/{id}/download/{fmt}`).
+  Implemented per §5a/§6 (see above): `frontend/src/instantMesh.js` (thin API client) +
+  `frontend/src/reconstruction.js` (`runReconstruction`, replaces `stubReconstruction.js` — same
+  fire-and-forget call site in `CreatePage.jsx`, now passing `photos[0].file` since InstantMesh
+  reconstructs from a single image). `VITE_INSTANTMESH_URL` added to `frontend/.env`/`.env.example`
+  (default the ZeroTier address `http://10.231.121.101:43839`).
+- **Verified BEFORE wiring (not assumed):** confirmed this dev machine can actually reach the GPU
+  box (`curl .../api/health` → 200 over ZeroTier) and that CORS is wildcard-enabled server-side
+  (`access-control-allow-origin: *` on an OPTIONS preflight) — both were real open questions, not
+  guessed. Then ran a full live submit→poll→download cycle with a synthetically generated test PNG
+  (System.Drawing, no repo test fixture existed): job went queued→working→done in ~15s at
+  `sample_steps=30`, downloaded GLB is a real 2.6 MB file with the correct `glTF` magic bytes.
+  `npm run build` passes with the new modules. Full browser click-through still not done (no
+  browser tool this session) — the live curl cycle exercises the exact request/poll/download shape
+  `reconstruction.js` uses, so this is real signal, not just a compile check.
+- **Notes:** InstantMesh has no numeric progress — `working`→our `jobs.progress=50` is a fixed
+  placeholder, not a real percentage (documented in §5a). Only the `glb` result format is wired to
+  the craft record; `obj`/`video`/`multiview`/`processed_image` are available via
+  `downloadResult(jobId, fmt)` but not surfaced in any screen — phase 2, not built.
+- **In progress:** — (awaiting next command)
+- **Next:** Commit this change if asked; resolve the still-open confirm-email gap from the prior
+  step if asked; otherwise next screen/design/command (rule 12).
+
+### 2026-08-06 — Step: Reorder Create flow (photo -> generate -> metadata -> save); confirm-email resolved
+- **Confirm-email gap (from the backendless step) resolved:** user disabled "Confirm email" in the
+  Supabase dashboard. Verified live: fresh signup now returns an `access_token` immediately (no
+  admin-confirm step needed, as tested previously).
+- **Command:** user explicitly reordered the Create flow to: (1) upload a single photo → (2)
+  generate the 3D model → (3) add metadata → (4) Store/Save — metadata now comes AFTER generation,
+  not before. This diverges from the flow-PDF's original Phase 2 step order (Choose Source → QR
+  Capture → Review & Edit → Metadata → Generate); flagged per rule 9, followed per rule 12 (§3
+  updated with an explicit override note, old step text struck through not deleted).
+- **Schema change:** `crafts.title` was `not null` — had to become nullable since a craft row is
+  now created before any metadata (including title) exists. Applied
+  `alter table public.crafts alter column title drop not null` directly against Supabase (system
+  Python + `psycopg2-binary`, since `backend/.venv` no longer exists — reused the `SUPABASE_DB_URL`
+  connection string from memory, as `backend/.env` was deleted in the backendless step). Mirrored
+  in `supabase/schema.sql` (source of truth) with a comment explaining why.
+- **`frontend/src/pages/CreatePage.jsx`** rewritten: single photo (not up to 12), no metadata
+  fields. On submit: creates a bare `crafts` row (`owner_id` only) → uploads the one photo to
+  Storage → creates the `jobs` row → calls `runReconstruction` → navigates to Processing. This is
+  now purely steps 1+2.
+- **`frontend/src/pages/ProcessingPage.jsx`**: on `completed`, now navigates to
+  `/craft/:craftId/metadata` instead of straight to the view screen.
+- **New `frontend/src/pages/MetadataPage.jsx`** (steps 3+4): loads the craft (prefills any
+  existing metadata), the same field set the old combined Create screen had (title required,
+  craft_type/material/technique/story/dimensions/weight/location/year optional), "Store / Save"
+  button updates the craft row then navigates to `/craft/:craftId` (view). Reused `Create.css`
+  classes/patterns rather than inventing new styling — no design was supplied for this screen (rule
+  13), and it's functionally the same fields the user already approved for the old Create screen.
+  Route added in `App.jsx` (`/craft/:craftId/metadata`, Protected, before the `/craft/:craftId`
+  route).
+- **Verified:** `npm run build` passes. Live against Supabase: signup now returns an immediate
+  session; craft insert with no title succeeds (previously would have violated `not null`); a
+  second test user's craft insert → metadata PATCH (title+craft_type+material+year) round-tripped
+  correctly. All test crafts/users cleaned up after. Full interactive browser click-through still
+  not done (no browser tool this session).
+- **In progress:** — (awaiting next command)
+- **Next:** Commit this change if asked; otherwise next screen/design/command (rule 12).
+
+### 2026-08-06 — Step: Fix InstantMesh CORS (dev proxy) + Storage upsert RLS bug
+User hit two real bugs while actually using the new flow in a browser (first live browser use this
+project — everything before was build-checks + direct API calls).
+
+- **Bug 1 — CORS blocked `/api/generate` in the browser.** Root cause: the InstantMesh server sends
+  `Access-Control-Allow-Origin` on its `OPTIONS` preflight but NOT on the actual `GET`/`POST`
+  responses — confirmed by comparing preflight vs. real-response headers directly (a server-side
+  bug in that separate GPU-box app, out of this repo's scope — AGENTS.md §2). My earlier "CORS is
+  wildcard-enabled" claim in the previous InstantMesh step was wrong — I'd only checked the
+  preflight, not the real response; correcting the record here.
+  - **Fix:** `vite.config.js` gained a dev-only proxy (`/instantmesh-api` → the GPU box,
+    `changeOrigin: true`); `instantMesh.js`'s `BASE_URL` uses that relative path when
+    `import.meta.env.DEV`, the real `VITE_INSTANTMESH_URL` otherwise. First rewrite attempt
+    (`/instantmesh-api` → `/api`) double-prefixed to `/api/api/...` (404) since `instantMesh.js`
+    already appends `/api/...` itself — fixed to strip the prefix to `''`. Verified via curl through
+    the proxy (`/instantmesh-api/api/health` → 200, `/instantmesh-api/api/generate` → 400 "not a
+    valid image" for a garbage file, i.e. reaches the real endpoint, not a 404).
+  - **Caveat unchanged:** dev-only; production has no proxy layer (documented in §5a already).
+  - **Side discovery while chasing this:** an orphaned `vite` process from the very first
+    `npm run dev` earlier in this session had survived an earlier `TaskStop` call (npm's process
+    tree doesn't always die cleanly on Windows) and had been squatting on port 5173 the whole time,
+    silently serving a stale pre-Supabase build — which is what the user had actually been testing
+    against for several steps. Found via `Get-NetTCPConnection`, killed, dev server now correctly
+    rebinds to 5173.
+- **Bug 2 — GLB upload 400 on `x-upsert:true`.** Reproduced directly via curl (not guessed): a
+  plain `POST` to `storage/v1/object/akaar/{owner}/{craft}/model.glb` succeeds (200); the identical
+  request with `x-upsert: true` (what `reconstruction.js` sends) returns HTTP 400 wrapping
+  `{"statusCode":"403","message":"new row violates row-level security policy"}`. Cause: Supabase
+  Storage's upsert path checks for a conflicting existing row before deciding insert-vs-update, and
+  that check is itself RLS-gated — we had `insert`/`update` policies on `storage.objects` but no
+  `select` policy, so the conflict check itself was denied.
+  - **Fix:** added `akaar_select_own` policy (same owner-path check as insert/update) to
+    `supabase/schema.sql` and applied live. Verified: upsert now succeeds both on a fresh path and
+    on a second upsert over the same path (the actual retry scenario).
+  - **Real user impact:** craft id 12 (job id 9) hit this exact failure and is now stuck
+    `status=failed`, no title/model — orphaned since "Try again" starts a fresh craft rather than
+    resuming. Left as-is (real user data, not test data); user can just retry from `/create`.
+- **Cleanup:** deleted all stray e2e test users/crafts created while reproducing both bugs
+  (queried `auth.users where email like 'akaar.e2e%'` directly, cascaded their crafts, confirmed
+  empty after).
+- **In progress:** — (awaiting next command)
+- **Next:** User to retry the Create flow in-browser; commit if asked; otherwise next command
+  (rule 12).
+
+### 2026-08-06 — Step: Show the generated model above the metadata form
+- **Done:** `MetadataPage.jsx` (step 3/4) now renders the craft's `<model-viewer>` above the
+  Details form, so the user can see what InstantMesh produced while filling in metadata — reused
+  `CraftPage.css`'s `.craft__viewer`/`.craft__no-model` classes and the same `<model-viewer>` props
+  (`camera-controls`, `auto-rotate`) rather than inventing new styling (rule 13). Falls back to a
+  "No 3D model yet" placeholder if `model_key` isn't set (shouldn't normally happen at this step
+  since Processing only routes here on `completed`, but the craft is fetched fresh so it degrades
+  gracefully instead of crashing).
+- **Verified:** `npm run build` passes. Component-only change (no config), so the running dev
+  server hot-reloads it — no restart needed.
+- **In progress:** — (awaiting next command)
+- **Next:** Commit if asked; otherwise next screen/design/command (rule 12).
+
+### 2026-08-06 — Step: Show owner name instead of raw uuid on Home
+- **Bug:** Home's Featured/Recent cards showed `By {craft.owner_id}` — a raw uuid, not a name.
+  Leftover from the backendless rewrite: the old FastAPI `list_crafts` response never included
+  owner names either (matched what was there before, but a uuid reads worse than the old integer
+  id did).
+- **Fix:** `HomePage.jsx` now batch-fetches `public_profiles(id, full_name)` for the distinct
+  `owner_id`s in the loaded craft list (one extra query, not N+1) into an `ownerNames` map, and
+  both card templates render `ownerNames[craft.owner_id] || 'Unknown creator'`.
+- **Verified:** `npm run build` passes. Confirmed live against Supabase that the real craft's
+  owner (`39bf2614-...`) resolves via `public_profiles` to `"Abhi Mitra"` — the fix will show that
+  instead of the uuid, not silently fall through to "Unknown creator".
+- **In progress:** — (awaiting next command)
+- **Next:** Commit if asked; otherwise next screen/design/command (rule 12).
+
+### 2026-08-06 — Step: Fix Home card clicks not opening the View screen
+- **Bug 1 — wrong route:** Featured cards' `onClick` navigated to `/crafts/${craft.id}` (plural)
+  but `App.jsx` only registers `/craft/:craftId` (singular) — pre-existing typo from the original
+  Home-screen build (2026-08-06 desktop-sidebar step), never caught before since this is the first
+  session with real interactive browser testing.
+  - **Fix:** `/crafts/` → `/craft/`.
+- **Bug 2 — Recent Uploads rows weren't clickable at all:** no `onClick` was ever wired on
+  `.home__recent-row` (only Featured cards had one). Added `onClick={() => navigate(`/craft/${craft.id}`)}`
+  to the row; added `e.stopPropagation()` on the (still-non-functional, decoration-only) "More
+  options" button so it doesn't also trigger navigation now that the row is clickable.
+- **Verified:** `npm run build` passes.
+- **In progress:** — (awaiting next command)
+- **Next:** Commit if asked; otherwise next screen/design/command (rule 12).
+
+### 2026-08-06 — Step: Build Explore, Library, Account pages + Share button on the View screen
+- **Command:** user pointed at the 5-tab bottom nav screenshot ("Home, Explore, Create, Library,
+  Profile") and said "write all these pages" — Home and Create already existed; built the other
+  three (Explore, Library/My Library, Account/Profile). Also: "add a share button here on the
+  viewer page" (the View-screen screenshot) → added to `CraftPage.jsx`.
+- **Refactor first (needed for all three):** AGENTS.md §3's "every-screen NFR checklist" requires
+  a 5-tab bottom nav on every top-level screen, but the sidebar+top-bar+tab-bar+FAB chrome was
+  hard-coded only inside `HomePage.jsx` — duplicating ~90 lines of JSX into 3 more files would
+  violate rule 4 (reuse, don't re-implement). Extracted it into
+  `frontend/src/components/AppNav.jsx` (takes an `active` key, highlights the matching sidebar/tab
+  item), byte-for-byte the same markup/icons as before (including a pre-existing sidebar-vs-tab-bar
+  icon inconsistency on "Explore" — kept as-is, not "fixed", per rule 13/"don't invent"). Refactored
+  `HomePage.jsx` to render `<AppNav active="home" />` instead of its inline copy — no visual change,
+  confirmed by build passing and by not touching any `home__*` CSS.
+- **`ExplorePage.jsx`** (§3 Phase 1, guest-accessible): public gallery only (`is_public=true`),
+  text search over title+story (client-side filter, matches the existing "ponytail: client-side
+  filtering" pattern from Home), craft-type chips (reused `home__chip`), list view (reused
+  `home__recent-row`). Semantic search/voice/autocomplete/sort-by-popularity are phase 2 (§9) — not
+  built. **Route fix:** `/explore` was wrapped in `ProtectedRoute` in `App.jsx` — contradicts §3
+  Phase 1 ("guest or logged in") and rule 8 (guests browse/search, only create/generate/download/
+  publish are gated) — un-wrapped it.
+- **`LibraryPage.jsx`** (§3 Phase 5, logged in only — already correctly `ProtectedRoute`-wrapped):
+  tabs All/Processing/Completed/Failed/Published. Fetches the owner's own crafts
+  (`owner_id = auth.uid()`, not RLS's public-or-own default) + a batched `jobs` query for those
+  craft ids, reduced to the latest job per craft client-side (jobs have no "is this the current
+  one" flag — took the most-recently-created). Tapping a card routes to `/processing/{job_id}` if
+  still queued/processing, else `/craft/{id}`. Status badges use only existing palette tokens
+  (terracotta/error/cream) — no new colors invented. Pull-to-refresh/infinite-scroll/long-press
+  menu are phase 2 (§9) — not built.
+- **`AccountPage.jsx`** (§3 Phase 6, logged in only): profile view + edit (full_name/institution/
+  department via `profiles` table update — email/role intentionally not user-editable), change
+  password (`supabase.auth.updateUser({password})`, no old-password reauth needed since there's
+  already an active session), sign out. Avatar upload, active sessions list, 2FA, notification
+  prefs, and delete-account are explicitly NOT built: phase 2 per §9, and delete-account
+  specifically would need the Supabase admin API (service-role key) which must never ship to a
+  frontend bundle — flagging the gap rather than faking it or unsafely working around it.
+- **Share button (`CraftPage.jsx`):** `navigator.share()` (native share sheet) when available,
+  else clipboard copy of `window.location.href` with a 2s "Link copied!" label swap — no QR/social-
+  specific rendering (phase 2 per §9, "share (QR/link/social)" is core but QR generation and
+  social-card rendering are listed as separate phase-2 items in §12's gap analysis).
+- **Verified:** `npm run build` passes. Live against Supabase (new query patterns, not covered by
+  earlier verification passes): `profiles` UPDATE under RLS (own row, full_name+institution)
+  succeeds; Library's owner-scoped crafts query + batched jobs-by-craft-id query both return
+  correct data for a 2-craft/2-job scenario (one processing, one completed+public); Explore's
+  `is_public=true` filter correctly excludes the private craft from a guest's (anon key) view. All
+  test data cleaned up after.
+- **In progress:** — (awaiting next command)
+- **Next:** Commit if asked; otherwise next screen/design/command (rule 12).

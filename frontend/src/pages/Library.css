@@ -1,0 +1,26 @@
+.library__badge {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.library__badge--processing {
+  background: var(--bg-cream);
+  color: var(--terracotta-900);
+}
+
+.library__badge--completed,
+.library__badge--published {
+  background: var(--terracotta-900);
+  color: #fff;
+}
+
+.library__badge--failed {
+  background: var(--error);
+  color: var(--on-error);
+}
