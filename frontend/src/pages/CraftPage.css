@@ -40,6 +40,19 @@
   white-space: nowrap;
 }
 
+.craft__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--terracotta-900);
+  cursor: pointer;
+}
+
 .craft__content {
   display: flex;
   flex-direction: column;
@@ -157,13 +170,6 @@
   background: transparent;
   border-color: var(--outline-cream);
   color: var(--terracotta-900);
-}
-
-.craft__btn--published {
-  background: var(--surface-container-high);
-  border-color: var(--outline-cream);
-  color: var(--text-muted);
-  cursor: default;
 }
 
 .craft__publish-error {

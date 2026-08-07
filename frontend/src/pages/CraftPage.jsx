@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import './CraftPage.css'
 
@@ -10,6 +11,7 @@ import './CraftPage.css'
 export default function CraftPage() {
   const { craftId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [craft, setCraft] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -116,6 +118,8 @@ export default function CraftPage() {
     )
   }
 
+  const isOwner = user && craft.owner_id === user.id
+
   const metaRows = [
     ['Craft type', craft.craft_type],
     ['Material', craft.material],
@@ -149,6 +153,19 @@ export default function CraftPage() {
           </svg>
         </button>
         <h1 className="craft__title">{craft.title}</h1>
+        {isOwner && (
+          <button
+            type="button"
+            className="craft__edit"
+            aria-label="Edit details"
+            onClick={() => navigate(`/craft/${craftId}/metadata`)}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+          </button>
+        )}
       </header>
 
       <div className="craft__content">
@@ -179,6 +196,9 @@ export default function CraftPage() {
           </dl>
 
           <div className="craft__actions">
+            <button type="button" className="craft__btn craft__btn--ghost" onClick={handleShare}>
+              {shareCopied ? 'Link copied!' : 'Share'}
+            </button>
             {craft.model_url && (
               <a
                 className="craft__btn craft__btn--primary"
@@ -188,15 +208,8 @@ export default function CraftPage() {
                 Download
               </a>
             )}
-            <button type="button" className="craft__btn craft__btn--ghost" onClick={handleShare}>
-              {shareCopied ? 'Link copied!' : 'Share'}
-            </button>
             {publishError && <p className="craft__publish-error">{publishError}</p>}
-            {craft.is_public ? (
-              <button type="button" className="craft__btn craft__btn--published" disabled>
-                Published
-              </button>
-            ) : (
+            {!craft.is_public && (
               <button
                 type="button"
                 className="craft__btn craft__btn--ghost"

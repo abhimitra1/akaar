@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import './Create.css'
 import './CraftPage.css'
@@ -10,13 +11,17 @@ const CRAFT_TYPES = ['Pottery', 'Bamboo', 'Textiles', 'Wood', 'Metal', 'Terracot
 
 // Create flow, step 3+4 of 4 (see AGENTS.md §3 Phase 2): the 3D model already exists
 // (Processing finished) — add metadata, then Store/Save persists it to the craft record.
+// Doubles as the edit-details screen (linked from CraftPage/LibraryPage for the creator):
+// the update-in-place logic is identical either way, only the heading text differs.
 export default function MetadataPage() {
   const { craftId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [modelUrl, setModelUrl] = useState(null)
+  const [isEdit, setIsEdit] = useState(false)
   const [form, setForm] = useState({
     title: '',
     craft_type: '',
@@ -32,6 +37,7 @@ export default function MetadataPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!user) return
     let cancelled = false
     const load = async () => {
       const { data, error: dbError } = await supabase
@@ -42,7 +48,13 @@ export default function MetadataPage() {
       if (cancelled) return
       if (dbError) {
         setLoadError('Craft not found')
+      } else if (data.owner_id !== user.id) {
+        // RLS would reject the update anyway — bounce back to the read-only view
+        // rather than showing an editable form the visitor can't actually save.
+        navigate(`/craft/${craftId}`, { replace: true })
+        return
       } else {
+        setIsEdit(Boolean(data.title))
         if (data.model_key) {
           const { data: pub } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(data.model_key)
           setModelUrl(pub.publicUrl)
@@ -66,7 +78,7 @@ export default function MetadataPage() {
     return () => {
       cancelled = true
     }
-  }, [craftId])
+  }, [craftId, user])
 
   const canSubmit = form.title.trim() !== '' && !submitting
 
@@ -106,7 +118,19 @@ export default function MetadataPage() {
     <div className="create">
       <div className="create__card">
         <header className="create__header">
-          <h1 className="create__title">Add Details</h1>
+          {isEdit && (
+            <button
+              type="button"
+              className="create__back"
+              aria-label="Back"
+              onClick={() => navigate(`/craft/${craftId}`)}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+          <h1 className="create__title">{isEdit ? 'Edit Details' : 'Add Details'}</h1>
         </header>
 
         {(error || loadError) && (
@@ -209,7 +233,7 @@ export default function MetadataPage() {
             </section>
 
             <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>
-              {submitting ? 'Saving…' : 'Store / Save'}
+              {submitting ? 'Saving…' : isEdit ? 'Save Changes' : 'Store / Save'}
             </button>
           </div>
         )}

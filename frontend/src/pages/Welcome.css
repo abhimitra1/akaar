@@ -50,6 +50,15 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
+.welcome__error {
+  margin: 12px var(--space-margin-horizontal) 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--error);
+  color: var(--on-error);
+  font-size: 14px;
+}
+
 /* Actions */
 .welcome__actions {
   display: flex;
@@ -86,6 +95,22 @@
 .btn--tertiary {
   background: var(--bg-cream);
   color: var(--text-muted);
+}
+
+.btn--google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  border-color: var(--outline-cream);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.btn--google:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* "or" visual divider */

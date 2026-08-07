@@ -3,6 +3,20 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import './Processing.css'
 
+// Progress bands written by reconstruction.js's simulated stage schedule — see the
+// comment there for why this isn't real per-stage signal from InstantMesh.
+const PROCESSING_STAGES = [
+  { min: 0, label: 'Understanding the craft…' },
+  { min: 30, label: 'Cleaning the image…' },
+  { min: 50, label: 'Imagining multiple views…' },
+  { min: 75, label: 'Creating the 3D model…' },
+  { min: 95, label: 'Finishing touches…' },
+]
+
+function stageLabel(progress) {
+  return PROCESSING_STAGES.reduce((label, s) => (progress >= s.min ? s.label : label), PROCESSING_STAGES[0].label)
+}
+
 // Real Processing screen: polls the jobs table every 2s, shows a progress
 // bar + status, and either routes to the view screen (completed) or offers retry (failed).
 export default function ProcessingPage() {
@@ -57,7 +71,7 @@ export default function ProcessingPage() {
     if (pollError) return 'Something went wrong while checking on your model.'
     if (done) return 'Done!'
     if (status === 'failed') return errorMessage || 'The reconstruction failed.'
-    if (status === 'processing') return 'AI is reconstructing your model...'
+    if (status === 'processing') return stageLabel(progress)
     return 'Waiting in queue...'
   }
 

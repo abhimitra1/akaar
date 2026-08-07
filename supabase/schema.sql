@@ -18,8 +18,16 @@ create table if not exists public.profiles (
   institution text,
   department text,
   email_verified boolean not null default true,
+  -- Exempts this user from check_daily_job_limit()'s 5/day cap (testers, staff).
+  -- Not exposed anywhere in app UI — set manually via SQL editor.
+  unlimited_creations boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- create table if not exists (above) won't add this column to an already-existing
+-- profiles table — needed the first time this migration runs after the column was added.
+alter table public.profiles
+  add column if not exists unlimited_creations boolean not null default false;
 
 alter table public.profiles enable row level security;
 
@@ -154,6 +162,40 @@ create policy jobs_update on public.jobs
   for update using (
     exists (select 1 from public.crafts c where c.id = craft_id and c.owner_id = auth.uid())
   );
+
+-- Daily creation credit: 5 reconstruction jobs per user per UTC calendar day. Enforced
+-- here (not just in frontend/instantmesh-proxy) so it holds regardless of entry point —
+-- each job consumes real GPU time on submission, whether or not it later succeeds.
+create or replace function public.check_daily_job_limit()
+returns trigger
+language plpgsql
+as $$
+declare
+  daily_limit constant integer := 5;
+  today_count integer;
+begin
+  if exists (select 1 from public.profiles p where p.id = auth.uid() and p.unlimited_creations) then
+    return new;
+  end if;
+
+  select count(*) into today_count
+  from public.jobs j
+  join public.crafts c on c.id = j.craft_id
+  where c.owner_id = auth.uid()
+    and j.created_at >= (date_trunc('day', now() at time zone 'utc') at time zone 'utc');
+
+  if today_count >= daily_limit then
+    raise exception 'Daily creation limit reached (% per day) — try again tomorrow.', daily_limit;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists jobs_daily_limit on public.jobs;
+create trigger jobs_daily_limit
+  before insert on public.jobs
+  for each row execute procedure public.check_daily_job_limit();
 
 -- ── storage bucket ("akaar"): public read, owner-scoped writes ─────────────
 insert into storage.buckets (id, name, public)

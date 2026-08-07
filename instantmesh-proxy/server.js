@@ -9,26 +9,38 @@
 //      real responses (server bug). This proxy sets them on every response instead.
 //   2. Auth — requires a valid Supabase access token (the same one issued when a
 //      user signs into the app) so anonymous internet traffic can't submit jobs.
+//      Supabase signs tokens with an asymmetric key (ES256), not a shared secret, so
+//      verification uses Supabase's public JWKS endpoint (keyed by the token's `kid`)
+//      rather than a secret this proxy would have to hold and protect.
 //   3. Rate limiting — caps job submissions per signed-in user, since each one
 //      consumes real GPU time.
 require('dotenv').config()
 const express = require('express')
 const jwt = require('jsonwebtoken')
+const jwksClient = require('jwks-rsa')
 const { createProxyMiddleware } = require('http-proxy-middleware')
 
 const PORT = process.env.PORT || 8787
 const TARGET = process.env.INSTANTMESH_TARGET || 'http://127.0.0.1:43839'
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)
-const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET
+const SUPABASE_URL = process.env.SUPABASE_URL
 const RATE_LIMIT_PER_HOUR = Number(process.env.RATE_LIMIT_PER_HOUR) || 20
 
-if (!SUPABASE_JWT_SECRET) {
-  console.error('SUPABASE_JWT_SECRET is required (Supabase dashboard > Project Settings > API > JWT Settings).')
+if (!SUPABASE_URL) {
+  console.error('SUPABASE_URL is required (same value as the frontend\'s VITE_SUPABASE_URL).')
   process.exit(1)
 }
 if (ALLOWED_ORIGINS.length === 0) {
   console.error('ALLOWED_ORIGINS is required (comma-separated list of frontend origins).')
   process.exit(1)
+}
+
+const jwks = jwksClient({ jwksUri: `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`, cache: true })
+function getSigningKey(header, callback) {
+  jwks.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err)
+    callback(null, key.getPublicKey())
+  })
 }
 
 const app = express()
@@ -50,13 +62,14 @@ app.use((req, res, next) => {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
   if (!token) return res.status(401).json({ error: 'Missing Authorization bearer token' })
 
-  try {
-    const decoded = jwt.verify(token, SUPABASE_JWT_SECRET, { algorithms: ['HS256'] })
+  jwt.verify(token, getSigningKey, { algorithms: ['ES256', 'RS256'] }, (err, decoded) => {
+    if (err) {
+      console.error('JWT verify failed:', err.name, '-', err.message)
+      return res.status(401).json({ error: 'Invalid or expired session' })
+    }
     req.userId = decoded.sub
     next()
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid or expired session' })
-  }
+  })
 })
 
 // Per-user submission cap — resets on an hourly sliding window, in-memory only
@@ -79,7 +92,14 @@ app.use('/api/generate', (req, res, next) => {
   next()
 })
 
-app.use('/api', createProxyMiddleware({ target: TARGET, changeOrigin: true }))
+// http-proxy-middleware restores req.url from req.originalUrl internally before
+// proxying, so the full '/api/...' path already reaches InstantMesh as-is — no
+// pathRewrite needed despite this being mounted under app.use('/api', ...).
+app.use('/api', createProxyMiddleware({
+  target: TARGET,
+  changeOrigin: true,
+  onProxyReq: (proxyReq) => console.log('Forwarding to:', proxyReq.path),
+}))
 
 app.listen(PORT, () => {
   console.log(`InstantMesh proxy listening on :${PORT} -> ${TARGET}`)

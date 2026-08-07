@@ -1,9 +1,20 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { runReconstruction } from '../reconstruction.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import './Create.css'
+
+// Matches supabase/schema.sql's check_daily_job_limit() trigger — that's the source of
+// truth (holds regardless of entry point); this is only for showing the count and
+// avoiding a wasted photo upload when it's already known to be blocked.
+const DAILY_LIMIT = 5
+
+function startOfUtcDayISO() {
+  const d = new Date()
+  d.setUTCHours(0, 0, 0, 0)
+  return d.toISOString()
+}
 
 // Create flow, step 1+2 of 4 (see AGENTS.md §3 Phase 2): upload a single photo, then
 // generate the 3D model. Metadata is added afterward, on the Processing → Metadata step
@@ -16,8 +27,24 @@ export default function CreatePage() {
   const [photo, setPhoto] = useState(null) // { file, previewUrl }
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [usedToday, setUsedToday] = useState(null) // null while loading
 
-  const canSubmit = photo !== null && !submitting
+  useEffect(() => {
+    let cancelled = false
+    supabase
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', startOfUtcDayISO())
+      .then(({ count }) => {
+        if (!cancelled) setUsedToday(count ?? 0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const remaining = usedToday === null ? null : Math.max(0, DAILY_LIMIT - usedToday)
+  const canSubmit = photo !== null && !submitting && remaining !== null && remaining > 0
 
   const handleFile = (e) => {
     const file = (e.target.files || [])[0]
@@ -98,11 +125,22 @@ export default function CreatePage() {
             </svg>
           </button>
           <h1 className="create__title">Create Digital Twin</h1>
+          {remaining !== null && (
+            <span className="create__credits">
+              {remaining} of {DAILY_LIMIT} creations left today
+            </span>
+          )}
         </header>
 
         {error && (
           <div className="create__error" role="alert">
             {error}
+          </div>
+        )}
+
+        {remaining === 0 && (
+          <div className="create__notice" role="status">
+            You've used all {DAILY_LIMIT} creations for today. Come back tomorrow for more.
           </div>
         )}
 

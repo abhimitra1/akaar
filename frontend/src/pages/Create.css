@@ -67,6 +67,24 @@
   font-size: 14px;
 }
 
+.create__credits {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  margin-left: auto;
+}
+
+.create__notice {
+  margin: 12px var(--space-margin-horizontal) 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-container-low);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
 .create__content {
   display: flex;
   flex-direction: column;

@@ -11,7 +11,7 @@
 // raw port. See AGENTS.md §5a.
 import { supabase } from './supabaseClient.js'
 
-const BASE_URL = import.meta.env.DEV ? '/instantmesh-api' : import.meta.env.VITE_INSTANTMESH_URL
+const BASE_URL = (import.meta.env.DEV ? '/instantmesh-api' : import.meta.env.VITE_INSTANTMESH_URL).replace(/\/+$/, '')
 
 async function authHeaders() {
   if (import.meta.env.DEV) return {}

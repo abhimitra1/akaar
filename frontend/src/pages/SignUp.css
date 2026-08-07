@@ -77,6 +77,44 @@
   padding: var(--space-section) var(--space-margin-horizontal);
 }
 
+.signup__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--outline-cream);
+  font-size: 13px;
+}
+
+.signup__or::before,
+.signup__or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--outline-cream);
+}
+
+.signup__google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.signup__google:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .field {
   display: flex;
   flex-direction: column;

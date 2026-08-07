@@ -12,7 +12,7 @@ University's Waste to Wealth Lab. It preserves traditional craftsmanship by turn
 craft objects into **Digital Twins** (3D models + rich metadata), lets students/artisans
 redesign them with AI, and feeds the improved design back into a better physical object.
 
-Tagline: *"Every Craft Has a Digital Twin."* Starts with pottery, scales to bamboo, textiles,
+Tagline: *"Craft Intelligence Platform."* Starts with pottery, scales to bamboo, textiles,
 wood, metal, terracotta, recycled products.
 
 **Closed loop:**
@@ -180,8 +180,9 @@ Story · Keywords · Est. Build Time · Commercial Status.
   its own). A small standalone Node proxy (`instantmesh-proxy/server.js`) runs alongside it on the
   same box and is the only thing made public, via a Cloudflare Tunnel. It (1) fixes the CORS bug
   by setting proper headers on every response, (2) requires a valid Supabase access token (the
-  signed-in user's JWT, verified against `SUPABASE_JWT_SECRET`) before forwarding to InstantMesh,
-  rejecting anonymous requests, and (3) rate-limits job submissions per user (`RATE_LIMIT_PER_HOUR`,
+  signed-in user's JWT, verified against Supabase's public JWKS — this project signs tokens with
+  an asymmetric key (ES256), not a shared secret) before forwarding to InstantMesh, rejecting
+  anonymous requests, and (3) rate-limits job submissions per user (`RATE_LIMIT_PER_HOUR`,
   default 20/hr) since each one consumes real GPU time. `frontend/src/instantMesh.js` sends the
   caller's Supabase access token as `Authorization: Bearer <token>` in production (skipped in dev,
   where the Vite proxy talks to InstantMesh directly on a trusted box). Deployed frontend's
