@@ -382,6 +382,9 @@ akaar/
     README.md
   frontend/
     package.json, vite.config.js, index.html
+    vercel.json           # SPA fallback rewrite (all paths -> index.html) — without this,
+                           # a direct/deep URL (e.g. /craft/70) 404s at Vercel's static file
+                           # server before React Router ever loads (added 2026-08-08)
     .env                  # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_GPU_PROXY_URL (gitignored)
     src/
       supabaseClient.js   # supabase-js client (anon key)
@@ -1669,3 +1672,31 @@ project — everything before was build-checks + direct API calls).
 - **Next:** User sets the Vercel env var and redeploys; live-verify the production site loads
   and a real AI submission (InstantMesh or Fooocus) succeeds end to end through the public
   tunnel, not just the auth/CORS checks done here.
+
+### 2026-08-08 — Step: Fix direct/deep-URL 404s on Vercel (SPA routing)
+- **Command (screenshot):** navigating straight to `akaar-six.vercel.app/craft/70` (not via
+  in-app navigation — a fresh tab/reload/shared link) returned Vercel's own platform
+  `404: NOT_FOUND`, not the app's React-rendered "Craft not found" state.
+- **Root cause:** this is a client-side-routed SPA (React Router) with no `vercel.json` in the
+  repo at all (confirmed via search, not assumed). Without a rewrite rule, Vercel's static file
+  server looks for a literal file/route at `/craft/70`, finds none (the build only produces one
+  `index.html` + hashed assets), and 404s before React (and therefore React Router) ever loads.
+  In-app navigation never hit this, since that's client-side routing within an already-loaded
+  page — only direct/deep URLs and hard refreshes do, which is exactly what the screenshot was.
+- **Done:** `frontend/vercel.json` added with the standard SPA catch-all rewrite
+  (`"/(.*)" -> "/index.html"`) — Vercel serves an actual matching static asset first when one
+  exists (JS/CSS/images), and only falls back to `index.html` for everything else, so this
+  doesn't break normal asset loading.
+- **Uncertainty flagged directly (no Vercel dashboard access to confirm):** this file needs to
+  live wherever Vercel's project "Root Directory" setting actually points. Placed in
+  `frontend/` on the strong assumption that's the configured root (no root-level build config
+  exists anywhere in the repo to suggest otherwise, and deploys have clearly been building the
+  Vite app correctly all along) — but if this doesn't take effect after the next deploy, check
+  that setting first before assuming the fix itself is wrong.
+- **Verified:** JSON validity only (`node -e "JSON.parse(...)"`) — the actual routing behavior
+  needs a real Vercel deployment to confirm, which happens automatically on next push/redeploy
+  (no manual step needed beyond that, unlike the two prior steps' Vercel env var asks).
+- **In progress:** — (awaiting next command)
+- **Next:** After next deploy, live-verify a direct URL to `/craft/:id`, `/explore`, etc. loads
+  the app instead of 404ing. Commit if asked (this file should ship with the next commit either
+  way, given it's the actual fix).
