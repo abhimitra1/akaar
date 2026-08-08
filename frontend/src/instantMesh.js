@@ -9,6 +9,7 @@
 // Cloudflare Tunnel in front of it in prod), never at InstantMesh's raw port directly.
 // See AGENTS.md §5a.
 import { supabase } from './supabaseClient.js'
+import { aiFetch } from './aiFetch.js'
 
 // Resolved lazily (inside requireBaseUrl, not here at module scope) so a missing env var
 // throws only when an AI feature is actually used, not on import — Vite bakes VITE_* vars
@@ -41,7 +42,7 @@ export async function submitJob(file, { removeBackground = true, seed = 42, samp
   form.append('seed', String(seed))
   form.append('sample_steps', String(sampleSteps))
 
-  const res = await fetch(`${baseUrl}/api/generate`, { method: 'POST', headers: await authHeaders(), body: form })
+  const res = await aiFetch(`${baseUrl}/api/generate`, { method: 'POST', headers: await authHeaders(), body: form })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     const err = new Error(data.detail || data.error || 'Failed to submit reconstruction job')
@@ -56,14 +57,14 @@ export async function submitJob(file, { removeBackground = true, seed = 42, samp
 
 export async function getJobStatus(jobId) {
   const baseUrl = requireBaseUrl()
-  const res = await fetch(`${baseUrl}/api/jobs/${jobId}`, { headers: await authHeaders() })
+  const res = await aiFetch(`${baseUrl}/api/jobs/${jobId}`, { headers: await authHeaders() })
   if (!res.ok) throw new Error('Failed to check reconstruction status')
   return res.json()
 }
 
 export async function downloadResult(jobId, fmt) {
   const baseUrl = requireBaseUrl()
-  const res = await fetch(`${baseUrl}/api/jobs/${jobId}/download/${fmt}`, { headers: await authHeaders() })
+  const res = await aiFetch(`${baseUrl}/api/jobs/${jobId}/download/${fmt}`, { headers: await authHeaders() })
   if (!res.ok) throw new Error(`Failed to download ${fmt} result`)
   return res.blob()
 }

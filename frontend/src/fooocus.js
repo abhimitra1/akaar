@@ -10,6 +10,7 @@
 // serializes submissions to either so they never run at once. So `VITE_GPU_PROXY_URL`
 // always points at that proxy, never at Fooocus-API's raw port directly. See AGENTS.md §5b.
 import { supabase } from './supabaseClient.js'
+import { aiFetch } from './aiFetch.js'
 
 // Resolved lazily (inside requireBaseUrl, not here at module scope) so a missing env var
 // throws only when co-creation is actually used, not on import — see instantMesh.js's
@@ -47,7 +48,7 @@ function fileToBase64(file) {
 export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.6, cnWeight = 0.6, imageNumber = 2 } = {}) {
   const baseUrl = requireBaseUrl()
   const cn_img = await fileToBase64(imageFile)
-  const res = await fetch(`${baseUrl}/fooocus/v2/generation/image-prompt`, {
+  const res = await aiFetch(`${baseUrl}/fooocus/v2/generation/image-prompt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify({
@@ -79,7 +80,7 @@ export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.6, cnWei
 // consistent shape (matches what fileToBase64 above produces for the *input* side too).
 export async function getJobStatus(jobId) {
   const baseUrl = requireBaseUrl()
-  const res = await fetch(`${baseUrl}/fooocus/v1/generation/query-job?job_id=${jobId}`, {
+  const res = await aiFetch(`${baseUrl}/fooocus/v1/generation/query-job?job_id=${jobId}`, {
     headers: await authHeaders(),
   })
   const data = await res.json().catch(() => ({}))
