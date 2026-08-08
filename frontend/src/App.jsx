@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import CompleteProfilePage from './pages/CompleteProfilePage.jsx'
 import CraftPage from './pages/CraftPage.jsx'
@@ -10,6 +11,7 @@ import ExplorePage from './pages/ExplorePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
 import MetadataPage from './pages/MetadataPage.jsx'
+import PolicyPage from './pages/PolicyPage.jsx'
 import ProcessingPage from './pages/ProcessingPage.jsx'
 import SignInPage from './pages/SignInPage.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
@@ -24,6 +26,16 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/" element={<HomePage />} />
+          {/* Public — readable before signing up (linked from SignUpPage/AcceptTermsPage). */}
+          <Route path="/policy" element={<PolicyPage />} />
+          <Route
+            path="/accept-terms"
+            element={
+              <ProtectedRoute>
+                <AcceptTermsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/complete-profile"
             element={

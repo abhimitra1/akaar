@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import PasswordField from '../components/PasswordField.jsx'
 import './SignUp.css'
 
 // Matches models.py User.role enum (excluding "visitor" = guest).
@@ -161,6 +162,13 @@ export default function SignUpPage() {
 
         <footer className="signup__footer">
           <Link to="/signin">Already have an account? Sign in</Link>
+          <p className="signup__terms-note">
+            After signing up you'll be asked to accept our{' '}
+            <Link to="/policy" target="_blank" rel="noopener noreferrer">
+              Privacy Policy &amp; AI Usage Policy
+            </Link>
+            .
+          </p>
         </footer>
       </div>
     </div>

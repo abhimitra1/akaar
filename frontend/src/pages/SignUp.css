@@ -177,6 +177,12 @@
   text-decoration: none;
 }
 
+.signup__terms-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 /* Wide screens (tablet/desktop): mirrors the Welcome breakpoint exactly — a centered
    fixed-width card on the surface-container-high tone. */
 @media (min-width: 768px) {

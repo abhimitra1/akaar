@@ -1,0 +1,6 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.9
+pillow==10.4.0
+transformers==4.44.2
+detoxify==0.5.2

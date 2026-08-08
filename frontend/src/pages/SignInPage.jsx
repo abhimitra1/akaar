@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import PasswordField from '../components/PasswordField.jsx'
 import './SignIn.css'
 
 export default function SignInPage() {
@@ -84,17 +85,14 @@ export default function SignInPage() {
             />
           </label>
 
-          <label className="field">
-            <span className="field__label">Password</span>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              autoComplete="current-password"
-            />
-          </label>
+          <PasswordField
+            label="Password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            autoComplete="current-password"
+          />
 
           <div className="signin__row">
             <label className="signin__checkbox">

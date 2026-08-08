@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AppNav from '../components/AppNav.jsx'
+import PasswordField from '../components/PasswordField.jsx'
 import '../pages/Home.css'
 import '../pages/Create.css'
 import './Account.css'
@@ -176,24 +177,18 @@ export default function AccountPage() {
           {passwordError && <div className="create__error" role="alert">{passwordError}</div>}
           {passwordSaved && <p className="account__success">Password changed.</p>}
 
-          <label className="field">
-            <span className="field__label">New password</span>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-            />
-          </label>
-          <label className="field">
-            <span className="field__label">Confirm new password</span>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-            />
-          </label>
+          <PasswordField
+            label="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+          <PasswordField
+            label="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
+          />
 
           <button
             type="button"
@@ -204,6 +199,10 @@ export default function AccountPage() {
             {changingPassword ? 'Changing…' : 'Change password'}
           </button>
         </div>
+
+        <Link to="/policy" className="craft__btn craft__btn--ghost account__btn">
+          Privacy &amp; AI Policy
+        </Link>
 
         <button type="button" className="craft__btn craft__btn--ghost account__btn account__signout" onClick={handleSignOut}>
           Sign out

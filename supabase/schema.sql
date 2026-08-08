@@ -21,13 +21,21 @@ create table if not exists public.profiles (
   -- Exempts this user from check_daily_job_limit()'s 5/day cap (testers, staff).
   -- Not exposed anywhere in app UI — set manually via SQL editor.
   unlimited_creations boolean not null default false,
+  -- NULL = not yet accepted. Set once by frontend/src/pages/AcceptTermsPage.jsx; every other
+  -- route is gated behind this via ProfileGate.jsx until it's set (same pattern already used
+  -- for forcing Google OAuth first-timers through /complete-profile). NULL on every existing
+  -- row after this migration runs, by design — retroactively requires acceptance from
+  -- everyone, same as a real ToS update would.
+  terms_accepted_at timestamptz,
   created_at timestamptz not null default now()
 );
 
--- create table if not exists (above) won't add this column to an already-existing
--- profiles table — needed the first time this migration runs after the column was added.
+-- create table if not exists (above) won't add these columns to an already-existing
+-- profiles table — needed the first time this migration runs after each column was added.
 alter table public.profiles
   add column if not exists unlimited_creations boolean not null default false;
+alter table public.profiles
+  add column if not exists terms_accepted_at timestamptz;
 
 alter table public.profiles enable row level security;
 
@@ -95,12 +103,23 @@ create table if not exists public.crafts (
   keywords jsonb not null default '[]'::jsonb,
   version_history jsonb not null default '[]'::jsonb,
   related_designs jsonb not null default '[]'::jsonb,
+  -- Set when this craft's photo is an AI co-creation started from an existing design (picked
+  -- via CoCreatePanel's library search, frontend/src/pages/CreatePage.jsx). NULL for a plain
+  -- upload. `on delete set null`, not cascade: deleting the parent design must not take its
+  -- derivatives down with it — see AGENTS.md §5b.
+  parent_design_id bigint references public.crafts (id) on delete set null,
   est_build_time text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+-- create table if not exists (above) won't add this column to an already-existing crafts
+-- table — needed the first time this migration runs after the column was added.
+alter table public.crafts
+  add column if not exists parent_design_id bigint references public.crafts (id) on delete set null;
+
 create index if not exists crafts_owner_id_idx on public.crafts (owner_id);
+create index if not exists crafts_parent_design_id_idx on public.crafts (parent_design_id);
 
 alter table public.crafts enable row level security;
 
@@ -115,6 +134,14 @@ create policy crafts_insert on public.crafts
 drop policy if exists crafts_update on public.crafts;
 create policy crafts_update on public.crafts
   for update using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+-- Owner-only delete, for My Library's delete option (LibraryPage.jsx). `jobs` rows for the
+-- craft cascade via jobs.craft_id's `on delete cascade` FK — no separate jobs policy needed.
+-- Storage objects (photos/model.glb) do NOT cascade (separate system); LibraryPage removes
+-- those itself before deleting the row, via akaar_delete_own below.
+drop policy if exists crafts_delete on public.crafts;
+create policy crafts_delete on public.crafts
+  for delete using (owner_id = auth.uid());
 
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
@@ -219,4 +246,11 @@ create policy akaar_update_own on storage.objects
 drop policy if exists akaar_select_own on storage.objects;
 create policy akaar_select_own on storage.objects
   for select to authenticated
+  using (bucket_id = 'akaar' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Owner-only delete, for My Library's delete option (LibraryPage.jsx removes a craft's
+-- photos + model.glb before deleting the crafts row itself).
+drop policy if exists akaar_delete_own on storage.objects;
+create policy akaar_delete_own on storage.objects
+  for delete to authenticated
   using (bucket_id = 'akaar' and (storage.foldername(name))[1] = auth.uid()::text);

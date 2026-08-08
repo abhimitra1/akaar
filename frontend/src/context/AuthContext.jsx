@@ -13,6 +13,13 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  // True whenever a profile fetch is in flight — separate from `loading` (initial session
+  // check only) because onAuthStateChange fires again later (token refresh, sign-in) without
+  // going through that initial flow. While this is true, `user` below may be the {id, email}
+  // fallback rather than the real profile — ProfileGate.jsx must not decide "needs terms" /
+  // "needs profile" off that partial shape, or a user who already accepted terms briefly
+  // reads as `terms_accepted_at` missing and gets bounced to /accept-terms for no reason.
+  const [profileLoading, setProfileLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -20,14 +27,27 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (cancelled) return
       setSession(data.session)
-      if (data.session) setProfile(await fetchProfile(data.session.user.id))
+      if (data.session) {
+        setProfile(await fetchProfile(data.session.user.id))
+      }
+      if (cancelled) return
       setLoading(false)
+      setProfileLoading(false)
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (cancelled) return
       setSession(newSession)
-      setProfile(newSession ? await fetchProfile(newSession.user.id) : null)
+      if (!newSession) {
+        setProfile(null)
+        setProfileLoading(false)
+        return
+      }
+      setProfileLoading(true)
+      const p = await fetchProfile(newSession.user.id)
+      if (cancelled) return
+      setProfile(p)
+      setProfileLoading(false)
     })
 
     return () => {
@@ -93,6 +113,7 @@ export function AuthProvider({ children }) {
         accessToken: session?.access_token ?? null,
         isAuthenticated,
         loading,
+        profileLoading,
         login,
         loginWithGoogle,
         logout,

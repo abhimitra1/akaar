@@ -37,3 +37,21 @@
   color: var(--text-muted);
   cursor: pointer;
 }
+
+.library__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin-left: 4px;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  color: var(--error);
+  cursor: pointer;
+}
+
+.library__delete:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

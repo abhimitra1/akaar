@@ -335,6 +335,250 @@
   cursor: default;
 }
 
+/* Secondary pill button (Co-Create: "Try Again", "No, just download"). */
+.create__btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--terracotta-900);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.create__btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.create__cocreate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create__cocreate-generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.create__cocreate-spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid var(--surface-container-high);
+  border-top-color: var(--terracotta-900);
+  border-radius: 50%;
+  animation: create-cocreate-spin 0.9s linear infinite;
+}
+
+@keyframes create-cocreate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.create__cocreate-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.create__cocreate-confirm p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.create__thumb--large {
+  width: 100%;
+  height: 280px;
+}
+
+/* Full photo/generated-image preview (unlike the small multi-thumb strip, which crops to
+   a square on purpose) — show the whole image, letterboxed on the container's background
+   rather than cropped, since source photos can be any aspect ratio (tall jugs, wide bowls). */
+.create__thumb--large img {
+  object-fit: contain;
+}
+
+.create__cocreate-hint {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Two side-by-side design variations to choose between (Co-Create review step). */
+.create__cocreate-variations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.create__cocreate-variation {
+  position: relative;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.create__cocreate-variation img {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 11px;
+}
+
+.create__cocreate-variation--selected {
+  border-color: var(--terracotta-900);
+}
+
+.create__cocreate-check {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--terracotta-900);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.create__library-selected-note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Co-create "Choose from Library" search + results grid. */
+.create__library-search {
+  position: relative;
+}
+
+.create__library-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.create__library-search input {
+  width: 100%;
+  padding: 12px 14px 12px 40px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.create__library-empty {
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.create__library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.create__library-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.create__library-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--outline-cream);
+}
+
+.create__library-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create__library-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* AcceptTermsPage. */
+.create__terms-summary {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.create__terms-summary a {
+  color: var(--terracotta-900);
+  font-weight: 600;
+}
+
+.create__terms-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.create__terms-checkbox input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--terracotta-900);
+}
+
 @media (min-width: 768px) {
   .create {
     min-height: 100vh;

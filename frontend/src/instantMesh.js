@@ -1,20 +1,18 @@
 // Client for the InstantMesh reconstruction API (separate GPU workstation, reachable
 // only over ZeroTier). Async job model: submit -> poll -> download.
 //
-// The InstantMesh server itself only sends CORS headers on its OPTIONS preflight, not
-// on actual GET/POST responses (server-side bug, out of this repo's scope), and it has
-// no auth of its own. In dev, route through the Vite proxy (vite.config.js), which
-// makes the real request from Node (no CORS, no auth needed on a trusted dev box). In
-// production, route through `instantmesh-proxy/` (runs on the GPU box, public via a
-// Cloudflare Tunnel) instead — it fixes CORS and requires the caller's Supabase login,
-// so `VITE_INSTANTMESH_URL` in production points at the tunnel URL, not InstantMesh's
-// raw port. See AGENTS.md §5a.
+// Routed through `instantmesh-proxy/` (runs on the GPU box) in both dev and prod — it
+// fixes InstantMesh's CORS bug (only sends CORS headers on its OPTIONS preflight, not
+// on real responses), requires the caller's Supabase login, and — since InstantMesh and
+// Fooocus (fooocus.js) share one GPU — serializes the two so they never run at once. So
+// `VITE_GPU_PROXY_URL` always points at that proxy (its own address in dev, the
+// Cloudflare Tunnel in front of it in prod), never at InstantMesh's raw port directly.
+// See AGENTS.md §5a.
 import { supabase } from './supabaseClient.js'
 
-const BASE_URL = (import.meta.env.DEV ? '/instantmesh-api' : import.meta.env.VITE_INSTANTMESH_URL).replace(/\/+$/, '')
+const BASE_URL = import.meta.env.VITE_GPU_PROXY_URL.replace(/\/+$/, '')
 
 async function authHeaders() {
-  if (import.meta.env.DEV) return {}
   const { data } = await supabase.auth.getSession()
   const token = data.session?.access_token
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -29,7 +27,14 @@ export async function submitJob(file, { removeBackground = true, seed = 42, samp
 
   const res = await fetch(`${BASE_URL}/api/generate`, { method: 'POST', headers: await authHeaders(), body: form })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.detail || data.error || 'Failed to submit reconstruction job')
+  if (!res.ok) {
+    const err = new Error(data.detail || data.error || 'Failed to submit reconstruction job')
+    // 422 is instantmesh-proxy's specific status for a content-moderation rejection (see
+    // AGENTS.md §5d) — reconstruction.js uses this to tell "flagged, don't offer retry with
+    // the same photo, clean it up" apart from ordinary failures (network/GPU/backend errors).
+    err.status = res.status
+    throw err
+  }
   return data.job_id
 }
 

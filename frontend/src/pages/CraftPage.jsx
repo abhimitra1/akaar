@@ -88,7 +88,22 @@ export default function CraftPage() {
           modelUrl = pub.publicUrl
         }
 
-        if (!cancelled) setCraft({ ...data, owner_name: ownerName, model_url: modelUrl })
+        // If this craft has no permission to see, RLS just returns no row here — the
+        // "Based on" link simply won't render, which is correct (no leaking that a private
+        // parent even exists).
+        let parentTitle = null
+        if (data.parent_design_id) {
+          const { data: parent } = await supabase
+            .from('crafts')
+            .select('title')
+            .eq('id', data.parent_design_id)
+            .single()
+          parentTitle = parent?.title ?? null
+        }
+
+        if (!cancelled) {
+          setCraft({ ...data, owner_name: ownerName, model_url: modelUrl, parent_title: parentTitle })
+        }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Something went wrong')
       } finally {
@@ -176,8 +191,22 @@ export default function CraftPage() {
             alt={craft.title}
             camera-controls
             auto-rotate
+            ar
+            ar-modes="webxr scene-viewer quick-look"
             style={{ width: '100%', height: '400px' }}
-          />
+          >
+            {/* model-viewer auto-hides this slotted button on devices/browsers that can't
+                do AR (no usdz for iOS Quick Look, no WebXR/Scene Viewer support, desktop) —
+                no manual capability check needed. */}
+            <button slot="ar-button" type="button" className="craft__ar-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z" />
+                <path d="M12 22V12" />
+                <path d="M20 6.5L12 12 4 6.5" />
+              </svg>
+              View in AR
+            </button>
+          </model-viewer>
         ) : (
           <div className="craft__no-model">No 3D model yet — it may still be processing.</div>
         )}
@@ -185,6 +214,18 @@ export default function CraftPage() {
         <div className="craft__card">
           <p className="craft__story">{craft.story}</p>
           <p className="craft__creator">By {craft.owner_name || `Creator #${craft.owner_id}`}</p>
+          {craft.parent_design_id != null && (
+            <p className="craft__related">
+              Based on:{' '}
+              <button
+                type="button"
+                className="craft__related-link"
+                onClick={() => navigate(`/craft/${craft.parent_design_id}`)}
+              >
+                {craft.parent_title || 'Untitled'}
+              </button>
+            </p>
+          )}
 
           <dl className="craft__meta">
             {metaRows.map(([label, value]) => (

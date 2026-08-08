@@ -67,6 +67,24 @@
   overflow: hidden;
 }
 
+/* Slotted into model-viewer's ar-button slot, which is already positioned bottom-right
+   as an overlay on the canvas — model-viewer shows/hides it based on AR availability. */
+.craft__ar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
 .craft__no-model {
   display: flex;
   align-items: center;
@@ -102,6 +120,24 @@
   margin: 0;
   color: var(--text-muted);
   font-size: 15px;
+}
+
+.craft__related {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.craft__related-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--terracotta-900);
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Metadata rows: footnote labels, subheadline values (Defence in Type). */

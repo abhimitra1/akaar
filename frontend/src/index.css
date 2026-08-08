@@ -49,3 +49,14 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Shared across any error banner that can show a content-moderation rejection (see
+   components/PolicyLink.jsx) — inherits color so it reads correctly whether it's on a
+   solid error background (white text) or plain surface (red text). */
+.policy-link {
+  display: block;
+  margin-top: 6px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}

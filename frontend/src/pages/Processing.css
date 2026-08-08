@@ -94,19 +94,36 @@
 }
 
 .processing__status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
   margin: 0;
   color: var(--text-primary);
   font-size: 17px;
   font-weight: 600;
-  min-height: 24px;
+  line-height: 1.4;
 }
 
-.processing__check {
+.processing__status--error {
+  color: var(--error);
+}
+
+/* Icon badge for terminal states (success/error) — replaces the spinner once there's
+   nothing left to wait on. */
+.processing__icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.processing__icon-badge--success {
+  background: var(--bg-cream);
   color: var(--terracotta-900);
+}
+
+.processing__icon-badge--error {
+  background: rgba(186, 26, 26, 0.1);
+  color: var(--error);
 }
 
 /* Progress bar: filled portion grows to progress%. */
@@ -129,13 +146,6 @@
   margin: 0;
   color: var(--text-muted);
   font-size: 13px;
-}
-
-.processing__error {
-  margin: 0;
-  color: var(--error);
-  font-size: 14px;
-  line-height: 1.4;
 }
 
 /* "Try again" pill (shown on failure) navigates back to /create. */
