@@ -92,7 +92,88 @@
   padding: 20px var(--space-margin-horizontal) 32px;
 }
 
-/* Segmented toggle: "Generate from Photos" / "Upload Existing Model". */
+/* Two big cards for choosing a creation method (Create Digital Twin wizard) — neither is
+   pre-selected, so the user must explicitly pick one before either form appears. */
+.create__method-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.create__method-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border: 1.5px solid var(--outline-cream);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.create__method-card:hover,
+.create__method-card:focus-visible {
+  border-color: var(--terracotta-900);
+  box-shadow: 0 4px 14px rgba(60, 30, 10, 0.12);
+}
+
+.create__method-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-container-low);
+  color: var(--terracotta-900);
+}
+
+.create__method-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.create__method-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.create__method-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Holds the chosen method's form plus the "Change method" link back to the card grid. */
+.create__method-active {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create__method-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--terracotta-900);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Segmented toggle used inside Co-Create (Upload Photo / Choose from Library source picker). */
 .create__tabs {
   display: flex;
   gap: 4px;

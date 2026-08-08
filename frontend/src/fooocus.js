@@ -82,8 +82,15 @@ export async function getJobStatus(jobId) {
   const res = await fetch(`${baseUrl}/fooocus/v1/generation/query-job?job_id=${jobId}`, {
     headers: await authHeaders(),
   })
-  if (!res.ok) throw new Error('Failed to check co-creation status')
-  const data = await res.json()
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const err = new Error(data.error || data.detail || 'Failed to check co-creation status')
+    // 422 = instantmesh-proxy rejected every generated result on output-side content
+    // moderation (see AGENTS.md §5d) — same status the submit-time rejection uses, so
+    // CoCreatePanel's existing policy-link handling (err.status === 422) covers this path too.
+    err.status = res.status
+    throw err
+  }
   if (data.job_result) {
     data.job_result = data.job_result.map((r) =>
       r.base64 ? { ...r, base64: r.base64.replace(/^data:image\/\w+;base64,/, '') } : r

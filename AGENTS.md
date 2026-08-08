@@ -1835,3 +1835,40 @@ project — everything before was build-checks + direct API calls).
 - **Next:** User re-runs `scripts/register-startup-tasks.ps1` (elevated) and confirms all 4
   "Registered" messages this time actually correspond to real tasks (`Get-ScheduledTask`).
   Commit if asked.
+
+### 2026-08-08 — Step: Restrict Co-Create with AI to craft/art output (close output-side gap)
+- **Command:** "Restrict this kind of creations" — with screenshots showing Co-Create with AI's
+  review step displaying two AI-generated portrait photos of a woman instead of a craft redesign.
+- **Root cause:** §5d's content moderation only ever screened the INPUT of a Co-Create submission
+  (source photo + prompt text, in `screenSubmission()` on the `POST
+  /fooocus/v2/generation/image-prompt` route). It never checked the OUTPUT — the actual generated
+  images returned by `GET /fooocus/v1/generation/query-job` flowed straight through the generic
+  `app.use('/fooocus', createProxyMiddleware(...))` passthrough, unmoderated. Fooocus's
+  "ImagePrompt" mode only loosely follows the source image for style/subject guidance, so a
+  source photo that legitimately is a craft (passes the input check) combined with an off-topic,
+  non-toxic prompt (passes Detoxify — nothing toxic about it) can still make Fooocus generate
+  something with no craft/art content at all.
+- **Done:** `instantmesh-proxy/server.js` — added a dedicated `GET
+  /fooocus/v1/generation/query-job` handler, registered ahead of the generic `/fooocus`
+  passthrough so it intercepts polling instead of streaming through it. Non-terminal job stages
+  (WAITING/RUNNING/ERROR) pass through unchanged; once a job reaches SUCCESS, each generated
+  result image is run through the same CLIP craft/art check the input already gets (reusing
+  `screenSubmission()`, image-only, no text). Per-image, not all-or-nothing: only variations that
+  fail are dropped, since one variation drifting off-topic doesn't mean the other did too. If
+  every variation fails, responds 422 with the same `rejectionMessage()` text the input-side
+  rejection uses. `frontend/src/fooocus.js`'s `getJobStatus()` updated to read `data.error` and
+  set `err.status = res.status` on a non-OK response (previously threw a generic message with no
+  status) — `CoCreatePanel.jsx`'s existing `err.status === 422` → show-policy-link handling now
+  covers this path with zero changes needed there.
+- **Scope note:** `instantmesh-proxy/` and `moderation-service/` run as standing services on the
+  GPU workstation (§5c/§5d), not part of the Vercel-deployed frontend — this code change needs a
+  manual restart of the `instantmesh-proxy Startup` task (or the process directly) on that box to
+  take effect. Not done by me this session — no access to that machine.
+- **Not verified live** (no GPU-box access this session): confirmed by code review only — the
+  new route's logic, the per-image fail-closed behavior on moderation-service errors (matches the
+  input-side check's existing fail-closed pattern), and the frontend error-shape change. Flagging
+  per rule 9/10 — needs a real Co-Create run against a redeployed proxy to fully confirm.
+- **In progress:** — (awaiting next command)
+- **Next:** User restarts `instantmesh-proxy` on the GPU box, then runs a real Co-Create
+  end-to-end (including one deliberately off-topic prompt like the one that produced the
+  portraits) to confirm the output is now filtered/rejected as expected.

@@ -329,6 +329,60 @@ app.post(
   }
 )
 
+// GET /fooocus/v1/generation/query-job: the submit route above only screens the INPUT
+// (prompt text + source photo) before a job is queued — but Fooocus's "ImagePrompt" mode
+// only loosely follows the source image for style/subject guidance, so an off-topic prompt
+// can still make it generate something with no craft/art content at all (e.g. a portrait)
+// even though the input passed. Registered ahead of the generic '/fooocus' passthrough
+// below so polling is intercepted here instead of streaming straight through: once a job
+// reaches SUCCESS, each generated image gets the same CLIP craft/art check the input
+// already gets, before the client ever sees it. Non-terminal stages (WAITING/RUNNING/ERROR)
+// pass through untouched — nothing to check yet.
+app.get('/fooocus/v1/generation/query-job', async (req, res) => {
+  try {
+    const upstreamRes = await fetch(
+      `${FOOOCUS_TARGET}/v1/generation/query-job?job_id=${encodeURIComponent(req.query.job_id || '')}`
+    )
+    const data = await upstreamRes.json().catch(() => null)
+    if (!upstreamRes.ok || !data) {
+      return res.status(upstreamRes.status).json(data || { error: 'Failed to check co-creation status' })
+    }
+
+    if (data.job_stage === 'SUCCESS' && Array.isArray(data.job_result)) {
+      const checked = await Promise.all(
+        data.job_result.map(async (r) => {
+          if (!r?.base64) return { result: r, ok: true }
+          try {
+            const screen = await screenSubmission({ imageDataUrl: r.base64 })
+            return { result: r, ok: !screen.rejected }
+          } catch (err) {
+            console.error('[moderation] output check failed:', err.message)
+            return { result: r, ok: false } // fail closed, same as the input-side check
+          }
+        })
+      )
+      const passed = checked.filter((c) => c.ok).map((c) => c.result)
+      // Only reject the whole job if every variation failed — a prompt that made one
+      // variation drift off-topic doesn't necessarily mean the other did too, and there's
+      // no reason to throw away a variation that did pass.
+      if (passed.length === 0) {
+        console.warn('[moderation] rejected: all Fooocus job results failed output-side craft/art check')
+        return res.status(422).json({ error: rejectionMessage() })
+      }
+      data.job_result = passed
+    }
+
+    res.status(200).json(data)
+  } catch (err) {
+    console.error('Failed to check Fooocus job status:', err.message)
+    res.status(502).json({ error: 'Failed to reach Fooocus-API' })
+  }
+})
+
+// Everything else under /fooocus (the submit route is handled above; this covers any other
+// Fooocus-API route the client might hit) passes straight through, unmoderated — job status
+// polling for non-terminal stages carries no result images yet, and nothing else here
+// returns generated content directly to the client the way query-job's SUCCESS stage does.
 app.use('/fooocus', createProxyMiddleware({
   target: FOOOCUS_TARGET,
   changeOrigin: true,

@@ -28,7 +28,8 @@ export default function CreatePage() {
   const location = useLocation()
   const fileInputRef = useRef(null)
 
-  const [mode, setMode] = useState('upload') // 'upload' | 'cocreate'
+  // null = neither method chosen yet — user must pick one before either form appears.
+  const [mode, setMode] = useState(null) // null | 'upload' | 'cocreate'
   const [photo, setPhoto] = useState(null) // { file, previewUrl }
   // Set only when `photo` came from CoCreatePanel picking an existing library design as its
   // starting point ({ id, title } of that design, from CoCreatePanel's onAccepted 3rd arg).
@@ -71,6 +72,7 @@ export default function CreatePage() {
     if (recovered) {
       setPhoto({ file: recovered.file, previewUrl: recovered.previewUrl })
       setParentDesign(recovered.parentDesign)
+      setMode('upload')
     }
     clearRecoveryPhoto(recoverCraftId)
     navigate(location.pathname, { replace: true, state: null })
@@ -223,76 +225,99 @@ export default function CreatePage() {
           </div>
         )}
 
-        <div className="create__tabs">
-          <button
-            type="button"
-            className={`create__tab ${mode === 'upload' ? 'create__tab--active' : ''}`}
-            onClick={() => guardLeaveCoCreate(() => setMode('upload'))}
-          >
-            Upload Photo
-          </button>
-          <button
-            type="button"
-            className={`create__tab ${mode === 'cocreate' ? 'create__tab--active' : ''}`}
-            onClick={() => setMode('cocreate')}
-          >
-            Co-Create with AI
-          </button>
-        </div>
-
         <div className="create__content">
-          {mode === 'cocreate' ? (
-            <CoCreatePanel onAccepted={handleCoCreateAccepted} onGeneratingChange={setCoCreateGenerating} />
+          {mode === null ? (
+            <div className="create__method-grid">
+              <button type="button" className="create__method-card" onClick={() => setMode('upload')}>
+                <span className="create__method-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </span>
+                <span className="create__method-title">Upload Photo</span>
+                <span className="create__method-desc">Choose one photo of your craft to turn into a 3D model</span>
+              </button>
+
+              <button type="button" className="create__method-card" onClick={() => setMode('cocreate')}>
+                <span className="create__method-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+                    <path d="M19 3l.6 1.7L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.3L19 3z" />
+                  </svg>
+                </span>
+                <span className="create__method-title">Co-Create with AI</span>
+                <span className="create__method-desc">Redesign a photo or an existing design with AI first</span>
+              </button>
+            </div>
           ) : (
-            <>
-              <section className="create__section">
-                <span className="create__section-label">Photo</span>
+            <div className="create__method-active">
+              <button
+                type="button"
+                className="create__method-change"
+                onClick={() => guardLeaveCoCreate(() => setMode(null))}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                Change method
+              </button>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={handleFile}
-                />
+              {mode === 'cocreate' ? (
+                <CoCreatePanel onAccepted={handleCoCreateAccepted} onGeneratingChange={setCoCreateGenerating} />
+              ) : (
+                <>
+                  <section className="create__section">
+                    <span className="create__section-label">Photo</span>
 
-                {photo ? (
-                  <div className="create__thumbs">
-                    <div className="create__thumb create__thumb--large">
-                      <img src={photo.previewUrl} alt="Selected craft photo" />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={handleFile}
+                    />
+
+                    {photo ? (
+                      <div className="create__thumbs">
+                        <div className="create__thumb create__thumb--large">
+                          <img src={photo.previewUrl} alt="Selected craft photo" />
+                          <button
+                            type="button"
+                            className="create__thumb-remove"
+                            aria-label="Remove photo"
+                            onClick={removePhoto}
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
                       <button
                         type="button"
-                        className="create__thumb-remove"
-                        aria-label="Remove photo"
-                        onClick={removePhoto}
+                        className="create__upload"
+                        onClick={() => fileInputRef.current?.click()}
                       >
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        <svg className="create__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
+                        <span className="create__upload-text">Add a photo</span>
+                        <span className="create__upload-sub">Choose one photo of your craft</span>
                       </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="create__upload"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <svg className="create__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <span className="create__upload-text">Add a photo</span>
-                    <span className="create__upload-sub">Choose one photo of your craft</span>
-                  </button>
-                )}
-              </section>
+                    )}
+                  </section>
 
-              <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>
-                {submitting ? 'Creating…' : 'Generate 3D Model'}
-              </button>
-            </>
+                  <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>
+                    {submitting ? 'Creating…' : 'Generate 3D Model'}
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
