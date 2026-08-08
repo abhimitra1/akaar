@@ -380,6 +380,12 @@ akaar/
     main.py               # external API, no per-request cost (§5d)
     requirements.txt
     README.md
+  scripts/                # GPU-box ops scripts (added 2026-08-08)
+    register-startup-tasks.ps1  # run once, elevated: boot-starts instantmesh-proxy,
+                                 # moderation-service, Fooocus-API (InstantMesh already
+                                 # has its own task, see InstantMesh/setup_startup_task.ps1)
+    sync-wsl-portproxy.ps1      # re-points netsh portproxy at WSL's current IP (changes
+                                 # every reboot) - run automatically by the task above
   frontend/
     package.json, vite.config.js, index.html
     vercel.json           # SPA fallback rewrite (all paths -> index.html) — without this,
@@ -1761,3 +1767,71 @@ project — everything before was build-checks + direct API calls).
   height_cm set — that the AR-placed model is actually the right real-world size. Decide
   whether a proper server-side USDZ pipeline is worth building if the texture cap alone doesn't
   resolve the texture issue.
+
+### 2026-08-08 — Step: Boot-start every backend service (except the frontend)
+- **Command:** "run all the process when system starts. so that I do not have to start them
+  manually." Then, mid-turn: "except the frontend."
+- **Checked for existing tasks before assuming a clean slate** — only `InstantMesh Startup`
+  existed (already working, untouched by this step). A task literally named `Proxy` also
+  showed up in the scan but turned out to be an unrelated built-in Windows task
+  (`\Microsoft\Windows\Autochk\Proxy`, disk-check subsystem) — confirmed via its XML before
+  assuming it was ours.
+- **Real gap this closes, not just convenience:** even with everything auto-starting,
+  `instantmesh-proxy`'s connection to InstantMesh depends on `netsh portproxy` rules pointed at
+  WSL2's VM IP — which changes every reboot. Without re-syncing that on every boot, "auto-start
+  everything" would still silently break after the very next reboot. New
+  `scripts/sync-wsl-portproxy.ps1` waits (retrying up to 5 min) for WSL's network to actually
+  come up, then re-points both portproxy rules (ZeroTier + LAN) at whatever the current IP is.
+- **New `scripts/register-startup-tasks.ps1`** (run once, elevated — same S4U/no-stored-password
+  pattern as the existing, proven `InstantMesh/setup_startup_task.ps1`) registers 4 boot tasks:
+  `AKAAR Portproxy Sync` (RunLevel Highest — needs admin for netsh), `instantmesh-proxy Startup`,
+  `moderation-service Startup`, `Fooocus-API Startup` (all three RunLevel Limited). All
+  boot-triggered in parallel with no explicit dependency ordering — each already tolerates its
+  dependencies not being ready yet (instantmesh-proxy's own requests just 502 transiently rather
+  than crash; the portproxy-sync script retries internally), so strict task-scheduler-level
+  ordering wasn't needed. Frontend deliberately excluded per the user's follow-up — it's run on
+  demand, not a standing service.
+- **Fooocus-API's task command verified against the actual running process, not AGENTS.md's own
+  documented command** — they turned out to differ: AGENTS.md's §5b describes
+  `Fooocus-API/main.py` (implying repo-root cwd), but the real live process (checked via
+  `Get-CimInstance Win32_Process`) is running `main.py` with no path prefix, meaning its actual
+  cwd is `Fooocus-API/` itself. Matched the task to the real, working process rather than the
+  doc.
+- **Bug caught before handing off:** both new scripts initially failed to parse at all
+  (`Missing closing '}'` / unterminated string) — root cause was em dash characters inside actual
+  string literals (not just comments) getting corrupted by Windows PowerShell 5.1's default
+  ANSI file-reading for BOM-less files, not a logic bug. Stripped all non-ASCII characters from
+  both scripts (checked via `grep -P "[^\x00-\x7F]"`) and re-verified with
+  `[System.Management.Automation.Language.Parser]::ParseFile()` before handing off — parse-only,
+  since actually running either script needs elevation this session doesn't have.
+- **Not done by me — needs the user, elevation required:** run
+  `scripts/register-startup-tasks.ps1` once in an elevated PowerShell. Not verified live beyond
+  static parsing — the actual task registration, and whether all four services really do come up
+  correctly on a real reboot, hasn't been exercised.
+- **In progress:** — (awaiting next command)
+- **Next:** User runs the registration script (elevated) and, ideally, actually reboots once to
+  confirm every service (InstantMesh, instantmesh-proxy, moderation-service, Fooocus-API, and
+  the portproxy sync) comes up on its own with no manual steps. Commit if asked.
+
+### 2026-08-08 — Step: Fix register-startup-tasks.ps1 (wrong param + a false-success bug)
+- **User ran it (elevated) and it errored 4/4 times, yet the script printed "Registered" for
+  all 4 anyway** — a worse bug than the visible error: `New-ScheduledTaskSettingsSet` failed
+  every call (`MultipleInstancesPolicy` isn't a real parameter — checked
+  `(Get-Command New-ScheduledTaskSettingsSet).Parameters.Keys` on this system: it's
+  `MultipleInstances`), which left `$settings` unset, which made `Register-ScheduledTask` fail
+  its own parameter validation too — but neither failure was checked before the unconditional
+  `Write-Host "Registered '$Name'"` ran anyway. Confirmed via `Get-ScheduledTask` that none of
+  the 4 tasks actually existed after the "successful" run.
+- **Done:** fixed the parameter name; wrapped each registration in try/catch
+  (`-ErrorAction Stop` on every cmdlet in the chain) so a real failure prints `FAILED` with the
+  actual exception message instead of silently falling through; added a post-registration
+  `Get-ScheduledTask` existence check as a second line of defense — the success message only
+  prints once the task is confirmed to actually exist, not just because no exception was thrown.
+- **Verified this time, not just parsed:** re-ran the parser (clean), AND actually executed the
+  fixed `New-ScheduledTaskSettingsSet` call in this session (doesn't need elevation, unlike
+  `Register-ScheduledTask`) and confirmed it now succeeds with `MultipleInstances = IgnoreNew`.
+  The registration itself still needs the user's elevated session to fully confirm.
+- **In progress:** — (awaiting next command)
+- **Next:** User re-runs `scripts/register-startup-tasks.ps1` (elevated) and confirms all 4
+  "Registered" messages this time actually correspond to real tasks (`Get-ScheduledTask`).
+  Commit if asked.
