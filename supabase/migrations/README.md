@@ -23,6 +23,7 @@ depends on, if anything).
 | `001_crafts_delete_policy.sql` | Not yet — run this before My Library's delete button will work |
 | `002_parent_design_id.sql` | Not yet — run this before Co-Create's "Choose from Library" lineage tracking will work |
 | `003_terms_accepted_at.sql` | Not yet — run this before signup/login will work at all (every authenticated route redirects to `/accept-terms`, which needs this column to exist) |
+| `004_height_cm.sql` | Not yet — run this before MetadataPage's "Height (cm)" field / CraftPage's real-scale AR will work |
 
-Run them in any order — none depend on each other. All three are safe to re-run (every
+Run them in any order — none depend on each other. All are safe to re-run (every
 statement is `if not exists` / `drop ... if exists` + `create`).

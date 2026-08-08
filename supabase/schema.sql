@@ -93,6 +93,10 @@ create table if not exists public.crafts (
   story text,
   dimensions text,
   weight double precision,
+  -- Optional, separate from the free-text `dimensions` above — when set, CraftPage.jsx
+  -- rescales the GLB to this real height (on-page preview and AR both), since InstantMesh's
+  -- single-image reconstruction has no way to know actual physical size on its own.
+  height_cm double precision,
   location text,
   year integer,
   commercial_status text,
@@ -117,6 +121,8 @@ create table if not exists public.crafts (
 -- table — needed the first time this migration runs after the column was added.
 alter table public.crafts
   add column if not exists parent_design_id bigint references public.crafts (id) on delete set null;
+alter table public.crafts
+  add column if not exists height_cm double precision;
 
 create index if not exists crafts_owner_id_idx on public.crafts (owner_id);
 create index if not exists crafts_parent_design_id_idx on public.crafts (parent_design_id);

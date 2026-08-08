@@ -1700,3 +1700,64 @@ project — everything before was build-checks + direct API calls).
 - **Next:** After next deploy, live-verify a direct URL to `/craft/:id`, `/explore`, etc. loads
   the app instead of 404ing. Commit if asked (this file should ship with the next commit either
   way, given it's the actual fix).
+
+### 2026-08-08 — Step: iOS AR texture/tracking + real-world height scaling
+- **Command:** "on iOS AR is not rendering with texture. Tracking has to be improved. if the
+  height is given it shall load with the fixed height from the metadata."
+- **Investigated the installed `@google/model-viewer` (4.3.1) source directly before touching
+  anything** (not assumed from general model-viewer knowledge, which turned out to be stale for
+  this version in two ways):
+  1. Without `ios-src`, this version auto-converts the loaded GLB to USDZ **client-side** on
+     every "View in AR" tap, via three.js's `USDZExporter` (confirmed in
+     `features/ar.ts`'s `prepareUSDZ()`/`$openIOSARQuickLook`) — CraftPage.jsx's own existing
+     comment ("no usdz for iOS Quick Look") was written against older behavior and is no longer
+     accurate for this version. This client-side exporter is a known category of source for
+     texture/material mapping issues — a documented three.js limitation, not something wrong in
+     our code.
+  2. There is **no plain `scale` attribute on `<model-viewer>` itself** in this version (checked
+     the actual `.d.ts` — not there) — confirmed the assumption from general docs/memory would
+     have been wrong. The only way to apply a scale multiplier to the primary model is via a
+     child `<extra-model>` element (real, registered custom element — `model-viewer.ts` imports
+     `features/extra-model.js` — `src`/`offset`/`orientation`/`scale` properties, confirmed in
+     its source), which becomes the hero model when the main `src` attribute is unset. Also
+     confirmed (`model-viewer-base.ts` `updated()`) that switching `src` from a URL to
+     `undefined` while adding an `<extra-model>` child correctly re-triggers a load.
+- **Done — real-world height scaling (the concretely buildable, verified part):**
+  `crafts.height_cm` (migration `004_height_cm.sql` + `schema.sql`) — optional, separate from
+  the existing free-text `dimensions`. `MetadataPage.jsx` gained a "Height (cm)" field.
+  `CraftPage.jsx`: two-phase load — model first loads at its native (arbitrary, since
+  InstantMesh's single-image reconstruction has no way to know real physical size) scale so
+  `getDimensions()` can read its actual authored height, then — only if `height_cm` is set —
+  swaps to the `<extra-model>` form with a computed correction factor (`desiredHeight /
+  nativeHeight`), triggering one visible reload at the corrected size. `ar-scale="fixed"` is
+  set (instead of the default `"auto"`) exactly when `height_cm` is present, so AR Quick
+  Look/Scene Viewer don't let the user resize away from the real size once it's known. Also
+  displays "Height: Xcm" in the metadata list alongside Dimensions/Weight.
+- **Done — best-effort texture mitigation:** `ar-usdz-max-texture-size="2048"` added (previous
+  default was effectively unlimited) — a commonly-cited practical workaround for Quick Look
+  texture display issues with the client-side exporter path. Explicitly NOT claimed as a fix —
+  no way to verify on real iOS hardware this session.
+- **NOT done, flagged as genuinely out of reach this session:**
+  - **"Tracking has to be improved"** — ARKit/ARCore's actual surface-tracking algorithm is an
+    OS-level capability; a web app doesn't control it directly. Correct real-world scale (above)
+    is the one plausible contributing factor within reach — a wildly-mis-scaled object can look
+    like "bad tracking" even when the underlying tracking is fine — but this is not a tracking
+    algorithm improvement, and was not oversold as one.
+  - **A guaranteed texture fix** — the actual root cause (which glTF material/texture setup
+    InstantMesh's GLB export produces, and exactly why three.js's `USDZExporter` mishandles it)
+    wasn't diagnosed further. A reliable fix likely needs either a proper server-side GLB→USDZ
+    pipeline (a real tool like Apple's own USD toolchain, not attempted — meaningfully larger
+    scope, not started without checking first) or changes to InstantMesh's own export code,
+    which is out of this repo's scope per AGENTS.md rule 2 ("Do not build: the GPU
+    reconstruction engine itself").
+- **Verified:** `npm run build` passes. The model-viewer API claims above are verified against
+  the actual installed package source (not the general docs/memory, which were wrong on two
+  points here) — but the runtime behavior (does the two-phase rescale actually look right, does
+  AR still work, does the texture cap help at all) is NOT verified on a real device/browser this
+  session.
+- **In progress:** — (awaiting next command)
+- **Next:** User applies the pending `height_cm` migration (joins 3 others still outstanding);
+  live-verify on a real iOS device: AR launches, texture presence, and — for a craft with
+  height_cm set — that the AR-placed model is actually the right real-world size. Decide
+  whether a proper server-side USDZ pipeline is worth building if the texture cap alone doesn't
+  resolve the texture issue.

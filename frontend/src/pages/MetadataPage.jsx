@@ -30,6 +30,7 @@ export default function MetadataPage() {
     story: '',
     dimensions: '',
     weight: '',
+    height_cm: '',
     location: '',
     year: '',
   })
@@ -68,6 +69,7 @@ export default function MetadataPage() {
           story: data.story || '',
           dimensions: data.dimensions || '',
           weight: data.weight != null ? String(data.weight) : '',
+          height_cm: data.height_cm != null ? String(data.height_cm) : '',
           location: data.location || '',
           year: data.year != null ? String(data.year) : '',
         }))
@@ -96,6 +98,7 @@ export default function MetadataPage() {
       body.story = form.story || null
       body.dimensions = form.dimensions || null
       body.weight = form.weight !== '' ? parseFloat(form.weight) : null
+      body.height_cm = form.height_cm !== '' ? parseFloat(form.height_cm) : null
       body.location = form.location || null
       body.year = form.year !== '' ? parseInt(form.year, 10) : null
 
@@ -212,6 +215,17 @@ export default function MetadataPage() {
                   />
                 </label>
               </div>
+
+              <label className="field">
+                <span className="field__label">Height</span>
+                <input
+                  name="height_cm"
+                  value={form.height_cm}
+                  onChange={handleChange}
+                  inputMode="decimal"
+                  placeholder="cm — optional, used to scale the 3D/AR view to true size"
+                />
+              </label>
 
               <div className="create__row">
                 <label className="field">
