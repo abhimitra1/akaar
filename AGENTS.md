@@ -1602,3 +1602,70 @@ project — everything before was build-checks + direct API calls).
   the dialog appears and both Stay/Leave behave correctly); everything still outstanding from
   the prior several steps (migrations, a real moderation round-trip, the auth-race fix).
   Commit if asked.
+
+### 2026-08-08 — Step: Fix production-wide crash from a Vercel/local env-var split
+- **User reported the deployed site (akaar-six.vercel.app) as a blank white page**, screenshot
+  showing `Uncaught TypeError: Cannot read properties of undefined (reading 'replace')` at
+  module scope, on every route.
+- **Root cause, confirmed not guessed:** `instantMesh.js`/`fooocus.js` both computed
+  `BASE_URL = import.meta.env.VITE_GPU_PROXY_URL.replace(...)` directly at module top level.
+  Earlier this session, `VITE_INSTANTMESH_URL`/`VITE_FOOOCUS_URL` were consolidated into one
+  `VITE_GPU_PROXY_URL` (§5c) — updated in the LOCAL `frontend/.env`/`.env.example`, which never
+  deploys (gitignored) and has no connection to Vercel's own separately-configured environment
+  variables. Vercel's env config was never updated to match, so in production
+  `VITE_GPU_PROXY_URL` resolved to `undefined`, `.replace()` on it threw at import time, and
+  since this happens at module scope (not inside a function), it crashed the entire bundle —
+  every route, not just the AI-feature ones. A second screenshotted error (manifest.webmanifest
+  blocked by Vercel's own SSO/deployment-protection redirect) was specific to a *preview* deploy
+  URL — a Vercel project setting, not a code issue; confirmed unrelated by checking it didn't
+  appear on the production domain screenshot.
+- **Done:** both files now resolve `BASE_URL` defensively (`null` if the env var is missing,
+  no `.replace()` call attempted) and moved the actual "is this configured" check into a
+  `requireBaseUrl()` called from *inside* each exported function, not at module scope — a
+  missing var now throws a clear, catchable "3D reconstruction is not configured on this
+  deployment" / "Co-creation is not configured..." error only when that specific feature is
+  actually used (surfaces through the existing error UI), instead of crashing every page on
+  import.
+- **Verified, not just reasoned about:** temporarily unset `VITE_GPU_PROXY_URL` in the local
+  `.env`, ran `npm run build` against that — succeeded, matching what should now happen on
+  Vercel too. Restored the original `.env` after and rebuilt again to confirm no drift.
+- **Not fixed by me — needs the user, no Vercel access this session:** Vercel's own project
+  environment variables (Settings → Environment Variables) still need `VITE_GPU_PROXY_URL` set
+  (old `VITE_INSTANTMESH_URL`/`VITE_FOOOCUS_URL` there are now dead, safe to remove) and a new
+  deployment triggered — env var changes don't apply retroactively to an existing build. Even
+  once set, whichever URL it points to must be *publicly reachable* — the value used
+  everywhere in local dev this session (`http://10.231.121.101:8787`) is a private ZeroTier
+  address Vercel's servers can't reach; production needs the Cloudflare-Tunnel-or-similar
+  public URL AGENTS.md §5c describes as the intended design, which — flagging honestly — I
+  have no evidence was ever actually set up. Until both of those are true, the crash is fixed
+  (site loads) but AI features in production will show the new "not configured" error rather
+  than working.
+- **In progress:** — (awaiting next command)
+- **Next:** User sets/updates `VITE_GPU_PROXY_URL` in Vercel and redeploys; separately decide
+  whether production AI features (needing a public tunnel in front of instantmesh-proxy) are
+  even in scope right now, given this session's proxy work has been entirely local-box-focused.
+  Commit if asked.
+
+### 2026-08-08 — Step: Production tunnel exists — confirmed, not the "no evidence" gap flagged above
+- **User supplied the answer to the previous step's open question:** "https://instantmesh.zpsyche.com/
+  try with this endpoint. this is working as CloudFlare Tunnel."
+- **Verified before wiring anywhere (not taken on faith):** `/api/health` and
+  `/fooocus/v2/generation/image-prompt` through this URL both return 401 — only explainable by
+  this hitting `instantmesh-proxy`'s global auth middleware, since InstantMesh raw has no auth
+  at all (confirmed extensively earlier this session) and no `/fooocus` route exists outside
+  the proxy. A CORS preflight for `Origin: https://akaar-six.vercel.app` returned `204` with the
+  correct `Access-Control-Allow-Origin` already — meaning this tunnel points at the *same* local
+  `instantmesh-proxy` process managed all session on this box (its `.env`'s `ALLOWED_ORIGINS`
+  already includes that exact origin), just also reachable publicly. Not a new/different
+  deployment to reconcile — the same one.
+- **Done:** `frontend/.env.example`'s `VITE_GPU_PROXY_URL` comment updated with this confirmed
+  URL and the evidence above, replacing the generic `gpu.yourdomain.com` placeholder.
+- **Still needs the user — no Vercel access:** set `VITE_GPU_PROXY_URL=https://instantmesh.zpsyche.com`
+  in Vercel's project environment variables and redeploy. Local `frontend/.env` deliberately left
+  pointed at the ZeroTier IP (`http://10.231.121.101:8787`) rather than switched to the tunnel —
+  lower latency for dev on/near this box, no external dependency, already the tested value —
+  the tunnel is what production specifically needs, not a local-dev replacement.
+- **In progress:** — (awaiting next command)
+- **Next:** User sets the Vercel env var and redeploys; live-verify the production site loads
+  and a real AI submission (InstantMesh or Fooocus) succeeds end to end through the public
+  tunnel, not just the auth/CORS checks done here.

@@ -11,7 +11,19 @@
 // always points at that proxy, never at Fooocus-API's raw port directly. See AGENTS.md §5b.
 import { supabase } from './supabaseClient.js'
 
-const BASE_URL = import.meta.env.VITE_GPU_PROXY_URL.replace(/\/+$/, '')
+// Resolved lazily (inside requireBaseUrl, not here at module scope) so a missing env var
+// throws only when co-creation is actually used, not on import — see instantMesh.js's
+// identical comment for why: a module-scope crash here previously took the entire app down
+// (blank page on every route) when this var went missing from a deployment's env config.
+const RAW_BASE_URL = import.meta.env.VITE_GPU_PROXY_URL
+const BASE_URL = RAW_BASE_URL ? RAW_BASE_URL.replace(/\/+$/, '') : null
+
+function requireBaseUrl() {
+  if (!BASE_URL) {
+    throw new Error('Co-creation is not configured on this deployment (VITE_GPU_PROXY_URL is missing).')
+  }
+  return BASE_URL
+}
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession()
@@ -33,8 +45,9 @@ function fileToBase64(file) {
 // require_base64 avoids depending on Fooocus-API's own file server staying reachable from
 // wherever the browser is — we just get image bytes back directly.
 export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.6, cnWeight = 0.6, imageNumber = 2 } = {}) {
+  const baseUrl = requireBaseUrl()
   const cn_img = await fileToBase64(imageFile)
-  const res = await fetch(`${BASE_URL}/fooocus/v2/generation/image-prompt`, {
+  const res = await fetch(`${baseUrl}/fooocus/v2/generation/image-prompt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify({
@@ -65,7 +78,8 @@ export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.6, cnWei
 // the API docs are misleading here. Stripped to raw base64 so every caller can rely on one
 // consistent shape (matches what fileToBase64 above produces for the *input* side too).
 export async function getJobStatus(jobId) {
-  const res = await fetch(`${BASE_URL}/fooocus/v1/generation/query-job?job_id=${jobId}`, {
+  const baseUrl = requireBaseUrl()
+  const res = await fetch(`${baseUrl}/fooocus/v1/generation/query-job?job_id=${jobId}`, {
     headers: await authHeaders(),
   })
   if (!res.ok) throw new Error('Failed to check co-creation status')

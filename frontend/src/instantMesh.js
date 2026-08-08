@@ -10,7 +10,22 @@
 // See AGENTS.md §5a.
 import { supabase } from './supabaseClient.js'
 
-const BASE_URL = import.meta.env.VITE_GPU_PROXY_URL.replace(/\/+$/, '')
+// Resolved lazily (inside requireBaseUrl, not here at module scope) so a missing env var
+// throws only when an AI feature is actually used, not on import — Vite bakes VITE_* vars
+// in at build time, and Vercel's env config is separate from local .env files (renaming a
+// var locally doesn't touch it), so a rename/typo there is a real, recoverable-without-a-
+// redeploy-crash possibility, not just a local dev mistake. Crashing at module scope took
+// the ENTIRE app down (blank page on every route, not just the AI ones) the one time this
+// actually happened — see AGENTS.md progress log.
+const RAW_BASE_URL = import.meta.env.VITE_GPU_PROXY_URL
+const BASE_URL = RAW_BASE_URL ? RAW_BASE_URL.replace(/\/+$/, '') : null
+
+function requireBaseUrl() {
+  if (!BASE_URL) {
+    throw new Error('3D reconstruction is not configured on this deployment (VITE_GPU_PROXY_URL is missing).')
+  }
+  return BASE_URL
+}
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession()
@@ -19,13 +34,14 @@ async function authHeaders() {
 }
 
 export async function submitJob(file, { removeBackground = true, seed = 42, sampleSteps = 75 } = {}) {
+  const baseUrl = requireBaseUrl()
   const form = new FormData()
   form.append('file', file)
   form.append('remove_background', String(removeBackground))
   form.append('seed', String(seed))
   form.append('sample_steps', String(sampleSteps))
 
-  const res = await fetch(`${BASE_URL}/api/generate`, { method: 'POST', headers: await authHeaders(), body: form })
+  const res = await fetch(`${baseUrl}/api/generate`, { method: 'POST', headers: await authHeaders(), body: form })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     const err = new Error(data.detail || data.error || 'Failed to submit reconstruction job')
@@ -39,13 +55,15 @@ export async function submitJob(file, { removeBackground = true, seed = 42, samp
 }
 
 export async function getJobStatus(jobId) {
-  const res = await fetch(`${BASE_URL}/api/jobs/${jobId}`, { headers: await authHeaders() })
+  const baseUrl = requireBaseUrl()
+  const res = await fetch(`${baseUrl}/api/jobs/${jobId}`, { headers: await authHeaders() })
   if (!res.ok) throw new Error('Failed to check reconstruction status')
   return res.json()
 }
 
 export async function downloadResult(jobId, fmt) {
-  const res = await fetch(`${BASE_URL}/api/jobs/${jobId}/download/${fmt}`, { headers: await authHeaders() })
+  const baseUrl = requireBaseUrl()
+  const res = await fetch(`${baseUrl}/api/jobs/${jobId}/download/${fmt}`, { headers: await authHeaders() })
   if (!res.ok) throw new Error(`Failed to download ${fmt} result`)
   return res.blob()
 }
