@@ -58,8 +58,9 @@ export default function WelcomePage() {
             <path d="M8 11V9a4 4 0 0 1 8 0v2" />
           </svg>
         </span>
-        <h1 className="welcome__title">AKAAR</h1>
-        <p className="welcome__subtitle">Craft Intelligence Platform</p>
+        <h1 className="welcome__title">PATHS</h1>
+        <p className="welcome__subtitle">Design Thinking by Thinking Design</p>
+        <p className="welcome__fullname">Pottery - Art - Technology - Heritage &amp; Sustainability</p>
       </header>
 
       {error && (
@@ -96,7 +97,17 @@ export default function WelcomePage() {
       </div>
 
       <footer className="welcome__footer">
-        By continuing you agree to the AKAAR terms and privacy notice.
+        <p>
+          By continuing you agree to PATHS's{' '}
+          <Link to="/terms">Terms &amp; Conditions</Link> and{' '}
+          <Link to="/policy">Privacy &amp; AI Usage Policy</Link>.
+        </p>
+        <p className="welcome__credit">
+          A living archive for traditional craft, built at{' '}
+          <a href="https://sofn.vercel.app/" target="_blank" rel="noopener noreferrer">Future Nexus Labs</a>
+          {' '}&amp;{' '}
+          <a href="https://cutm.ac.in" target="_blank" rel="noopener noreferrer">Centurion University</a>.
+        </p>
       </footer>
       </div>
     </div>

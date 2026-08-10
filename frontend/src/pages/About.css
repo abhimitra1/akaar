@@ -1,0 +1,49 @@
+.about__hero {
+  text-align: center;
+  padding: 4px 0 20px;
+}
+
+.about__tagline {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--terracotta-900);
+}
+
+.about__fullname {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.about__credits {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.about__credit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.about__credit-link {
+  color: var(--terracotta-900);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.about__credit-link:hover {
+  text-decoration: underline;
+}
+
+.about__credit-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}

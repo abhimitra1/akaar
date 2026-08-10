@@ -155,7 +155,7 @@ async function screenSubmission({ text, imageDataUrl }) {
 // path — the frontend renders an actual clickable link instead, keyed off this response's
 // 422 status (see instantMesh.js/fooocus.js's `err.status`), so this stays plain, portable text.
 function rejectionMessage() {
-  return 'This submission doesn\'t meet AKAAR\'s content guidelines. Our AI tools are reserved ' +
+  return 'This submission doesn\'t meet PATHS\'s content guidelines. Our AI tools are reserved ' +
     'for genuine craft and art reconstruction or redesign — sexual, violent, or otherwise ' +
     'inappropriate content isn\'t supported.'
 }

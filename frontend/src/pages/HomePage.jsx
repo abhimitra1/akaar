@@ -159,8 +159,8 @@ export default function HomePage() {
                 <path d="M12 14v6.8" />
               </svg>
             </div>
-            <p className="home__empty-title">No crafts uploaded yet.</p>
-            <p className="home__empty-sub">Be the first to share your creation!</p>
+            <p className="home__empty-title">No crafts documented yet.</p>
+            <p className="home__empty-sub">Be the first to preserve a craft's story as a digital twin.</p>
           </div>
         )}
       </section>

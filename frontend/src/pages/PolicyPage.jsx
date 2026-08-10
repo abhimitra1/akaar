@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import './Policy.css'
 
 // Public page (no ProtectedRoute) — readable before signing up, linked from SignUpPage and
@@ -47,7 +47,7 @@ export default function PolicyPage() {
           </p>
           <p>
             Crafts stay private (visible only to you) until you explicitly publish them. Publishing
-            makes the photos, 3D model, and metadata visible to anyone using AKAAR.
+            makes the photos, 3D model, and metadata visible to anyone using PATHS.
           </p>
         </section>
 
@@ -73,7 +73,7 @@ export default function PolicyPage() {
         <section className="policy__section">
           <h2>5. AI Usage Policy — what our AI tools are for</h2>
           <p>
-            AKAAR's AI tools exist to turn genuine craft and art objects into digital twins, and to
+            PATHS's AI tools exist to turn genuine craft and art objects into digital twins, and to
             help you explore AI-assisted redesigns of your own work. They are not a general-purpose
             image generator.
           </p>
@@ -99,15 +99,18 @@ export default function PolicyPage() {
             Automated moderation isn't perfect — it can occasionally flag acceptable content or miss
             something it shouldn't. If you believe a submission was rejected in error, contact us.
             You're still responsible for what you submit; repeated violations may result in
-            restricted access to AKAAR's AI features.
+            restricted access to PATHS's AI features.
           </p>
         </section>
 
         <section className="policy__section">
           <h2>7. Questions</h2>
           <p>
-            This is a student/research project from Centurion University's Waste to Wealth Lab. For
+            This is a student/research project from Centurion University's Waste to Wealth Lab,
+            built at Future Nexus Labs — see <Link to="/about">About</Link> for more. For
             questions about this policy or your data, contact the project maintainers directly.
+            For the general rules of using PATHS, see our{' '}
+            <Link to="/terms">Terms &amp; Conditions</Link>.
           </p>
         </section>
       </div>

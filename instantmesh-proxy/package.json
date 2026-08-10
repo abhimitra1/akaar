@@ -1,5 +1,5 @@
 {
-  "name": "akaar-instantmesh-proxy",
+  "name": "PATHS-instantmesh-proxy",
   "private": true,
   "version": "0.1.0",
   "description": "Public-facing proxy for the GPU workstation's model APIs (InstantMesh reconstruction + Fooocus-API co-creation). Fixes InstantMesh's CORS bug, requires a valid Supabase login, rate-limits job submissions, content-moderates every submission (via ../moderation-service, local/no-cost), and serializes the two models on the shared GPU.",

@@ -5,4 +5,4 @@ export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY,
 )
 
-export const STORAGE_BUCKET = 'akaar'
+export const STORAGE_BUCKET = 'PATHS'

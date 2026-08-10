@@ -50,7 +50,7 @@ export default function CompleteProfilePage() {
     <div className="create">
       <div className="create__card">
         <header className="create__header">
-          <h1 className="create__title">Welcome to AKAAR</h1>
+          <h1 className="create__title">Welcome to PATHS</h1>
         </header>
 
         {error && (

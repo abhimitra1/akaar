@@ -1,11 +1,11 @@
 {
-  "name": "AKAAR",
-  "short_name": "AKAAR",
-  "description": "Craft Intelligence Platform.",
+  "name": "PATHS — Pottery - Art - Technology - Heritage & Sustainability",
+  "short_name": "PATHS",
+  "description": "Design Thinking by Thinking Design — a Craft Intelligence Platform preserving traditional craft heritage through AI-assisted digital twins.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#fff8f6",
+  "theme_color": "#974400",
   "icons": [
     { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]

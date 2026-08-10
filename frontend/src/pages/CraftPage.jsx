@@ -32,7 +32,7 @@ export default function CraftPage() {
     const shareUrl = window.location.href
     if (navigator.share) {
       try {
-        await navigator.share({ title: craft?.title || 'AKAAR craft', url: shareUrl })
+        await navigator.share({ title: craft?.title || 'PATHS craft', url: shareUrl })
       } catch {
         // User cancelled the native share sheet — not an error.
       }

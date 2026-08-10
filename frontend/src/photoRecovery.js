@@ -6,7 +6,7 @@
 // the user doesn't have to re-pick a photo or, worse, redo an AI co-creation generation
 // (real GPU time, rate-limited) just because the *reconstruction* step failed. Cleared
 // once a job completes successfully, or as soon as it's been restored on retry.
-const KEY_PREFIX = 'akaar:recovery-photo:'
+const KEY_PREFIX = 'PATHS:recovery-photo:'
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {

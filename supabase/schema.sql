@@ -1,4 +1,4 @@
--- AKAAR backendless migration: profiles/crafts/jobs tables + RLS + storage bucket.
+-- PATHS backendless migration: profiles/crafts/jobs tables + RLS + storage bucket.
 -- Replaces the FastAPI backend (SQLAlchemy models + JWT auth + MinIO + Redis) with
 -- direct Supabase Auth / Postgres RLS / Storage access from the frontend.
 
@@ -144,7 +144,7 @@ create policy crafts_update on public.crafts
 -- Owner-only delete, for My Library's delete option (LibraryPage.jsx). `jobs` rows for the
 -- craft cascade via jobs.craft_id's `on delete cascade` FK — no separate jobs policy needed.
 -- Storage objects (photos/model.glb) do NOT cascade (separate system); LibraryPage removes
--- those itself before deleting the row, via akaar_delete_own below.
+-- those itself before deleting the row, via PATHS_delete_own below.
 drop policy if exists crafts_delete on public.crafts;
 create policy crafts_delete on public.crafts
   for delete using (owner_id = auth.uid());
@@ -230,33 +230,33 @@ create trigger jobs_daily_limit
   before insert on public.jobs
   for each row execute procedure public.check_daily_job_limit();
 
--- ── storage bucket ("akaar"): public read, owner-scoped writes ─────────────
+-- ── storage bucket ("PATHS"): public read, owner-scoped writes ─────────────
 insert into storage.buckets (id, name, public)
-values ('akaar', 'akaar', true)
+values ('PATHS', 'PATHS', true)
 on conflict (id) do update set public = true;
 
-drop policy if exists akaar_insert_own on storage.objects;
-create policy akaar_insert_own on storage.objects
+drop policy if exists PATHS_insert_own on storage.objects;
+create policy PATHS_insert_own on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'akaar' and (storage.foldername(name))[1] = auth.uid()::text);
+  with check (bucket_id = 'PATHS' and (storage.foldername(name))[1] = auth.uid()::text);
 
-drop policy if exists akaar_update_own on storage.objects;
-create policy akaar_update_own on storage.objects
+drop policy if exists PATHS_update_own on storage.objects;
+create policy PATHS_update_own on storage.objects
   for update to authenticated
-  using (bucket_id = 'akaar' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'PATHS' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Upsert (used by reconstruction.js re-uploading model.glb) needs SELECT too — the
 -- storage API checks for a conflicting existing row before deciding insert vs. update,
 -- and that check is itself RLS-gated. Without this, upsert:true 400s even though a
 -- plain non-upsert insert succeeds.
-drop policy if exists akaar_select_own on storage.objects;
-create policy akaar_select_own on storage.objects
+drop policy if exists PATHS_select_own on storage.objects;
+create policy PATHS_select_own on storage.objects
   for select to authenticated
-  using (bucket_id = 'akaar' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'PATHS' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Owner-only delete, for My Library's delete option (LibraryPage.jsx removes a craft's
 -- photos + model.glb before deleting the crafts row itself).
-drop policy if exists akaar_delete_own on storage.objects;
-create policy akaar_delete_own on storage.objects
+drop policy if exists PATHS_delete_own on storage.objects;
+create policy PATHS_delete_own on storage.objects
   for delete to authenticated
-  using (bucket_id = 'akaar' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'PATHS' and (storage.foldername(name))[1] = auth.uid()::text);

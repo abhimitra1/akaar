@@ -200,8 +200,16 @@ export default function AccountPage() {
           </button>
         </div>
 
+        <Link to="/about" className="craft__btn craft__btn--ghost account__btn">
+          About PATHS
+        </Link>
+
         <Link to="/policy" className="craft__btn craft__btn--ghost account__btn">
           Privacy &amp; AI Policy
+        </Link>
+
+        <Link to="/terms" className="craft__btn craft__btn--ghost account__btn">
+          Terms &amp; Conditions
         </Link>
 
         <button type="button" className="craft__btn craft__btn--ghost account__btn account__signout" onClick={handleSignOut}>

@@ -1,19 +1,23 @@
-# AGENTS.md — Project AKAAR (Craft Digital Twin Repository)
+# AGENTS.md — Project PATHS (Craft Digital Twin Repository)
 
 > Read this file fully before writing code. It is the single source of context for any agent
 > working on Akira's part of the group project: **the app AND the website**.
 
 ---
 
-## 1. What AKAAR is
+## 1. What PATHS is
 
-AKAAR is a **Physical–Digital–Physical (PDP) Craft Intelligence Platform** from Centurion
-University's Waste to Wealth Lab. It preserves traditional craftsmanship by turning physical
-craft objects into **Digital Twins** (3D models + rich metadata), lets students/artisans
-redesign them with AI, and feeds the improved design back into a better physical object.
+**PATHS — Pottery - Art - Technology - Heritage & Sustainability** — is a **Physical–Digital–Physical
+(PDP) Craft Intelligence Platform** from Centurion University's Waste to Wealth Lab (built at
+Future Nexus Labs, https://sofn.vercel.app/). It preserves traditional craftsmanship and
+traditional knowledge by turning physical craft objects into **Digital Twins** (3D models + rich
+metadata), lets students/artisans redesign them with AI, and feeds the improved design back into
+a better physical object.
 
-Tagline: *"Craft Intelligence Platform."* Starts with pottery, scales to bamboo, textiles,
-wood, metal, terracotta, recycled products.
+Tagline (2026-08-10, superseding the prior "Craft Intelligence Platform" tagline — that phrase
+is kept as the functional/descriptive subtitle, not the tagline): *"Design Thinking by Thinking
+Design."* Starts with pottery, scales to bamboo, textiles, wood, metal, terracotta, recycled
+products.
 
 **Closed loop:**
 `Physical craft → photo capture → AI 3D reconstruction → digital twin (GLB/OBJ/USD + metadata)
@@ -36,7 +40,7 @@ Windows RTX 5080 box), or other teammates' work unless asked.
 
 ---
 
-## 3. App flow (from AKAAR_App_Flow.pdf — 8 phases)
+## 3. App flow (from PATHS_App_Flow.pdf — 8 phases)
 
 **Phase 0 — Auth & Onboarding**
 - Sign Up: email/password, full name, role, institution, department, OTP email verify.
@@ -142,7 +146,7 @@ Story · Keywords · Est. Build Time · Commercial Status.
                      │                    ┌──────────┼──────────┐
                      │ direct fetch       ▼          ▼          ▼
                      │ (CORS: *)      Auth       Postgres    Storage
-                     ▼               (email/pw,  (profiles,   (bucket "akaar":
+                     ▼               (email/pw,  (profiles,   (bucket "PATHS":
         [ InstantMesh API ]           JWT, RLS    crafts,      photos/model.glb,
         (GPU workstation,             via         jobs; RLS     owner-scoped
          ZeroTier, async job          auth.uid()) enforces      writes, public
@@ -354,7 +358,7 @@ Story · Keywords · Est. Build Time · Commercial Status.
 - DB: Supabase Postgres. Tables: `profiles`, `crafts`, `jobs` — see `supabase/schema.sql` for the
   full DDL + RLS policies (source of truth, run once against the project via the SQL editor or
   `psql`).
-- Storage: Supabase Storage, bucket `akaar` (public read; writes restricted per-user via
+- Storage: Supabase Storage, bucket `PATHS` (public read; writes restricted per-user via
   `storage.objects` RLS keyed on the first path segment = `auth.uid()`).
 - Reconstruction: InstantMesh REST API on a separate GPU workstation (§5a) — real reconstruction,
   not a stub.
@@ -366,7 +370,7 @@ Story · Keywords · Est. Build Time · Commercial Status.
 
 ## 7. Repo layout (current)
 ```
-akaar/
+PATHS/
   PLAN.md                # build plan
   AGENTS.md              # this file
   Fooocus/                # gitignored — real Fooocus install (GPU workstation, models live here)
@@ -415,7 +419,7 @@ frontend does not re-check ownership/visibility in application code.
 - `crafts` table: `select` sees `is_public = true OR owner_id = auth.uid()` (guest = public only,
   owner = public + own); `insert`/`update` require `owner_id = auth.uid()`.
 - `jobs` table: `select`/`insert`/`update` require the parent craft's `owner_id = auth.uid()`.
-- Storage bucket `akaar`: public read (via `getPublicUrl`); `insert`/`update` require the object
+- Storage bucket `PATHS`: public read (via `getPublicUrl`); `insert`/`update` require the object
   path's first segment to equal `auth.uid()`.
 - Publish/unpublish = `crafts.update({is_public})` from `CraftPage.jsx` (owner only, via RLS).
 
@@ -446,12 +450,12 @@ the Supabase dashboard (Table Editor / Storage / Logs).
 
 ---
 
-## 12. Concept Note — full detail (from `Project AKAAR Concept Note.dc.pdf`)
+## 12. Concept Note — full detail (from `Project PATHS Concept Note.dc.pdf`)
 
 This is the project's north star. Everything above is derived from it. Capture nothing extra
 beyond this and the flow PDF.
 
-**Provenance:** Codename PROJECT AKAAR — Craft Digital Twin Repository. Concept by Abhi Mitra.
+**Provenance:** Codename PROJECT PATHS — Craft Digital Twin Repository. Concept by Abhi Mitra.
 Feasibility = Complete. POC = In Place. Time to deploy = 2 weeks. Home: Centurion University ·
 Waste to Wealth Lab.
 
@@ -519,12 +523,12 @@ web upload.
 software/licensing (mostly OSS / Centurion Cloud) — · dev & integration (in-house, 2-week) — ·
 TOTAL ₹50,000–70,000. Recurring cost near zero.
 
-**Suggested research article titles (reference only, NOT build tasks):** (1) Project AKAAR: A
+**Suggested research article titles (reference only, NOT build tasks):** (1) Project PATHS: A
 Craft Digital Twin Repository for AI-Assisted Preservation, Redesign and Experiential Learning in
-Traditional Crafts. (2) AKAAR: A PDP Framework for Digital Twin–Driven Craft Preservation and
-Innovation. (3) Craft Digital Twins for Traditional Artisan Ecosystems: Designing the AKAAR
+Traditional Crafts. (2) PATHS: A PDP Framework for Digital Twin–Driven Craft Preservation and
+Innovation. (3) Craft Digital Twins for Traditional Artisan Ecosystems: Designing the PATHS
 Platform. (4) From Clay to Digital Twin: An AI-Driven PDP Workflow for Traditional Pottery. (5)
-Designing AKAAR: A Scalable Digital Twin Repository for Heritage Crafts in Waste-to-Wealth Labs.
+Designing PATHS: A Scalable Digital Twin Repository for Heritage Crafts in Waste-to-Wealth Labs.
 
 **Gaps between concept note and the 8-phase app flow (flagged in the flow PDF's own review notes):**
 - Concept's **Design Studio** (Blender expert editing + AI design suggestions) and standalone
@@ -599,8 +603,8 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
 > the end of every commanded step. Log entries are facts of what happened; they never override
 > rules 1–13 or this file's role as single source of truth.
 
-### 2026-08-04 — Step: Project setup (scaffold `akaar/`)
-- **Done:** Created `akaar/` repo tree per §7: `docker-compose.yml`, `PLAN.md`, `AGENTS.md`
+### 2026-08-04 — Step: Project setup (scaffold `PATHS/`)
+- **Done:** Created `PATHS/` repo tree per §7: `docker-compose.yml`, `PLAN.md`, `AGENTS.md`
   (this copy + Progress Log), `backend/` (Dockerfile, requirements.txt, app/ stubs: main,
   config, db, models, security, storage, queue, worker; routers/ stubs: auth, crafts, jobs),
   `frontend/` (package.json, vite.config.js, index.html, Dockerfile, nginx.conf,
@@ -626,7 +630,7 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
   to on-prem PostgreSQL).
 - **Decisions:** `DATABASE_URL` env values in compose left as placeholders (not wired yet — real
   Supabase connection is a separate, later step per command). Same AGENTS.md edits mirrored to the
-  root copy at `/home/akira/Downloads/AKAAR/AGENTS.md` to keep both in sync.
+  root copy at `/home/akira/Downloads/PATHS/AGENTS.md` to keep both in sync.
 - **In progress:** — (awaiting next command)
 - **Next:** Backend build — wire `SUPABASE_DB_URL` + `sslmode=require` into `config.py`/`db.py`,
   then rest of backend (models, security, storage, queue, worker, routers) → boot + verify.
@@ -637,7 +641,7 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
   `config.py` now a pydantic-settings `Settings` class with **required** `supabase_db_url`
   (`env_file=".env"`), no hardcoded credentials. `db.py` builds `engine` from
   `settings.supabase_db_url` with `connect_args={"sslmode": "require"}` plus `SessionLocal`,
-  `Base`, `get_db`. `akaar/.gitignore` created with `.env` (no real `.env` written — real value
+  `Base`, `get_db`. `PATHS/.gitignore` created with `.env` (no real `.env` written — real value
   added by the user locally; not a git repo yet).
 - **Pendings/notes:** `docker-compose.yml` still hardcodes `DATABASE_URL: ...@postgres:5432/...`
   in api/worker (from an earlier step) — compose env will need rewiring to `SUPABASE_DB_URL` in a
@@ -708,10 +712,10 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
   `ensure_bucket_exists()` (idempotent; 404→create, 403→exists), `upload_file(bytes,key,ct)->key`,
   `get_presigned_url(key, expires=3600)`, `delete_file(key)`. No validation/size limits (phase-2).
 - **Config additions:** `config.py` Settings gained `minio_endpoint`, `minio_access_key`,
-  `minio_secret_key` (required) + `minio_bucket` (default `"akaar"`). `.env.example` and
-  `backend/.env` gained MINIO_ENDPOINT=localhost:9000, MINIO_ACCESS_KEY=akaar,
-  MINIO_SECRET_KEY=akaar12345678, MINIO_BUCKET=akaar — matching docker-compose minio service
-  (root creds akaar/akaar12345678, API port 9000; api/worker pass MINIO_ACCESS_KEY etc.).
+  `minio_secret_key` (required) + `minio_bucket` (default `"PATHS"`). `.env.example` and
+  `backend/.env` gained MINIO_ENDPOINT=localhost:9000, MINIO_ACCESS_KEY=PATHS,
+  MINIO_SECRET_KEY=PATHS12345678, MINIO_BUCKET=PATHS — matching docker-compose minio service
+  (root creds PATHS/PATHS12345678, API port 9000; api/worker pass MINIO_ACCESS_KEY etc.).
 - **Verified end-to-end** against a real `minio/minio` docker container (same creds, port 9000):
   client created, bucket created idempotently (head→404→create, second call no-op), upload
   returned key, presigned URL contained X-Amz-Signature, content roundtripped, delete removed the
@@ -722,7 +726,7 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
 ### 2026-08-05 — Step: Implement `backend/app/queue.py`
 - **Done:** redis-py helpers (`redis==5.0.7` already in requirements — no new dependency).
   `get_redis_client()` (host/port from settings, db 0, decode_responses=True), `enqueue_job`
-  (RPUSH JSON `{job_id, craft_id}` to `akaar:reconstruction_jobs`), `dequeue_job(timeout=5)`
+  (RPUSH JSON `{job_id, craft_id}` to `PATHS:reconstruction_jobs`), `dequeue_job(timeout=5)`
   (BLPOP; returns parsed dict or None on timeout), `get_queue_length()` (LLEN). No priority/retry/
   DLQ (phase-2).
 - **Config additions:** `config.py` gained `redis_host: str = "redis"` and `redis_port: int = 6379`
@@ -785,7 +789,7 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
 ### 2026-08-06 — Step: Desktop-only Home layout (sidebar replaces bottom tab bar)
 - **Done:** Added desktop-only styling to the Home screen, active ONLY at `@media (min-width: 768px)`. Nothing below 768px changed — mobile is pixel-identical to before.
 - **Changes (Home screen only):**
-  - `HomePage.jsx` — added a `.home__sidebar` nav (`AKAAR` wordmark + 5 items Home/Explore/Create/Library/Profile with icon+label; Home `.home__sidebar-item--active`), and a `.home__empty-icon` SVG in the Recent Uploads empty state.
+  - `HomePage.jsx` — added a `.home__sidebar` nav (`PATHS` wordmark + 5 items Home/Explore/Create/Library/Profile with icon+label; Home `.home__sidebar-item--active`), and a `.home__empty-icon` SVG in the Recent Uploads empty state.
   - `Home.css` — base rules hide `.home__sidebar` and `.home__empty-icon` (`display: none`) so they never render on mobile; replaced the old centered 800px desktop media block with the fixed left sidebar (280px, full height, `--surface-container-high` bg, primary #974400 wordmark, white pill active item), content `margin-left: 280px`, top-bar becomes a fixed right-aligned menu+search group (brand hidden), `.home__tab-bar { display: none }`, FAB moves to bottom-right of the content area (bottom 24 / right 28), empty-state icon shown centered.
 - **Verified:** `npm run build` passes. Headless Chromium (puppeteer) at 1280×800 — sidebar flex full-height at x0 y0 w280 h800, Home pill highlighted, tab-bar `none`, FAB bottom-right (1196,720), empty icon centered; at 375×812 — sidebar & icon hidden, tab-bar present at bottom (y740 h72), brand + top-bar unchanged.
 - **In progress:** — (awaiting next command)
@@ -849,7 +853,7 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
   - `frontend/src/pages/CraftPage.css` — frosted header, `--radius-md` card, `--radius-full` pill buttons, DESIGN.md tokens.
 - **Backend (needed to serve the model + creator):** there was NO file-serving route in the backend (main.py/storage.py check confirmed files were never served — the Home thumbnail URL `/api/crafts/{id}/photos/{key}` was a dead pattern). `get_craft` now sets `owner_name` (`craft.owner.full_name`) and `model_url` on the response; `CraftOut` gained optional `owner_name`/`model_url` fields.
 - **Model URL pattern:** `storage.py` gained `get_browser_url()` — a presigned URL **signed against `MINIO_PUBLIC_ENDPOINT`** (new setting, default `localhost:9000`, documented in `.env.example`). A host-swap after signing returned 403 (signature includes the Host header); signing the URL against the public endpoint fixes it and `generate_presigned_url` is pure computation (no network), so it works from inside the api container. `ponytail:` dev-only convenience; production serves files through the API.
-- **Verified:** api rebuilt. `/api/crafts/16` returns owner_name "E2E" + model_url `http://localhost:9000/akaar/stub/16.glb?...`; curl fetch of that URL → 200 `model/gltf-binary`, magic `glTF`. Headless Chromium (SPA nav via `history.pushState`+popstate after sign-in): `/craft/14` renders title "Processing E2E vase", `<model-viewer>` present with `src`/`camera-controls`/`auto-rotate`, and a network request to the stub GLB fires; `/craft/16` renders full metadata rows (Craft type Terracotta, Material Clay, Technique Hand-thrown, Dimensions 10 x 8 cm, Weight 0.4 kg, Location Paralakhemundi, Year 2024), story, "By E2E", Download + Publish buttons. Stub GLB is empty geometry (expected); viewer wired correctly for real models. `npm run build` passes (model-viewer adds ~to bundle; chunk-size warning noted).
+- **Verified:** api rebuilt. `/api/crafts/16` returns owner_name "E2E" + model_url `http://localhost:9000/PATHS/stub/16.glb?...`; curl fetch of that URL → 200 `model/gltf-binary`, magic `glTF`. Headless Chromium (SPA nav via `history.pushState`+popstate after sign-in): `/craft/14` renders title "Processing E2E vase", `<model-viewer>` present with `src`/`camera-controls`/`auto-rotate`, and a network request to the stub GLB fires; `/craft/16` renders full metadata rows (Craft type Terracotta, Material Clay, Technique Hand-thrown, Dimensions 10 x 8 cm, Weight 0.4 kg, Location Paralakhemundi, Year 2024), story, "By E2E", Download + Publish buttons. Stub GLB is empty geometry (expected); viewer wired correctly for real models. `npm run build` passes (model-viewer adds ~to bundle; chunk-size warning noted).
 - **In progress:** — (awaiting next command)
 - **Next:** Commit this change if asked; otherwise next screen/design per user command (rule 12–13).
 
@@ -885,7 +889,7 @@ Mandatory for any agent in this repo. Violating them wastes the user's time.
   the old SQLAlchemy models, `owner_id`/ownership-chain now uuid). RLS policies replace every
   ownership/visibility check that used to live in FastAPI route handlers: `crafts_select` (public
   OR own), `crafts_insert`/`update` (own only), `jobs_select`/`insert`/`update` (via parent craft
-  ownership), storage bucket `akaar` (public=true; `storage.objects` insert/update restricted to
+  ownership), storage bucket `PATHS` (public=true; `storage.objects` insert/update restricted to
   `(storage.foldername(name))[1] = auth.uid()::text`).
   - **Old data dropped:** pre-existing `users`/`crafts`/`jobs` tables (6 users, 12 crafts, 12 jobs,
     integer PKs from the custom-JWT backend) could not map to Supabase Auth's uuid `auth.uid()` —
@@ -1022,20 +1026,20 @@ project — everything before was build-checks + direct API calls).
     against for several steps. Found via `Get-NetTCPConnection`, killed, dev server now correctly
     rebinds to 5173.
 - **Bug 2 — GLB upload 400 on `x-upsert:true`.** Reproduced directly via curl (not guessed): a
-  plain `POST` to `storage/v1/object/akaar/{owner}/{craft}/model.glb` succeeds (200); the identical
+  plain `POST` to `storage/v1/object/PATHS/{owner}/{craft}/model.glb` succeeds (200); the identical
   request with `x-upsert: true` (what `reconstruction.js` sends) returns HTTP 400 wrapping
   `{"statusCode":"403","message":"new row violates row-level security policy"}`. Cause: Supabase
   Storage's upsert path checks for a conflicting existing row before deciding insert-vs-update, and
   that check is itself RLS-gated — we had `insert`/`update` policies on `storage.objects` but no
   `select` policy, so the conflict check itself was denied.
-  - **Fix:** added `akaar_select_own` policy (same owner-path check as insert/update) to
+  - **Fix:** added `PATHS_select_own` policy (same owner-path check as insert/update) to
     `supabase/schema.sql` and applied live. Verified: upsert now succeeds both on a fresh path and
     on a second upsert over the same path (the actual retry scenario).
   - **Real user impact:** craft id 12 (job id 9) hit this exact failure and is now stuck
     `status=failed`, no title/model — orphaned since "Try again" starts a fresh craft rather than
     resuming. Left as-is (real user data, not test data); user can just retry from `/create`.
 - **Cleanup:** deleted all stray e2e test users/crafts created while reproducing both bugs
-  (queried `auth.users where email like 'akaar.e2e%'` directly, cascaded their crafts, confirmed
+  (queried `auth.users where email like 'PATHS.e2e%'` directly, cascaded their crafts, confirmed
   empty after).
 - **In progress:** — (awaiting next command)
 - **Next:** User to retry the Create flow in-browser; commit if asked; otherwise next command
@@ -1207,7 +1211,7 @@ project — everything before was build-checks + direct API calls).
   storage to retrive if the 3d generation fails for any reason. Fix the image viewer size." +
   (mid-turn) "Generate two image veriations and ask the user to select one."
 - **Recovery cache:** new `frontend/src/photoRecovery.js` (`saveRecoveryPhoto`/
-  `loadRecoveryPhoto`/`clearRecoveryPhoto`, localStorage, keyed `akaar:recovery-photo:{craftId}`,
+  `loadRecoveryPhoto`/`clearRecoveryPhoto`, localStorage, keyed `PATHS:recovery-photo:{craftId}`,
   data-URL-encoded, best-effort — swallows quota/private-browsing failures rather than blocking
   generation). `CreatePage.jsx.handleSubmit` calls `saveRecoveryPhoto` right before
   `runReconstruction` (craft + photo-upload + job row already committed by then — this is purely
@@ -1278,13 +1282,13 @@ project — everything before was build-checks + direct API calls).
   codebase — kept to rule 6, no new dep/component for one use). On confirm: best-effort removes
   the craft's Storage objects (photos, converted back from their public URLs to bucket-relative
   paths since `crafts.photos` stores URLs not paths; `model_key`, already a raw path) via
-  `.storage.from('akaar').remove(paths)` — logged, not fatal, if it fails, since a leaked
+  `.storage.from('PATHS').remove(paths)` — logged, not fatal, if it fails, since a leaked
   Storage object with no DB row pointing at it is unreachable to anyone anyway — then deletes
   the `crafts` row itself, which cascades its `jobs` rows via the existing FK.
 - **Schema change required — NOT auto-applied, must be run against Supabase:** neither
   `crafts` nor `storage.objects` had a DELETE RLS policy at all (only select/insert/update
   existed), so without this the delete silently fails under RLS. Added `crafts_delete`
-  (owner-only) and `akaar_delete_own` (owner-only, mirrors the existing insert/update/select
+  (owner-only) and `PATHS_delete_own` (owner-only, mirrors the existing insert/update/select
   storage policies) to `supabase/schema.sql` (source of truth, idempotent
   `drop policy if exists` + `create policy`). User needs to run schema.sql's new statements
   against their Supabase project (SQL editor) before this feature will actually work — flagged
@@ -1482,7 +1486,7 @@ project — everything before was build-checks + direct API calls).
   the pending migration to actually test the delete half) — the reordering and status-check
   logic is code-reviewed, not exercised against a real flagged submission end to end this step.
 - **In progress:** — (awaiting next command)
-- **Next:** User applies the pending `crafts_delete`/`akaar_delete_own` migration, then triggers
+- **Next:** User applies the pending `crafts_delete`/`PATHS_delete_own` migration, then triggers
   a real flagged submission and confirms: the photo never appears in Storage, the craft row
   disappears from Library within ~4s, and the rejection reason was visible on Processing before
   it did. Commit if asked.
@@ -1613,7 +1617,7 @@ project — everything before was build-checks + direct API calls).
   Commit if asked.
 
 ### 2026-08-08 — Step: Fix production-wide crash from a Vercel/local env-var split
-- **User reported the deployed site (akaar-six.vercel.app) as a blank white page**, screenshot
+- **User reported the deployed site (PATHS-six.vercel.app) as a blank white page**, screenshot
   showing `Uncaught TypeError: Cannot read properties of undefined (reading 'replace')` at
   module scope, on every route.
 - **Root cause, confirmed not guessed:** `instantMesh.js`/`fooocus.js` both computed
@@ -1662,7 +1666,7 @@ project — everything before was build-checks + direct API calls).
   `/fooocus/v2/generation/image-prompt` through this URL both return 401 — only explainable by
   this hitting `instantmesh-proxy`'s global auth middleware, since InstantMesh raw has no auth
   at all (confirmed extensively earlier this session) and no `/fooocus` route exists outside
-  the proxy. A CORS preflight for `Origin: https://akaar-six.vercel.app` returned `204` with the
+  the proxy. A CORS preflight for `Origin: https://PATHS-six.vercel.app` returned `204` with the
   correct `Access-Control-Allow-Origin` already — meaning this tunnel points at the *same* local
   `instantmesh-proxy` process managed all session on this box (its `.env`'s `ALLOWED_ORIGINS`
   already includes that exact origin), just also reachable publicly. Not a new/different
@@ -1680,7 +1684,7 @@ project — everything before was build-checks + direct API calls).
   tunnel, not just the auth/CORS checks done here.
 
 ### 2026-08-08 — Step: Fix direct/deep-URL 404s on Vercel (SPA routing)
-- **Command (screenshot):** navigating straight to `akaar-six.vercel.app/craft/70` (not via
+- **Command (screenshot):** navigating straight to `PATHS-six.vercel.app/craft/70` (not via
   in-app navigation — a fresh tab/reload/shared link) returned Vercel's own platform
   `404: NOT_FOUND`, not the app's React-rendered "Craft not found" state.
 - **Root cause:** this is a client-side-routed SPA (React Router) with no `vercel.json` in the
@@ -1784,7 +1788,7 @@ project — everything before was build-checks + direct API calls).
   come up, then re-points both portproxy rules (ZeroTier + LAN) at whatever the current IP is.
 - **New `scripts/register-startup-tasks.ps1`** (run once, elevated — same S4U/no-stored-password
   pattern as the existing, proven `InstantMesh/setup_startup_task.ps1`) registers 4 boot tasks:
-  `AKAAR Portproxy Sync` (RunLevel Highest — needs admin for netsh), `instantmesh-proxy Startup`,
+  `PATHS Portproxy Sync` (RunLevel Highest — needs admin for netsh), `instantmesh-proxy Startup`,
   `moderation-service Startup`, `Fooocus-API Startup` (all three RunLevel Limited). All
   boot-triggered in parallel with no explicit dependency ordering — each already tolerates its
   dependencies not being ready yet (instantmesh-proxy's own requests just 502 transiently rather
@@ -1872,3 +1876,86 @@ project — everything before was build-checks + direct API calls).
 - **Next:** User restarts `instantmesh-proxy` on the GPU box, then runs a real Co-Create
   end-to-end (including one deliberately off-topic prompt like the one that produced the
   portraits) to confirm the output is now filtered/rejected as expected.
+
+### 2026-08-10 — Step: Rebrand full name/tagline + Heritage tone pass + About/Terms pages
+- **Command:** name expanded from "PATHS" (short) to "PATHS — Pottery, Art, Technology, Heritage
+  and Society" (the "S" mapping confirmed directly with the user — not guessed); new tagline
+  "Design Thinking by Thinking Design"; frontend tone to foreground Heritage/Traditional
+  Knowledge; add About + Terms & Conditions to the app sidebar; credit "Developed at Future Nexus
+  Labs (https://sofn.vercel.app/), Centurion University (https://cutm.ac.in)" surfaced in the UI.
+- **Done:**
+  - §1 above updated with the full name and new tagline (old tagline kept as the functional
+    subtitle, not deleted — still accurate).
+  - Fixed a leftover pre-rebrand artifact: `frontend/public/favicon.svg`'s wordmark glyph was
+    still the old "A" (AKAAR) — changed to "P". `index.html` (title, added a meta description,
+    theme-color #000000 → terracotta `#974400`) and `manifest.webmanifest` (name/description/
+    theme_color/background_color) brought in line with the new name + terracotta brand color that
+    was already in use everywhere else.
+  - `WelcomePage.jsx`/`Welcome.css`: subtitle is now the tagline, full name added as a small line
+    beneath it; footer now links `/terms` + `/policy` (previously just prose, no `/terms` existed)
+    and adds the Future Nexus Labs / Centurion University credit line.
+  - `AppNav.jsx`/`Home.css`: added a tagline line under the desktop sidebar's "PATHS" wordmark; a
+    new secondary nav section (About, Terms & Conditions) below the primary 5 items,
+    **desktop-sidebar only** — deliberately NOT added to the mobile tab bar (only 5 slots, already
+    full) or the FAB; a credit footer pinned to the sidebar's bottom via `margin-top: auto`.
+    Mobile reaches the same two pages via new links on `AccountPage`.
+  - New `AboutPage.jsx` (+ `About.css`) and `TermsPage.jsx` — both public routes (`/about`,
+    `/terms`, no `ProtectedRoute`, same pattern as `/policy`), both reuse `PolicyPage`'s `.policy`
+    shell (back+title header, article body) rather than inventing new chrome. About covers the
+    mission/heritage story + the PDP loop + the Future Nexus Labs/Centurion University credit
+    with real links. Terms covers acceptance, roles/guest limits, account responsibility, content
+    ownership (uploader keeps ownership; publishing only changes visibility — verified against
+    `CraftPage.jsx`'s actual publish/download code before writing this, since `schema.sql` has an
+    unused `license` column and AGENTS.md's own §3 Phase 4 describes a license-picker UI that was
+    never built — did NOT claim that feature exists, per rule 9), acceptable use (links to
+    §5d/PolicyPage rather than duplicating it), AI-result accuracy caveats, and the
+    provided-as-is/student-project framing.
+  - `AccountPage.jsx`: added "About PATHS" and "Terms & Conditions" links next to the existing
+    Privacy & AI Policy one (mobile parity for the sidebar-only nav additions).
+  - `PolicyPage.jsx` §7 and `AcceptTermsPage.jsx`: added cross-links to `/about` and `/terms`
+    (informational only — did not touch `AcceptTermsPage`'s required checkbox/logic, which is
+    specifically about Policy acceptance per §5e and wasn't asked to change).
+  - Light tone pass: `HomePage.jsx`'s empty state ("No crafts uploaded yet." / "Be the first to
+    share your creation!") reworded toward the heritage framing ("No crafts documented yet." /
+    "Be the first to preserve a craft's story as a digital twin."). Left other copy
+    (ProcessingPage, MetadataPage, CraftPage, Library empty state) unchanged — already used
+    heritage-appropriate language ("digital twin", "story", "Hand-thrown terracotta vase" as a
+    placeholder) and didn't need rewriting.
+- **Decisions:** No strict letter-by-letter forcing beyond what the user confirmed (P-A-T-T
+  wasn't real, S = Society was confirmed directly rather than invented). Did not touch the actual
+  git remote name (`root-Akira/akaar`) or rename the repo folder — out of scope, and renaming a
+  git remote is a destructive/external action not requested. Did not add a license-picker feature
+  to make the Terms page's ownership section "more complete" — that would be scope creep past a
+  copy/branding request (rule 1/11).
+- **Verified:** `npm run build` in `frontend/` — see next log line for outcome. Not yet verified
+  in a real browser session (no running dev server / browser available this session) — the two
+  new routes' links and the sidebar layout change (extra sidebar content potentially overflowing
+  short viewports, mitigated with `overflow-y: auto` on `.home__sidebar`) should be spot-checked
+  once a dev server is available.
+- **Next:** Manually click through `/about`, `/terms`, the sidebar's new items, and
+  `AccountPage`'s new links once `npm run dev` is up, to confirm the desktop sidebar layout holds
+  and no route 404s. Commit if asked.
+
+### 2026-08-10 — Step: Correct full-name expansion — Society → Sustainability
+- **Command:** the "S" in the full name changed from "and Society" to "& Sustainability", and the
+  separator style changed from comma+"and" to " - " between the first four words with "&" before
+  the last: **"Pottery - Art - Technology - Heritage & Sustainability"** (was "Pottery, Art,
+  Technology, Heritage and Society" — see the prior entry above, where "Society" had been
+  confirmed directly with the user minutes earlier; superseded by this correction, not a case of
+  guessing wrong).
+- **Done:** every occurrence of the full name replaced with the new wording/punctuation exactly:
+  §1 above, `frontend/index.html` (meta description), `frontend/public/manifest.webmanifest`
+  (`name`), `WelcomePage.jsx` (`welcome__fullname`), `AboutPage.jsx` (`about__fullname`),
+  `TermsPage.jsx` §1. Found the full set via `grep -rn "Society"` across the repo (outside
+  `node_modules`/`dist`/`.git`) rather than relying on memory of where it had been written, so
+  nothing was missed. The short name (PATHS), the tagline ("Design Thinking by Thinking Design"),
+  and everything else from the 2026-08-10 rebrand entry above are unchanged.
+- **Decisions:** left the prior log entry's text as-is rather than editing it to say
+  "Sustainability" — it's an accurate record of what was confirmed and done at that point in time;
+  this entry is the correction on top of it, per this section's own rule that log entries are
+  facts of what happened, not a rewritable spec.
+- **Not yet re-verified live** — the prior entry's Playwright screenshot pass covered layout/
+  console-errors for the old wording; this is a same-length text swap in the same spots, but a
+  fresh pass hasn't been re-run against a live dev server this time.
+- **Next:** Re-run the same verification pass (or at minimum `npm run build`) to confirm the
+  swapped text didn't break anything, then commit if asked.

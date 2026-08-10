@@ -1,4 +1,4 @@
-# AKAAR — Build Plan
+# PATHS — Build Plan
 
 > Source of truth: `AGENTS.md`. Build order from AGENTS.md §10. Progress is also logged
 > in the **Progress Log** section of `AGENTS.md`.
@@ -15,7 +15,7 @@
 
 | # | Step | Status |
 |---|------|--------|
-| 1 | Project setup / scaffold (`akaar/` tree, compose, configs) | DONE |
+| 1 | Project setup / scaffold (`PATHS/` tree, compose, configs) | DONE |
 | 1a | Backend build (models, security, storage, queue, worker, routers) | NOT STARTED |
 | 1b | Boot backend + verify health/tables/MinIO | NOT STARTED |
 | 2 | App frontend build (screen by screen, per supplied design) | NOT STARTED |

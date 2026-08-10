@@ -4,7 +4,7 @@
 # Registers Windows Scheduled Tasks so every backend service this app depends on comes back
 # up on its own after a reboot - InstantMesh already has its own task
 # (InstantMesh/setup_startup_task.ps1, untouched by this script); this covers the rest:
-#   1. AKAAR Portproxy Sync    - re-points the WSL-IP-dependent netsh portproxy rules at
+#   1. PATHS Portproxy Sync    - re-points the WSL-IP-dependent netsh portproxy rules at
 #                                 whatever WSL's IP actually is this boot (see
 #                                 sync-wsl-portproxy.ps1 - that IP changes every reboot).
 #                                 Runs elevated (RunLevel Highest); the other three don't
@@ -23,7 +23,7 @@
 # S4U-logon / restart-on-failure pattern as the existing InstantMesh task, so no password
 # ever needs to be stored.
 
-$repoRoot = "C:\Users\abhim\Documents\Projects\akaar"
+$repoRoot = "C:\Users\abhim\Documents\Projects\PATHS"
 $winUser = "Abhi"
 
 $node = "C:\Program Files\nodejs\node.exe"
@@ -51,7 +51,7 @@ $restartSettings = @{
     DontStopIfGoingOnBatteries  = $true
 }
 
-function Register-AkaarTask($Name, $Execute, $Argument, $WorkingDirectory, $RunLevel) {
+function Register-PATHSTask($Name, $Execute, $Argument, $WorkingDirectory, $RunLevel) {
     $actionArgs = @{ Execute = $Execute; Argument = $Argument }
     if ($WorkingDirectory) { $actionArgs.WorkingDirectory = $WorkingDirectory }
 
@@ -63,7 +63,7 @@ function Register-AkaarTask($Name, $Execute, $Argument, $WorkingDirectory, $RunL
 
         Register-ScheduledTask -TaskName $Name -Action $action -Trigger $trigger `
             -Principal $principal -Settings $settings -Force -ErrorAction Stop `
-            -Description "AKAAR backend service - registered by scripts/register-startup-tasks.ps1" | Out-Null
+            -Description "PATHS backend service - registered by scripts/register-startup-tasks.ps1" | Out-Null
     } catch {
         Write-Host "FAILED to register '$Name': $($_.Exception.Message)" -ForegroundColor Red
         return
@@ -81,14 +81,14 @@ function Register-AkaarTask($Name, $Execute, $Argument, $WorkingDirectory, $RunL
 Write-Host "Registering startup tasks..." -ForegroundColor Cyan
 
 # 1. Portproxy sync - needs admin (netsh portproxy).
-Register-AkaarTask `
-    -Name "AKAAR Portproxy Sync" `
+Register-PATHSTask `
+    -Name "PATHS Portproxy Sync" `
     -Execute "powershell.exe" `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$syncScript`"" `
     -RunLevel Highest
 
 # 2. instantmesh-proxy
-Register-AkaarTask `
+Register-PATHSTask `
     -Name "instantmesh-proxy Startup" `
     -Execute $node `
     -Argument "server.js" `
@@ -96,7 +96,7 @@ Register-AkaarTask `
     -RunLevel Limited
 
 # 3. moderation-service
-Register-AkaarTask `
+Register-PATHSTask `
     -Name "moderation-service Startup" `
     -Execute $moderationPython `
     -Argument "-m uvicorn main:app --host 127.0.0.1 --port 8790" `
@@ -107,7 +107,7 @@ Register-AkaarTask `
 # venv - matches how it's actually been run manually all along, confirmed against the live
 # process's real command line + cwd, not guessed from AGENTS.md's doc alone, which turned
 # out to describe a different cwd than what's actually running)
-Register-AkaarTask `
+Register-PATHSTask `
     -Name "Fooocus-API Startup" `
     -Execute $fooocusPython `
     -Argument "main.py --skip-pip --host 0.0.0.0 --port 8888 --base-url http://10.231.121.101:8888" `
@@ -116,7 +116,7 @@ Register-AkaarTask `
 
 Write-Host ""
 Write-Host "Done. All four tasks will run at next boot. To start them now without rebooting:" -ForegroundColor Yellow
-Write-Host '  Start-ScheduledTask -TaskName "AKAAR Portproxy Sync"'
+Write-Host '  Start-ScheduledTask -TaskName "PATHS Portproxy Sync"'
 Write-Host '  Start-ScheduledTask -TaskName "instantmesh-proxy Startup"'
 Write-Host '  Start-ScheduledTask -TaskName "moderation-service Startup"'
 Write-Host '  Start-ScheduledTask -TaskName "Fooocus-API Startup"'

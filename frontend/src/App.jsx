@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import AboutPage from './pages/AboutPage.jsx'
 import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import CompleteProfilePage from './pages/CompleteProfilePage.jsx'
@@ -15,6 +16,7 @@ import PolicyPage from './pages/PolicyPage.jsx'
 import ProcessingPage from './pages/ProcessingPage.jsx'
 import SignInPage from './pages/SignInPage.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
+import TermsPage from './pages/TermsPage.jsx'
 import WelcomePage from './pages/WelcomePage.jsx'
 
 function App() {
@@ -28,6 +30,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           {/* Public — readable before signing up (linked from SignUpPage/AcceptTermsPage). */}
           <Route path="/policy" element={<PolicyPage />} />
+          {/* Public — About/Terms, linked from AppNav's desktop sidebar + AccountPage's footer. */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route
             path="/accept-terms"
             element={

@@ -57,7 +57,7 @@ export default function AcceptTermsPage() {
 
         <form className="create__content" onSubmit={handleSubmit}>
           <p className="create__section-label">
-            AKAAR uses AI (InstantMesh for 3D reconstruction, Fooocus for AI-assisted
+            PATHS uses AI (InstantMesh for 3D reconstruction, Fooocus for AI-assisted
             redesign) to turn your photos into digital twins. Please review how we handle
             your data and what our AI tools can and can't be used for before continuing.
           </p>
@@ -70,6 +70,10 @@ export default function AcceptTermsPage() {
               processed. Full details in the{' '}
               <Link to="/policy" target="_blank" rel="noopener noreferrer">
                 Privacy Policy &amp; AI Usage Policy
+              </Link>
+              . General rules of use are in our{' '}
+              <Link to="/terms" target="_blank" rel="noopener noreferrer">
+                Terms &amp; Conditions
               </Link>
               .
             </p>

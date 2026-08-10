@@ -1,5 +1,5 @@
 """
-Local, no-cost content moderation service for AKAAR's instantmesh-proxy.
+Local, no-cost content moderation service for PATHS's instantmesh-proxy.
 
 Replaces the OpenAI-based checks (Moderation API + gpt-4o-mini classifier) with two models
 that run entirely on this box, free forever, no per-request API cost:
@@ -31,7 +31,7 @@ from PIL import Image
 from pydantic import BaseModel
 from transformers import CLIPModel, CLIPProcessor
 
-app = FastAPI(title="AKAAR moderation service")
+app = FastAPI(title="PATHS moderation service")
 
 # ── Models (loaded once at startup, not per-request) ────────────────────────
 print("Loading CLIP (openai/clip-vit-base-patch32)...")
