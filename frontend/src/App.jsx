@@ -91,14 +91,11 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/craft/:craftId"
-            element={
-              <ProtectedRoute>
-                <CraftPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Guest-accessible per AGENTS.md §3 Phase 1 (view/3D/AR doesn't require sign-in) —
+              CraftPage itself already treats `user` as optional (isOwner gates Edit/Publish;
+              RLS already hides anything a guest shouldn't see). Was incorrectly wrapped in
+              ProtectedRoute, which bounced guests to /welcome before they could view anything. */}
+          <Route path="/craft/:craftId" element={<CraftPage />} />
         </Routes>
       </ProfileGate>
     </AuthProvider>

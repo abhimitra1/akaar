@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient.js'
 import { submitImagePrompt, getJobStatus, base64ToFile } from '../fooocus.js'
+import { compressImage } from '../imageCompression.js'
 import PolicyLink from './PolicyLink.jsx'
 
 const POLL_INTERVAL_MS = 2000
@@ -130,11 +131,12 @@ export default function CoCreatePanel({ onAccepted, onGeneratingChange }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
 
-  const handleSourceFile = (e) => {
+  const handleSourceFile = async (e) => {
     const file = (e.target.files || [])[0]
     e.target.value = ''
     if (!file) return
-    setSource({ file, previewUrl: URL.createObjectURL(file) })
+    const compressed = await compressImage(file)
+    setSource({ file: compressed, previewUrl: URL.createObjectURL(compressed) })
     setSelectedDesign(null)
   }
 

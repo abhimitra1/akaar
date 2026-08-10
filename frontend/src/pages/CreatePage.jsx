@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { runReconstruction } from '../reconstruction.js'
+import { compressImage } from '../imageCompression.js'
 import CoCreatePanel from '../components/CoCreatePanel.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -111,11 +112,12 @@ export default function CreatePage() {
   const remaining = usedToday === null ? null : Math.max(0, DAILY_LIMIT - usedToday)
   const canSubmit = photo !== null && !submitting && (unlimited || (remaining !== null && remaining > 0))
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = (e.target.files || [])[0]
     e.target.value = '' // allow re-selecting the same file
     if (!file) return
-    setPhoto({ file, previewUrl: URL.createObjectURL(file) })
+    const compressed = await compressImage(file)
+    setPhoto({ file: compressed, previewUrl: URL.createObjectURL(compressed) })
     setParentDesign(null)
   }
 
@@ -129,8 +131,12 @@ export default function CreatePage() {
   // either way, so co-creation needs no special-casing past this point. `sourceDesign` is
   // only set when the co-creation started from a library pick (see CoCreatePanel) — carried
   // into the craft insert below as `parent_design_id`.
-  const handleCoCreateAccepted = (file, previewUrl, sourceDesign) => {
-    setPhoto({ file, previewUrl })
+  const handleCoCreateAccepted = async (file, previewUrl, sourceDesign) => {
+    // Fooocus returns an uncompressed PNG — same compression pass as a normal upload
+    // before it becomes the craft's stored photo; previewUrl (already a data URL from the
+    // review step) still matches visually, so it's kept as-is rather than regenerated.
+    const compressed = await compressImage(file)
+    setPhoto({ file: compressed, previewUrl })
     setParentDesign(sourceDesign || null)
     setMode('upload')
   }

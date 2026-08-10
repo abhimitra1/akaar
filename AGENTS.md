@@ -1959,3 +1959,65 @@ project — everything before was build-checks + direct API calls).
   fresh pass hasn't been re-run against a live dev server this time.
 - **Next:** Re-run the same verification pass (or at minimum `npm run build`) to confirm the
   swapped text didn't break anything, then commit if asked.
+
+### 2026-08-10 — Step: Compress photos on upload/co-create + fix 2 live bugs from the rebrand
+- **Command 1 — storage optimization:** "photos uploaded, created and saved... are taking too
+  much space." No backend exists to do this server-side (§6) — added client-side compression at
+  the point a photo is picked/accepted, before anything else touches it.
+  - New `frontend/src/imageCompression.js`: `compressImage(file)` — `createImageBitmap` (with
+    `imageOrientation: 'from-image'`, so a portrait phone photo doesn't come out rotated) → draw
+    to a canvas capped at 1600px long edge → `canvas.toBlob('image/jpeg', 0.82)`. Falls back to
+    the original file untouched on any failure, and also if the re-encoded blob would actually be
+    *larger* (can happen on tiny/already-compressed sources) — never makes things worse.
+  - Wired into the 3 spots a photo becomes `CreatePage.jsx`'s `photo` state (which is what
+    `reconstruction.js` uploads to Storage and `photoRecovery.js` caches to localStorage — both
+    get the benefit for free, no changes needed in either file): `handleFile` (plain upload),
+    `handleCoCreateAccepted` (Fooocus's chosen output — Fooocus returns uncompressed PNG, so this
+    one matters most). Also wired into `CoCreatePanel.jsx`'s `handleSourceFile` (the *input* photo
+    fed to Fooocus) — that one's never stored, but compressing it cuts upload bandwidth to the GPU
+    proxy too.
+  - **User follow-up asked**: whether a co-creation's thumbnail also needs saving compressed —
+    confirmed via AskUserQuestion that `handleCoCreateAccepted`'s compression above already covers
+    it; no separate thumbnail-storage feature was requested.
+  - **Verified live** (Playwright, browser APIs aren't available in plain Node): a synthetic
+    10.11MB/4000x3000 PNG compressed to 263KB JPEG capped at 1600x1200 (97.5% reduction); a tiny
+    50x50 PNG correctly fell through to "keep original" with zero regression. `npm run build`
+    clean.
+- **Command 2 — two live bugs reported by the user with a real console error (400 on
+  `.../storage/v1/object/public/PATHS/.../model.glb`), fixed same session:**
+  1. **Storage bucket mismatch.** The 2026-08-10 rebrand entry above changed
+     `supabaseClient.js`'s `STORAGE_BUCKET` from `'akaar'` to `'PATHS'` as a branding/docs pass —
+     but Supabase Storage buckets can't be renamed in place (would need a new bucket + copying
+     every object + rewriting every `crafts.photos` URL already baked into the DB), and that
+     migration never happened. **Verified directly against the live Supabase project** (anon-key
+     curl, no code involved): `.../object/public/PATHS/...` → `400 {"error":"Bucket not
+     found"}`; `.../object/public/akaar/...` → `200` with real glTF bytes. Reverted
+     `STORAGE_BUCKET` to `'akaar'` — the bucket that actually holds every existing file. Zero data
+     risk: nothing was ever successfully written to a `'PATHS'` bucket (it doesn't exist, so any
+     upload attempted while the constant was wrong would have errored, not silently succeeded
+     into the void) — this is a pure revert-to-what-was-true, not a migration.
+  2. **Guest viewing required login (contradicts AGENTS.md §3 Phase 1's "guests can browse/
+     search/view 3D/AR" and the user's explicit "visitors do not need to login to view an item").**
+     `App.jsx`'s `/craft/:craftId` route was wrapped in `<ProtectedRoute>`, which redirects any
+     unauthenticated visitor straight to `/welcome` before `CraftPage` ever renders — likely an
+     oversight from early scaffolding never revisited when `/explore` was later made guest-
+     accessible. `CraftPage.jsx` itself already treats `user` as optional (`isOwner` gates Edit/
+     Publish only; RLS already hides anything a guest shouldn't see), so unwrapping it needed no
+     other change. Left `/craft/:craftId/metadata` (add/edit details) and `/create`/`/processing`
+     protected — those genuinely require an owner.
+  - **Verified live**, both together: a fresh Playwright browser context with no session
+    navigated straight to `/craft/22` (a real public craft) — stayed on `/craft/22` (no redirect),
+    title rendered, the model.glb request returned `200` from the `akaar` bucket, zero console
+    errors, and the actual 3D vase rendered on screen (screenshot taken, not just a status-code
+    check).
+- **Decisions:** Did not attempt to actually migrate Storage to a real `'PATHS'` bucket (create
+  bucket, copy every object, rewrite every stored `crafts.photos` URL) — that's a deliberate,
+  credential-gated (needs the service-role key, which isn't in this repo's `.env` — only the anon
+  key is) data migration, not a "safe fix" for a production 400. If full branding parity in
+  Storage is wanted later, that's a separate, explicitly-requested step. Did not change Download/
+  Publish visibility on `CraftPage.jsx` even though AGENTS.md §3 has an internal contradiction
+  between Phase 1's craft-detail bullet (lists "download (if public)" as guest-visible) and the
+  later "guests... cannot download/publish" line — out of scope for what was actually asked this
+  round; flagging here per rule 9 rather than silently picking a side.
+- **Next:** Commit if asked. If Storage branding parity (`akaar` → an actual `PATHS` bucket) is
+  wanted, that needs the service-role key and a deliberate migration script — ask before doing it.
