@@ -6,7 +6,7 @@ import LoadingScreen from '../components/LoadingScreen.jsx'
 import '../pages/Home.css'
 import './Explore.css'
 
-const CATEGORY_CHIPS = ['Pottery', 'Textiles', 'Wood', 'Metal']
+const CATEGORY_CHIPS = ['Pottery', 'Terracotta', 'Wood', 'Metal']
 
 // Search & Explore (AGENTS.md §3 Phase 1): public gallery, guest-accessible. Text
 // search (title/story) + craft-type filter chips are core; semantic search, sort by

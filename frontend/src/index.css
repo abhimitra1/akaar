@@ -21,6 +21,23 @@
   --error: #ba1a1a;
   --on-error: #ffffff;
 
+  /* Brand typography (from the "Wheel Rings" logo design, Claude Design project "PATHS logo
+     directions") — used for the wordmark/tagline and other brand moments (sidebar brand,
+     WelcomePage, BrandingPage), NOT the app's general body/UI font, which stays the system
+     font below. Loaded via Google Fonts <link> in index.html. */
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Spectral', Georgia, serif;
+
+  /* Wheel Rings mark's own palette (fixed brand colors, not reused as general UI tokens —
+     the app's existing --terracotta-800/900 above stay as the UI accent). Kept here, named,
+     so BrandingPage.jsx's swatches and PathsMark.jsx's hardcoded hex values have one place
+     that documents where those exact numbers came from. */
+  --mark-ink: #2a241f;
+  --mark-cream: #f6efe4;
+  --mark-ring: #c1662e;
+  --mark-taupe: #8a7a63;
+  --mark-gold: #c99a3c;
+
   /* shapes */
   --radius-md: 12px;
   --radius-lg: 12px;

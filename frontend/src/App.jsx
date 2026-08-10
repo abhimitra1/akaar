@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
+import BrandingPage from './pages/BrandingPage.jsx'
 import CompleteProfilePage from './pages/CompleteProfilePage.jsx'
 import CraftPage from './pages/CraftPage.jsx'
 import CreatePage from './pages/CreatePage.jsx'
@@ -30,8 +31,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           {/* Public — readable before signing up (linked from SignUpPage/AcceptTermsPage). */}
           <Route path="/policy" element={<PolicyPage />} />
-          {/* Public — About/Terms, linked from AppNav's desktop sidebar + AccountPage's footer. */}
+          {/* Public — About/Branding/Terms, linked from AppNav's desktop sidebar + AccountPage's footer. */}
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/branding" element={<BrandingPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route
             path="/accept-terms"

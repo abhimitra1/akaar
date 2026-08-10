@@ -106,7 +106,17 @@ export default function TermsPage() {
         </section>
 
         <section className="policy__section">
-          <h2>8. Changes to these terms</h2>
+          <h2>8. Our name and mark</h2>
+          <p>
+            "PATHS," the Wheel Rings mark, and the project's wordmark and tagline are ours. See{' '}
+            <Link to="/branding">Branding</Link> for the approved logo files, colors, and usage
+            guidelines before reusing them anywhere — including which variant to use, minimum
+            size, and clear space.
+          </p>
+        </section>
+
+        <section className="policy__section">
+          <h2>9. Changes to these terms</h2>
           <p>
             If these terms change in a way that affects how PATHS may be used, we'll update this
             page and the "Last updated" date above. Continuing to use PATHS after a change means
@@ -115,7 +125,7 @@ export default function TermsPage() {
         </section>
 
         <section className="policy__section">
-          <h2>9. Contact</h2>
+          <h2>10. Contact</h2>
           <p>
             Questions about these terms? Contact the project maintainers directly, or read more
             about the project on the <Link to="/about">About</Link> page.

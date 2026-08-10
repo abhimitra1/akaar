@@ -2,7 +2,7 @@
    - Top bar: hamburger menu (left), PATHS brand (center, #974400), search icon (right) — both non-functional for now
    - Large title: "Explore Crafts" using DESIGN.md's large-title typography
    - Featured Collection carousel: horizontal-scrolling row of cards (craft photo, "Featured Collection" badge, title, "By {creator}" subtitle)
-   - Category filter chips: Pottery, Textiles, Wood, Metal — horizontal scroll, pill-shaped, one active, primary color when selected
+   - Category filter chips: Pottery, Terracotta, Wood, Metal — horizontal scroll, pill-shaped, one active, primary color when selected
    - Recent Uploads section: list of craft rows (thumbnail, title, creator name, overflow menu)
    - Floating action button: orange circle with "+" icon, bottom-right, navigates to /create
    - Bottom tab bar: 5 icons with labels, Home active/highlighted, other tabs navigate to their routes
@@ -49,7 +49,10 @@
 }
 
 .home__brand {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
   color: var(--terracotta-900);
@@ -440,7 +443,11 @@
   }
 
   .home__sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: var(--terracotta-900);
+    font-family: var(--font-display);
     font-weight: 700;
     font-size: 24px;
     letter-spacing: 0.5px;
@@ -449,10 +456,10 @@
 
   .home__sidebar-tagline {
     margin: 0 0 32px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 12px;
+    letter-spacing: 0.2px;
     color: var(--text-faint);
   }
 

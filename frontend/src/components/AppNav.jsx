@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import PathsMark from './PathsMark.jsx'
 
 const NAV_ITEMS = [
   { key: 'home', to: '/', label: 'Home' },
@@ -46,7 +47,10 @@ export default function AppNav({ active }) {
   return (
     <>
       <nav className="home__sidebar">
-        <div className="home__sidebar-brand">PATHS</div>
+        <div className="home__sidebar-brand">
+          <PathsMark size={24} />
+          <span>PATHS</span>
+        </div>
         <div className="home__sidebar-tagline">Design Thinking by Thinking Design</div>
         <div className="home__sidebar-nav">
           {NAV_ITEMS.map((item) => (
@@ -94,7 +98,10 @@ export default function AppNav({ active }) {
             now that there's no hamburger button (it never opened anything).
             Hidden on desktop, where the brand is hidden too — see Home.css. */}
         <div className="home__topbar-spacer" aria-hidden="true" />
-        <div className="home__brand">PATHS</div>
+        <div className="home__brand">
+          <PathsMark size={20} />
+          <span>PATHS</span>
+        </div>
         <button className="home__icon-btn" aria-label="Search">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />

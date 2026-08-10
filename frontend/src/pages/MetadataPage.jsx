@@ -7,7 +7,7 @@ import LoadingScreen from '../components/LoadingScreen.jsx'
 import './Create.css'
 import './CraftPage.css'
 
-const CRAFT_TYPES = ['Pottery', 'Bamboo', 'Textiles', 'Wood', 'Metal', 'Terracotta', 'Recycled', 'Other']
+const CRAFT_TYPES = ['Pottery', 'Terracotta', 'Wood', 'Metal']
 
 // Create flow, step 3+4 of 4 (see AGENTS.md §3 Phase 2): the 3D model already exists
 // (Processing finished) — add metadata, then Store/Save persists it to the craft record.

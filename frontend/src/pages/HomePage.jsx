@@ -6,7 +6,7 @@ import AppNav from '../components/AppNav.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import './Home.css'
 
-const CATEGORY_CHIPS = ['Pottery', 'Textiles', 'Wood', 'Metal']
+const CATEGORY_CHIPS = ['Pottery', 'Terracotta', 'Wood', 'Metal']
 
 export default function HomePage() {
   const navigate = useNavigate()

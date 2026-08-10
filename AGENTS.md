@@ -52,7 +52,7 @@ Windows RTX 5080 box), or other teammates' work unless asked.
 - Auth gate: no token → `/welcome` (Sign In / Sign Up / Continue as Guest). Guests browse only.
 
 **Phase 1 — Landing & Discovery (guest or logged in)**
-- Home: featured carousel, search bar, category chips (Pottery, Bamboo…), recent uploads,
+- Home: featured carousel, search bar, category chips (Pottery, Terracotta, Wood, Metal), recent uploads,
   "Start Creating" CTA, bottom nav (Home | Create | Library | Profile).
 - Search & Explore: text search (title/story/tags), voice (later), filters (craft type, material,
   technique, creator, date), sort (newest/popular/downloads), semantic (later), autocomplete.
@@ -2021,3 +2021,119 @@ project — everything before was build-checks + direct API calls).
   round; flagging here per rule 9 rather than silently picking a side.
 - **Next:** Commit if asked. If Storage branding parity (`akaar` → an actual `PATHS` bucket) is
   wanted, that needs the service-role key and a deliberate migration script — ask before doing it.
+
+### 2026-08-10 — Step: Trim craft-type options to Pottery/Terracotta/Wood/Metal
+- **Command:** "Remove Textile and others keep only Terracotta, Pottery, Wood, Metal" — then "this
+  has to be done safely for the entire project," so searched the whole repo (not just the obvious
+  spot) before calling it done.
+- **Done:** `MetadataPage.jsx`'s `CRAFT_TYPES` (was Pottery/Bamboo/Textiles/Wood/Metal/Terracotta/
+  Recycled/Other, 8 options) and `HomePage.jsx`/`ExplorePage.jsx`'s `CATEGORY_CHIPS` (was Pottery/
+  Textiles/Wood/Metal — never had Terracotta at all) all now read
+  `['Pottery', 'Terracotta', 'Wood', 'Metal']`. `Home.css`'s header comment (describes
+  `CATEGORY_CHIPS`) and §3 Phase 1's "category chips (Pottery, Bamboo…)" line above updated to
+  match, for the same reason the earlier rebrand entries kept docs in sync with code.
+  - `grep -rln "Textiles\|Bamboo\|Recycled"` across the whole repo (not just `frontend/`) turned
+    up only this file afterward — nothing in the frontend, backend, proxy, or moderation service
+    was missed.
+  - **Verified safe against the DB first**: `craft_type` (`supabase/schema.sql`) is plain `text`
+    with no `CHECK` constraint and no migration references it — this is a pure input-options
+    change, zero schema/data risk. Any existing craft already saved with a now-removed type
+    (Textiles/Bamboo/etc.) keeps that value and still displays everywhere unfiltered; it just
+    won't match any of the 4 current filter chips, same as any custom value ever would.
+  - **Verified live**, not just built: `npm run build` clean, then an actual browser session
+    confirmed both `Home` and `Explore`'s chip rows render exactly `[Pottery, Terracotta, Wood,
+    Metal]` with zero console errors.
+- **Decisions:** Left two other "Textiles/Bamboo/Recycled" mentions in this file alone rather than
+  editing them to match: §12's "Future Expansion domains" line is a verbatim transcription of the
+  original concept-note PDF (rule 9 — don't alter what a source document actually says), and the
+  2026-08-08 progress-log entry describing the original 8-option dropdown is a historical record
+  of what was built then (§15's own rule — log entries are facts of what happened, not a
+  rewritable spec). This entry is the correction layered on top, same pattern as the
+  Society→Sustainability entry above.
+- **Next:** Commit if asked.
+
+### 2026-08-10 — Step: Implement the "Wheel Rings" logo + Branding page
+- **Command:** import and implement `PATHS Logo - Wheel Rings.dc.html` from the Claude Design
+  project "PATHS logo directions" (`e5210957-e7c5-4240-858b-bcb374b271f7`, via the DesignSync
+  MCP tool — `get_project`/`list_files`/`get_file` only, no write access used, this was a
+  read-only import), use it as the site icon, and build a branding page with guidelines +
+  downloadable logos. Three mid-turn refinements followed: add the mark as the actual favicon;
+  cross-link the new Branding page from Terms & Conditions; then remove the sidebar's Branding
+  link after seeing it rendered (kept the page itself and its other entry points).
+- **The mark, as designed:** a potter's wheel from above — clay core (filled circle), a thrown
+  ring of terracotta (`#C1662E`, the one color constant across every variant), and an outer
+  dashed ring (the 3D scan traced around the object). Companion typography: Space Grotesk
+  (wordmark/headings) + Spectral italic (taglines) — new to this app, added via Google Fonts.
+- **Done:**
+  - `frontend/src/components/PathsMark.jsx` — new reusable icon component (`variant: 'ink' |
+    'onDark'`), stroke weights matching the source file's small-size ("Horizontal lockup")
+    rendition since every in-app use is icon-scale, not the large standalone-icon scale.
+  - Wired into `AppNav.jsx` (desktop sidebar brand + mobile top-bar brand, both now icon+"PATHS"
+    instead of text-only) and `WelcomePage.jsx` (replaced the generic placeholder badge icon —
+    a lock/bell-ish glyph that was never actually the brand mark — with `<PathsMark variant=
+    "onDark">`, since that badge sits on the terracotta gradient header).
+  - **Site icon**, per the mid-turn ask: `frontend/public/favicon.svg` rebuilt around the mark —
+    dark-ink tile (`#2A241F`, matching the source's own "on dark" background choice) + the three
+    rings, cream ink. Outer ring simplified from dashed to solid specifically for the favicon —
+    a dashed line is imperceptible at the 16-32px browser-tab size a favicon actually renders at;
+    the full dashed detail is kept everywhere else (sidebar, Welcome, BrandingPage) where display
+    size is large enough to read it. Same size-legibility tradeoff the source design itself
+    already makes between its large "Icon" (dashed, thin stroke) and small "lockup icon" (dashed,
+    thicker stroke) renditions — just taken one step further for an even smaller target.
+  - **Downloadable brand assets** — real static files in new `frontend/public/brand/`, one per
+    composition the source file actually defined (no invented extra permutations):
+    `paths-icon.svg` (icon, ink-on-transparent, master/thin-stroke), `paths-icon-on-dark.svg`
+    (icon, cream-on-transparent, for any dark background), `paths-lockup.svg` (icon + "PATHS" +
+    tagline, real `<text>` elements, transparent bg), `paths-mark-on-dark.svg` (icon + wordmark
+    on the mark's own ink tile — reproduces the source's exact "On dark" swatch).
+  - **New `/branding` page** (`BrandingPage.jsx` + `Branding.css`, public route, no
+    `ProtectedRoute` — same pattern as `/about`/`/terms`/`/policy`): hero (mark + wordmark +
+    tagline), "The mark" concept explainer, a download card per asset above (SVG file link +
+    a "PNG" button that rasterizes client-side via new `frontend/src/svgDownload.js` — `fetch`
+    the SVG → `<img>` → canvas → `toBlob('image/png')` → trigger download, same canvas-based
+    approach as `imageCompression.js`), a color-swatch section (all 5 mark colors + hex codes,
+    with an explicit note that the ring's terracotta is intentionally NOT the same as the app's
+    existing UI accent `--terracotta-900`/`#974400` — the mark keeps its own designed color
+    rather than being retinted to match buttons/links elsewhere), a typography section (live
+    Space Grotesk / Spectral-italic samples), a short usage-guidelines list (clear space, don't
+    recolor the ring, don't stretch it, simplify below 24px, use the on-dark variant rather than
+    opacity tricks), and the full name/tagline strings already established in the earlier
+    rebrand entries.
+  - **New CSS tokens** (`index.css`): `--font-display` (Space Grotesk, falls back to the
+    existing system-font stack), `--font-serif` (Spectral, falls back to Georgia/serif), and
+    `--mark-ink`/`--mark-cream`/`--mark-ring`/`--mark-taupe`/`--mark-gold` (named documentation
+    of the mark's own fixed palette — not repurposed as new general UI tokens; the app's existing
+    `--terracotta-800/900` UI accent is untouched). Fonts loaded via a Google Fonts `<link>` in
+    `index.html` (preconnect + stylesheet, matching the source file's own `<helmet>` exactly) —
+    the first external font dependency this app has taken on; scoped to brand moments (wordmark/
+    tagline in Welcome/AppNav/BrandingPage), NOT applied to general body/UI text.
+  - **Nav wiring**: added an "About PATHS" cross-link and a "Branding" link to
+    `AccountPage.jsx` (mobile parity, same reasoning as the earlier About/Terms addition), and a
+    "Branding" link to `AboutPage.jsx`'s Questions section. Also briefly added "Branding" to
+    `AppNav.jsx`'s desktop-sidebar secondary nav (using `<PathsMark>` itself as the link's icon)
+    — **removed again same session** after the user saw the rendered sidebar and asked for it
+    back out; `AccountPage`/`AboutPage`/`TermsPage` links (below) are still how `/branding` is
+    reached, the page itself was never removed, only that one entry point.
+  - **Mid-turn ask**: cross-link Branding from Terms & Conditions. Added `TermsPage.jsx` §8 "Our
+    name and mark" (existing §8/§9 renumbered to §9/§10) — states the name/mark are owned, points
+    to `/branding` for approved files and usage rules rather than duplicating them inline.
+  - **Verified live**, not just built: `npm run build` clean; a real browser session confirmed
+    the favicon's 3-ring dark tile, the Welcome badge and title rendering with the mark and Space
+    Grotesk applied, `/brand/paths-icon.svg` resolving 200, an actual PNG download firing from
+    the branding page's "PNG" button (confirmed a real ~36KB file landed, not just that the
+    button exists), and TermsPage's new section + Branding link — zero console/page errors
+    across every page checked. The sidebar removal was a quick follow-up edit verified by
+    re-reading the component, not re-screenshotted — low-risk enough (deleting one array entry
+    and its now-dead render branch) not to warrant a second full Playwright pass.
+- **Decisions:** Did not retint the app's existing UI accent color (`--terracotta-900`,
+  `#974400`) to match the mark's ring color (`#C1662E`) — that would be a much larger, riskier
+  re-theme of every button/active-state/badge in the app, not what implementing a logo design
+  calls for; documented the intentional color difference on the branding page itself instead of
+  silently leaving it unexplained. Did not apply Space Grotesk/Spectral to the app's general body
+  copy, buttons, or form text — scoped to brand moments only, consistent with this being a
+  logo-design import, not a full typography-system redesign. Did not build a zip/bundle download
+  — individual file downloads (SVG + on-demand PNG) match what a simple brand page conventionally
+  offers.
+- **Next:** Commit if asked. If the on-dark favicon reads too dark against a light browser-tab
+  theme in practice, a lighter-tile alternative could be offered — only rendered/screenshotted in
+  one headless Chromium context this session, not checked against every OS/browser theme.

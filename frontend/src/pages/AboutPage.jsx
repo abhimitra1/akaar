@@ -100,7 +100,8 @@ export default function AboutPage() {
           <p>
             Curious how your data is handled, or what our AI tools are for? Read the{' '}
             <Link to="/policy">Privacy &amp; AI Usage Policy</Link>. For the rules of using PATHS,
-            see our <Link to="/terms">Terms &amp; Conditions</Link>.
+            see our <Link to="/terms">Terms &amp; Conditions</Link>. Want the logo files or brand
+            colors? See <Link to="/branding">Branding</Link>.
           </p>
         </section>
       </div>

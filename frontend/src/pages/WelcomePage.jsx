@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import PathsMark from '../components/PathsMark.jsx'
 import './Welcome.css'
 
 export default function WelcomePage() {
@@ -44,19 +45,7 @@ export default function WelcomePage() {
           </svg>
         </button>
         <span className="welcome__badge" aria-hidden="true">
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 11h14a7 7 0 0 1-14 0z" />
-            <path d="M8 11V9a4 4 0 0 1 8 0v2" />
-          </svg>
+          <PathsMark variant="onDark" size={26} />
         </span>
         <h1 className="welcome__title">PATHS</h1>
         <p className="welcome__subtitle">Design Thinking by Thinking Design</p>

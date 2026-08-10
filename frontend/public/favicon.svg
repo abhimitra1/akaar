@@ -1,18 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#bb5808" />
-      <stop offset="100%" stop-color="#974400" />
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)" />
-  <text
-    x="32"
-    y="45"
-    font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
-    font-size="34"
-    font-weight="700"
-    fill="#ffffff"
-    text-anchor="middle"
-  >P</text>
+  <!-- PATHS "Wheel Rings" mark — a potter's wheel from above (clay core, thrown terracotta
+       ring, outer scan-trace ring). Outer ring simplified to solid (source design uses a
+       dashed ring, imperceptible at 16-32px favicon size) — same size-legibility tradeoff
+       the source design itself makes between its large Icon (dashed) and small lockup-icon
+       (bolder dashed) renditions; see src/components/PathsMark.jsx for the full-detail
+       dashed version used everywhere it's shown larger. -->
+  <rect width="64" height="64" rx="14" fill="#2A241F" />
+  <circle cx="32" cy="32" r="21" fill="none" stroke="#F6EFE4" stroke-width="3" />
+  <circle cx="32" cy="32" r="14.5" fill="none" stroke="#C1662E" stroke-width="7" />
+  <circle cx="32" cy="32" r="5.5" fill="#F6EFE4" />
 </svg>

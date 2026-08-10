@@ -54,13 +54,15 @@
 }
 
 .welcome__title {
+  font-family: var(--font-display);
   font-size: 34px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .welcome__subtitle {
   margin-top: 6px;
+  font-family: var(--font-serif);
   font-size: 15px;
   font-style: italic;
   color: rgba(255, 255, 255, 0.85);
@@ -68,6 +70,7 @@
 
 .welcome__fullname {
   margin-top: 4px;
+  font-family: var(--font-display);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;

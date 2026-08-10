@@ -204,6 +204,10 @@ export default function AccountPage() {
           About PATHS
         </Link>
 
+        <Link to="/branding" className="craft__btn craft__btn--ghost account__btn">
+          Branding
+        </Link>
+
         <Link to="/policy" className="craft__btn craft__btn--ghost account__btn">
           Privacy &amp; AI Policy
         </Link>
