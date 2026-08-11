@@ -260,3 +260,40 @@ drop policy if exists PATHS_delete_own on storage.objects;
 create policy PATHS_delete_own on storage.objects
   for delete to authenticated
   using (bucket_id = 'PATHS' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ── likes ─────────────────────────────────────────────────────────────────
+-- Per-user likes on crafts (one row per (user, craft)). Counts start at zero
+-- for every craft until a real user likes it — no demo/placeholder data.
+-- This table already existed live (created ad hoc, not through this file) before this
+-- entry was added — CraftPage.jsx's like button (2026-08-10) is the first thing to
+-- actually use it; brought into schema.sql/migrations so a fresh project gets it too.
+create table if not exists public.likes (
+  id bigint generated always as identity primary key,
+  craft_id bigint not null references public.crafts (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (craft_id, user_id)
+);
+
+create index if not exists likes_craft_id_idx on public.likes (craft_id);
+
+alter table public.likes enable row level security;
+
+-- Inserting a like requires an authenticated user and records their own uid.
+drop policy if exists likes_insert on public.likes;
+create policy likes_insert on public.likes
+  for insert with check (auth.uid() = user_id);
+
+-- Deleting (unliking) a like: only the row's own user can remove it.
+drop policy if exists likes_delete on public.likes;
+create policy likes_delete on public.likes
+  for delete using (auth.uid() = user_id);
+
+-- Counting likes: every viewer (guests + logged-in) may read like rows so the
+-- count is visible on public/own crafts. The parent-craft visibility is already
+-- controlled by the crafts RLS policy.
+drop policy if exists likes_select on public.likes;
+create policy likes_select on public.likes
+  for select using (
+    exists (select 1 from public.crafts c where c.id = craft_id)
+  );

@@ -116,10 +116,44 @@
   line-height: 1.5;
 }
 
+.craft__like-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .craft__creator {
   margin: 0;
   color: var(--text-muted);
   font-size: 15px;
+}
+
+.craft__like-btn {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.craft__like-btn--active {
+  border-color: var(--terracotta-900);
+  background: var(--bg-cream);
+  color: var(--terracotta-900);
+}
+
+.craft__like-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .craft__related {

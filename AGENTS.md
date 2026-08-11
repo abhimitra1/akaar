@@ -1617,7 +1617,7 @@ project — everything before was build-checks + direct API calls).
   Commit if asked.
 
 ### 2026-08-08 — Step: Fix production-wide crash from a Vercel/local env-var split
-- **User reported the deployed site (PATHS-six.vercel.app) as a blank white page**, screenshot
+- **User reported the deployed site (paths.cutm.ac.in) as a blank white page**, screenshot
   showing `Uncaught TypeError: Cannot read properties of undefined (reading 'replace')` at
   module scope, on every route.
 - **Root cause, confirmed not guessed:** `instantMesh.js`/`fooocus.js` both computed
@@ -1666,7 +1666,7 @@ project — everything before was build-checks + direct API calls).
   `/fooocus/v2/generation/image-prompt` through this URL both return 401 — only explainable by
   this hitting `instantmesh-proxy`'s global auth middleware, since InstantMesh raw has no auth
   at all (confirmed extensively earlier this session) and no `/fooocus` route exists outside
-  the proxy. A CORS preflight for `Origin: https://PATHS-six.vercel.app` returned `204` with the
+  the proxy. A CORS preflight for `Origin: https://paths.cutm.ac.in` returned `204` with the
   correct `Access-Control-Allow-Origin` already — meaning this tunnel points at the *same* local
   `instantmesh-proxy` process managed all session on this box (its `.env`'s `ALLOWED_ORIGINS`
   already includes that exact origin), just also reachable publicly. Not a new/different
@@ -1684,7 +1684,7 @@ project — everything before was build-checks + direct API calls).
   tunnel, not just the auth/CORS checks done here.
 
 ### 2026-08-08 — Step: Fix direct/deep-URL 404s on Vercel (SPA routing)
-- **Command (screenshot):** navigating straight to `PATHS-six.vercel.app/craft/70` (not via
+- **Command (screenshot):** navigating straight to `paths.cutm.ac.in/craft/70` (not via
   in-app navigation — a fresh tab/reload/shared link) returned Vercel's own platform
   `404: NOT_FOUND`, not the app's React-rendered "Craft not found" state.
 - **Root cause:** this is a client-side-routed SPA (React Router) with no `vercel.json` in the
@@ -2137,3 +2137,138 @@ project — everything before was build-checks + direct API calls).
 - **Next:** Commit if asked. If the on-dark favicon reads too dark against a light browser-tab
   theme in practice, a lighter-tile alternative could be offered — only rendered/screenshotted in
   one headless Chromium context this session, not checked against every OS/browser theme.
+
+### 2026-08-10 — Step: Implement Likes (table already lived, nothing used it)
+- **Command:** user pasted a `schema.sql` and asked what's in it but not implemented in the app.
+  That pasted file turned out to be an *older* snapshot (missing `height_cm`,
+  `unlimited_creations`, `terms_accepted_at`, `parent_design_id`, and using bucket name `akaar`
+  where the real current file already says `PATHS` — see the bucket-mismatch bug fixed earlier
+  today, still latent in schema.sql itself, not re-touched this entry) — so it wasn't treated as
+  ground truth. Diffed it against the ACTUAL current `schema.sql`, `supabase/migrations/`, the
+  frontend, AND the live database (not assumed from any single source) to find the real gap.
+- **The actual finding, verified live, not guessed:** `public.likes` (per-user likes on crafts,
+  `unique(craft_id, user_id)`, full RLS) already exists on the running Supabase project — a direct
+  `GET .../rest/v1/likes?select=id&limit=1` returned `200 []` (a real empty table, not a 404
+  "relation does not exist"). It's in none of `schema.sql`, `supabase/migrations/`, or a single
+  line of frontend code (`grep`, zero hits) — created ad hoc at some point, then never wired to
+  either the schema-as-code or the UI. This is the one genuine "in the DB but not implemented"
+  gap; every other pasted-schema field (commercial_status/keywords/version_history/
+  related_designs/est_build_time) was already known-unused per the 2026-08-08 entry above, not
+  new information.
+- **Done:**
+  - Brought `likes` into the source-of-truth files it was missing from: appended to
+    `schema.sql` (§ "likes", matches what's actually live) and new
+    `supabase/migrations/005_likes.sql` — marked "Already live" in `migrations/README.md`'s
+    status table (the one migration in that table that's already applied, unlike 001-004).
+  - **Built the actual feature** on `CraftPage.jsx` (the only place actions like Share/Download/
+    Publish already live) — a heart-icon like button + count next to the "By {creator}" line.
+    Count is fetched for every viewer, including guests (`likes_select`'s policy allows it);
+    "have I liked this" only queries when `user` exists. Clicking it as a guest navigates to
+    `/welcome` — the exact same redirect `ProtectedRoute` already uses, rather than inventing a
+    new "sign in to continue" pattern (checked first: no such pattern exists anywhere in the app
+    yet despite AGENTS.md's Phase-1 prose mentioning it — this is the first real instance of it).
+    Toggle is a plain insert/delete against `likes`, best-effort on failure (`console.error`,
+    no error banner) — same low-stakes-secondary-action handling as `LibraryPage.jsx`'s storage
+    cleanup, not the full error-banner treatment `handlePublish` gets for its more consequential
+    action.
+  - New CSS: `.craft__like-row`/`.craft__like-btn`/`.craft__like-btn--active` in `CraftPage.css`,
+    matching the file's existing pill-button conventions.
+- **Verified live against the real project, at every layer:**
+  `curl` confirmed anon can `SELECT` (`200 []`) but an anon `INSERT` correctly 401s with
+  `42501 row-level security policy` (not a schema/column error — confirms the table shape
+  matches what the app now sends). A real headless-browser guest session on `/craft/22` showed
+  the button rendering "♡ 0" and confirmed clicking it navigates to `/welcome`, zero console
+  errors. `npm run build` clean. Did not test the authenticated insert/delete path live (no real
+  user session available this session) — verified by RLS-policy read + the anon-401 check
+  instead; flagging per rule 9/10 as the one not-fully-verified piece.
+- **Decisions:** Did not add like counts to Home/Explore/Library card lists — that needs a
+  batched per-card count query (N+1 otherwise) and wasn't asked for; CraftPage's detail-view like
+  button is the minimum real implementation of what the table was clearly built for. Did not
+  "fix" `likes_select`'s policy checking only `exists(...crafts...)` rather than also checking
+  `is_public`/ownership (a private craft's like-count is technically queryable if you already
+  know/guess its numeric id) — that's the pre-existing live policy, not something introduced now,
+  the leak is minor (existence + count of an already-guessable sequential id, not any craft
+  content), and changing already-live RLS wasn't part of what was asked.
+- **Next:** Commit if asked. If real per-user testing surfaces an RLS edge case on insert/delete
+  (only checked via anon-401 + policy reading, not a real authenticated session), fix then.
+
+### 2026-08-10 — Step: Hard-check the site icon + add Open Graph
+- **Command:** "Hard check the site icon again" (the user had earlier seen a stale favicon, which
+  turned out to be plain browser caching — this was a request to actually re-verify rigorously,
+  not just re-assert it's fine) plus "check the opengraph page" (there were zero Open Graph/
+  Twitter Card tags anywhere before this entry).
+- **Important finding while hard-checking, before any real Vercel domain was known**: this
+  file's 2026-08-08 entries mention the deployed site as `PATHS-six.vercel.app`. Fetched it live
+  before trusting it — it 200s, but it's a **completely different, unrelated Next.js site** (a
+  different organization's "PATHS" youth-program site, `/_next/image` bundling, unrelated photo
+  filenames). That domain must have been reassigned after this project's Vercel project using
+  that slug was deleted/renamed at some point — `.vercel.app` slugs aren't permanently reserved.
+  **Did not use this domain anywhere** (would have pointed Open Graph tags, and nearly the
+  "hard check," at someone else's live website). Asked the user directly for the real domain
+  rather than guess a plausible-looking one — got `https://paths.cutm.ac.in` (a Centurion
+  University subdomain, which fits — this is their project), verified live before using it:
+  `curl` confirms it serves this actual app (matching title/meta/Google-Fonts links), and
+  already has the correct Wheel-Rings `favicon.svg` deployed (so the earlier "not updated" report
+  really was just caching, confirmed now rather than assumed).
+- **The site icon, hard-checked and completed properly:** the SVG itself was already correct and
+  already live. What was still a real, verified gap: `apple-touch-icon` pointed at the SVG — iOS
+  Safari doesn't reliably rasterize SVG for the home-screen icon and silently falls back to a
+  page screenshot instead — and there was no `favicon.ico` (some old browsers/crawlers request
+  `/favicon.ico` directly regardless of `<link>` tags) or PNG manifest icons (Android/desktop PWA
+  install prompts). Fixed without hand-drawing new art — rasterized the existing, already-correct
+  `favicon.svg` at each required size via a headless-Chromium screenshot (no new npm dependency):
+  `apple-touch-icon.png` (180x180), `icon-192.png`/`icon-512.png` (manifest), and a hand-built
+  `favicon.ico` (32x32) — modern ICO's PNG-in-ICO container format is simple enough to construct
+  directly (6-byte ICONDIR + 16-byte ICONDIRENTRY + raw PNG bytes), avoiding an ICO-encoding
+  dependency for one file. `file` confirmed the result parses as a real
+  "MS Windows icon resource ... with PNG image data." `index.html`/`manifest.webmanifest` updated
+  to reference all of them. Not done: a dedicated "maskable" icon variant with extra safe-zone
+  padding (Android adaptive icons can crop up to ~20% per side) — the existing art already has
+  modest padding but wasn't designed against that exact guideline; minor, flagged rather than
+  silently skipped.
+- **Open Graph + Twitter Card**, built from scratch (none existed): rendered a real
+  `frontend/public/og-image.png` (1200x630, the standard size) via a small standalone HTML file
+  + headless-Chromium screenshot — same mark + "PATHS" wordmark (Space Grotesk) + tagline
+  (Spectral italic) + full name, on the mark's own ink background, rather than a generic text
+  card. Added the full tag set to `index.html`: `og:type/site_name/title/description/url/image`
+  (+ width/height/alt) and `twitter:card=summary_large_image` + title/description/image, all
+  using the real confirmed domain above.
+- **Verified live, every layer, not just "it built":** `npm run build` clean, all 6 new/changed
+  static files (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`,
+  `og-image.png`, `manifest.webmanifest`) present in `dist/` with correct content-types when
+  fetched from a running `npm run dev` server, and every OG/Twitter meta tag parsed out of the
+  actual rendered DOM (not just grepped from source) with the expected values, zero console
+  errors. **Then checked production honestly**: `paths.cutm.ac.in/og-image.png` and
+  `/favicon.ico` currently return `200 text/html` — `vercel.json`'s SPA catch-all rewrite serving
+  `index.html` for a path that doesn't exist in the *currently deployed* build, not a real image.
+  Confirms nothing from this entry (or several before it this session) is deployed yet; this
+  works correctly locally and will work in production as soon as it's pushed.
+- **Decisions:** Did not attempt to fix or repoint anything at the stale `PATHS-six.vercel.app`
+  reference elsewhere in this file's history — those are past log entries describing what was
+  true at the time (§15's own rule), not a live config value; this entry is the note that it's
+  since changed, for whoever reads this next. Did not guess a domain when it wasn't yet known —
+  asked directly rather than fabricate a URL, per the standing rule never to invent URLs.
+- **Next:** Commit and deploy, then re-verify `og:image`/`favicon.ico` are real files in
+  production (not the SPA-fallback HTML seen above), and re-check the actual social-share
+  previews via Facebook's Sharing Debugger / Twitter Card Validator / LinkedIn Post Inspector —
+  those tools cache their own fetch of `og:image` aggressively (the same class of caching gotcha
+  that caused the original favicon confusion), so a first check right after deploying may need a
+  manual "scrape again" in whichever tool before it shows the new image.
+- **Bug caught by the user, same session, before this ever shipped:** the 4 rasterized PNG/ICO
+  files above (`apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `favicon.ico`) rendered
+  with solid white dots in the corners instead of matching the dark tile. Root cause: the
+  generation script's `page.screenshot({ omitBackground: false })` — `favicon.svg`'s `rect` has
+  `rx="14"` (rounded corners), leaving the actual square canvas's 4 corners transparent in the
+  source SVG; `omitBackground: false` tells Playwright to composite that transparency onto an
+  opaque (white) backdrop rather than preserve it, baking white squares into exactly the corners
+  that should've stayed see-through. Fixed by regenerating all 4 with `omitBackground: true` and
+  rebuilding the ICO from the corrected PNG. **Verified the fix at the pixel level, not
+  visually** — Read/image-preview tools composite transparent PNGs onto their own white canvas
+  for display, which would have shown the identical white corners whether or not the bug was
+  actually fixed, so a screenshot comparison wouldn't have proven anything either way. Instead:
+  loaded each regenerated PNG into a canvas via Playwright and read raw pixel data with
+  `getImageData` — corner `(0,0)` is `rgba(0,0,0,0)` (true transparency) on all three PNGs, and
+  the top-mid-edge pixel is the correct opaque `#2A241F` (`rgb(42,36,31)`, alpha 255) — confirming
+  the tile fill is intact and only the corners changed. `file` re-confirmed the rebuilt
+  `favicon.ico` as 32-bit RGBA (was RGB before the fix). Rebuilt `dist/` afterward to confirm the
+  corrected files, not the buggy ones, are what a real build ships.

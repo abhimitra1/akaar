@@ -16,7 +16,7 @@ thing" version.
 necessarily the order you need to run them — each file's own comment says what it
 depends on, if anything).
 
-**Status as of 2026-08-08:**
+**Status as of 2026-08-10:**
 
 | File | Applied? |
 |---|---|
@@ -24,6 +24,7 @@ depends on, if anything).
 | `002_parent_design_id.sql` | Not yet — run this before Co-Create's "Choose from Library" lineage tracking will work |
 | `003_terms_accepted_at.sql` | Not yet — run this before signup/login will work at all (every authenticated route redirects to `/accept-terms`, which needs this column to exist) |
 | `004_height_cm.sql` | Not yet — run this before MetadataPage's "Height (cm)" field / CraftPage's real-scale AR will work |
+| `005_likes.sql` | **Already live** — the `public.likes` table already existed on the running project (verified via a direct query, not assumed) before this file was written; it's here so a fresh project gets it too. |
 
 Run them in any order — none depend on each other. All are safe to re-run (every
 statement is `if not exists` / `drop ... if exists` + `create`).

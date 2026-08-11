@@ -8,8 +8,15 @@
       name="description"
       content="PATHS — Pottery - Art - Technology - Heritage & Sustainability. Design Thinking by Thinking Design: a Craft Intelligence Platform that turns traditional craft into living digital twins, preserving heritage while opening it to AI-assisted redesign."
     />
+    <!-- SVG for modern browsers; .ico fallback for anything that doesn't support it (some
+         crawlers/old browsers request /favicon.ico directly regardless of these tags anyway —
+         having a real file there rather than a 404 matters for those). apple-touch-icon is a
+         PNG deliberately, not the SVG — iOS Safari doesn't reliably rasterize SVG for the
+         home-screen icon, it'll silently fall back to a screenshot instead. All three are
+         generated from favicon.svg's own artwork (frontend/public/*.png), not separate art. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <!-- Brand typography from the "Wheel Rings" logo design (Space Grotesk for the wordmark,
          Spectral for taglines) — used only at brand moments; see index.css's --font-display/
@@ -21,6 +28,32 @@
       rel="stylesheet"
     />
     <title>PATHS — Design Thinking by Thinking Design</title>
+
+    <!-- Open Graph (Facebook/LinkedIn/WhatsApp/iMessage/Slack link previews) + Twitter Card.
+         Domain confirmed live 2026-08-10 (https://paths.cutm.ac.in serves this app) — an
+         earlier vercel.app domain found in AGENTS.md's history was checked and turned out to
+         now belong to an unrelated site, so it was deliberately NOT used here. og-image.png
+         is a real rendered 1200x630 asset (public/og-image.png), not a placeholder. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PATHS" />
+    <meta property="og:title" content="PATHS — Design Thinking by Thinking Design" />
+    <meta
+      property="og:description"
+      content="Pottery - Art - Technology - Heritage & Sustainability. A Craft Intelligence Platform that turns traditional craft into living digital twins, preserving heritage while opening it to AI-assisted redesign."
+    />
+    <meta property="og:url" content="https://paths.cutm.ac.in/" />
+    <meta property="og:image" content="https://paths.cutm.ac.in/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="PATHS — Design Thinking by Thinking Design" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PATHS — Design Thinking by Thinking Design" />
+    <meta
+      name="twitter:description"
+      content="Pottery - Art - Technology - Heritage & Sustainability. A Craft Intelligence Platform preserving heritage through AI-assisted digital twins."
+    />
+    <meta name="twitter:image" content="https://paths.cutm.ac.in/og-image.png" />
   </head>
   <body>
     <div id="root"></div>

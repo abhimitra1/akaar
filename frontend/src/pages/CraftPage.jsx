@@ -19,6 +19,9 @@ export default function CraftPage() {
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState('')
   const [shareCopied, setShareCopied] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
+  const [liked, setLiked] = useState(false)
+  const [likeSubmitting, setLikeSubmitting] = useState(false)
 
   const modelViewerRef = useRef(null)
   // "x y z" scale-multiplier string once known, or null before that / when no height_cm is
@@ -66,6 +69,71 @@ export default function CraftPage() {
       setPublishing(false)
     }
   }
+
+  // Guests get bounced to /welcome, same as ProtectedRoute does for a protected route —
+  // liking requires an account (records `user_id`), but viewing/counting doesn't.
+  const handleToggleLike = async () => {
+    if (!user) {
+      navigate('/welcome')
+      return
+    }
+    if (likeSubmitting) return
+    setLikeSubmitting(true)
+    try {
+      if (liked) {
+        const { error: deleteError } = await supabase
+          .from('likes')
+          .delete()
+          .eq('craft_id', craftId)
+          .eq('user_id', user.id)
+        if (deleteError) throw deleteError
+        setLiked(false)
+        setLikeCount((c) => Math.max(0, c - 1))
+      } else {
+        const { error: insertError } = await supabase
+          .from('likes')
+          .insert({ craft_id: craftId, user_id: user.id })
+        if (insertError) throw insertError
+        setLiked(true)
+        setLikeCount((c) => c + 1)
+      }
+    } catch (err) {
+      // Best-effort, like LibraryPage's storage cleanup — a failed like/unlike isn't worth
+      // a full error banner; log and leave the count/button exactly as it was.
+      console.error('Failed to update like:', err.message || err)
+    } finally {
+      setLikeSubmitting(false)
+    }
+  }
+
+  // Separate from the craft-detail load below: count is public (every viewer, including
+  // guests, per likes_select RLS), "did I like this" only applies once `user` exists.
+  useEffect(() => {
+    let cancelled = false
+    const loadLikes = async () => {
+      const { count } = await supabase
+        .from('likes')
+        .select('id', { count: 'exact', head: true })
+        .eq('craft_id', craftId)
+      if (!cancelled) setLikeCount(count ?? 0)
+
+      if (!user) {
+        if (!cancelled) setLiked(false)
+        return
+      }
+      const { data } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('craft_id', craftId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!cancelled) setLiked(Boolean(data))
+    }
+    loadLikes()
+    return () => {
+      cancelled = true
+    }
+  }, [craftId, user])
 
   useEffect(() => {
     let cancelled = false
@@ -262,7 +330,22 @@ export default function CraftPage() {
 
         <div className="craft__card">
           <p className="craft__story">{craft.story}</p>
-          <p className="craft__creator">By {craft.owner_name || `Creator #${craft.owner_id}`}</p>
+          <div className="craft__like-row">
+            <p className="craft__creator">By {craft.owner_name || `Creator #${craft.owner_id}`}</p>
+            <button
+              type="button"
+              className={`craft__like-btn ${liked ? 'craft__like-btn--active' : ''}`}
+              onClick={handleToggleLike}
+              disabled={likeSubmitting}
+              aria-label={liked ? 'Unlike this craft' : 'Like this craft'}
+              aria-pressed={liked}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+              </svg>
+              <span>{likeCount}</span>
+            </button>
+          </div>
           {craft.parent_design_id != null && (
             <p className="craft__related">
               Based on:{' '}
