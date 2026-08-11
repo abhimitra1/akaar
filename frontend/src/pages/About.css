@@ -32,6 +32,14 @@
   gap: 2px;
 }
 
+/* Shows a credit as housed within the row above it (Future Nexus Labs is a studio inside
+   Centurion University, not a separate, coequal organization). */
+.about__credit-row--nested {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 2px solid var(--outline-cream);
+}
+
 .about__credit-link {
   color: var(--terracotta-900);
   font-weight: 700;
@@ -46,4 +54,171 @@
 .about__credit-desc {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* Learning-loop ring diagram. The SVG's own geometry (viewBox 820x540) is tuned for a
+   fixed-scale poster render, so on narrow phones it's let scroll horizontally at a legible
+   min-width rather than shrunk small enough to fit — shrinking it further makes the 12 node
+   labels unreadable. */
+.about__loop-ring-scroll {
+  overflow-x: auto;
+  margin: 4px -16px 0;
+  padding: 4px 16px 8px;
+}
+
+.about__loop-svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  max-width: 620px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.about__loop-track {
+  fill: none;
+  stroke: var(--outline-cream);
+  stroke-width: 2;
+}
+
+.about__loop-arc {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.about__loop-return {
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 2;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+}
+
+.about__loop-dot {
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+
+.about__loop-num {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  fill: var(--text-faint);
+}
+
+.about__loop-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  fill: var(--text-primary);
+}
+
+.about__loop-hub {
+  fill: var(--surface-container-low);
+  stroke: var(--outline-cream);
+  stroke-width: 1;
+}
+
+.about__loop-hub-eye {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  fill: var(--text-faint);
+}
+
+.about__loop-hub-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  fill: var(--text-primary);
+}
+
+.about__loop-hub-brand-p {
+  fill: var(--terracotta-900);
+}
+
+.about__loop-hub-tag {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 12px;
+  fill: var(--text-muted);
+}
+
+.about__loop-hub-tag-by {
+  fill: var(--terracotta-900);
+}
+
+/* Text breakdown of the ring's 12 steps, grouped into the same 3 phases. */
+.about__phases {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+@media (max-width: 640px) {
+  .about__phases {
+    grid-template-columns: 1fr;
+  }
+}
+
+.about__phase {
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  background: var(--surface-container-low);
+}
+
+.about__phase-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.about__phase-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.about__phase-name {
+  margin: 8px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--terracotta-900);
+}
+
+.about__phase-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.about__phase-steps li {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.about__phase-steps b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.about__phase-num {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  margin-right: 6px;
 }

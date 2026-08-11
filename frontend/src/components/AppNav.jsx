@@ -88,7 +88,7 @@ export default function AppNav({ active }) {
         <div className="home__sidebar-footer">
           Preserving craft heritage, built at{' '}
           <a href="https://sofn.vercel.app/" target="_blank" rel="noopener noreferrer">Future Nexus Labs</a>
-          {' '}&amp;{' '}
+          {', '}
           <a href="https://cutm.ac.in" target="_blank" rel="noopener noreferrer">Centurion University</a>
         </div>
       </nav>

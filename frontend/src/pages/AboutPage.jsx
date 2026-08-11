@@ -1,4 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
+import LearningLoopRing from '../components/LearningLoopRing'
+import { LEARNING_LOOP_PHASES } from '../data/learningLoop'
 import './Policy.css'
 import './About.css'
 
@@ -57,6 +59,32 @@ export default function AboutPage() {
         </section>
 
         <section className="policy__section">
+          <h2>The Learning Loop</h2>
+          <div className="about__loop-ring-scroll">
+            <LearningLoopRing />
+          </div>
+          <div className="about__phases">
+            {LEARNING_LOOP_PHASES.map((phase) => (
+              <div className="about__phase" key={phase.key}>
+                <div className="about__phase-head">
+                  <span className="about__phase-dot" style={{ background: phase.color }} />
+                  {phase.title}
+                </div>
+                <div className="about__phase-name">{phase.subtitle}</div>
+                <ul className="about__phase-steps">
+                  {phase.steps.map((step) => (
+                    <li key={step.n}>
+                      <i className="about__phase-num">{step.n}</i>
+                      <b>{step.label}</b> <span>— {step.desc}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="policy__section">
           <h2>What we stand for</h2>
           <ul>
             <li>Preserve traditional craft knowledge as a searchable, living archive — not a museum piece.</li>
@@ -73,17 +101,6 @@ export default function AboutPage() {
             <div className="about__credit-row">
               <a
                 className="about__credit-link"
-                href="https://sofn.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Future Nexus Labs
-              </a>
-              <span className="about__credit-desc">Design &amp; engineering studio</span>
-            </div>
-            <div className="about__credit-row">
-              <a
-                className="about__credit-link"
                 href="https://cutm.ac.in"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -91,6 +108,17 @@ export default function AboutPage() {
                 Centurion University
               </a>
               <span className="about__credit-desc">Academic home of the Waste to Wealth Lab</span>
+            </div>
+            <div className="about__credit-row about__credit-row--nested">
+              <a
+                className="about__credit-link"
+                href="https://sofn.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Future Nexus Labs
+              </a>
+              <span className="about__credit-desc">Design &amp; engineering studio within the Waste to Wealth Lab, building PATHS</span>
             </div>
           </div>
         </section>
