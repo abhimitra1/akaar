@@ -5,6 +5,7 @@ import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AiGeneratedBadge from '../components/AiGeneratedBadge.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
+import { generateShareCard } from '../shareCard.js'
 import './CraftPage.css'
 
 // Real View screen: loads the craft detail (incl. model_url + owner_name via Supabase),
@@ -20,6 +21,8 @@ export default function CraftPage() {
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState('')
   const [shareCopied, setShareCopied] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [shareError, setShareError] = useState('')
   const [likeCount, setLikeCount] = useState(0)
   const [liked, setLiked] = useState(false)
   const [likeSubmitting, setLikeSubmitting] = useState(false)
@@ -32,22 +35,56 @@ export default function CraftPage() {
   // scaled scene when generating its USDZ, see <extra-model> below) show true-to-life size.
   const [computedScale, setComputedScale] = useState(null)
 
+  // Generates a PATHS-branded shareable image (craft photo, title, maker, real stats, a QR
+  // code back to this page — see shareCard.js) and hands it to the native share sheet when
+  // the platform supports sharing files at all (navigator.canShare({files}) is the actual
+  // capability check — navigator.share existing isn't enough, most desktop browsers have
+  // the latter without the former). Where file-sharing isn't available, downloads the image
+  // and copies share text (which includes the link, so it's never lost even though the
+  // image itself can't carry a clickable URL) to the clipboard instead.
   const handleShare = async () => {
+    if (sharing || !craft) return
     const shareUrl = window.location.href
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: craft?.title || 'PATHS craft', url: shareUrl })
-      } catch {
-        // User cancelled the native share sheet — not an error.
-      }
-      return
-    }
+    // Recomputed here rather than reused from the render-level `isOwner` below (declared
+    // later in this component, so out of scope for this closure) — same check either way.
+    const isSharerOwner = Boolean(user && craft.owner_id === user.id)
+    const shareText = isSharerOwner
+      ? `I designed "${craft.title || 'this craft'}" with PATHS Studio. ${shareUrl}`
+      : `Look at this design from PATHS Studio — "${craft.title || 'a craft'}" by ${craft.owner_name || 'a PATHS maker'}. ${shareUrl}`
+
+    setSharing(true)
+    setShareError('')
     try {
-      await navigator.clipboard.writeText(shareUrl)
-      setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
-    } catch {
-      // Clipboard API unavailable/denied — nothing more we can do without inventing UI.
+      const blob = await generateShareCard(craft, { likeCount, shareUrl })
+      const file = new File([blob], `paths-${craftId}.png`, { type: 'image/png' })
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: craft.title || 'PATHS craft', text: shareText })
+        } catch {
+          // User cancelled the native share sheet — not an error.
+        }
+      } else {
+        const downloadUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = downloadUrl
+        a.download = `paths-${craftId}.png`
+        a.click()
+        URL.revokeObjectURL(downloadUrl)
+
+        try {
+          await navigator.clipboard.writeText(shareText)
+        } catch {
+          // Clipboard API unavailable/denied — the image download still happened.
+        }
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2500)
+      }
+    } catch (err) {
+      setShareError(err.message || 'Failed to generate share image')
+      setTimeout(() => setShareError(''), 3000)
+    } finally {
+      setSharing(false)
     }
   }
 
@@ -371,8 +408,9 @@ export default function CraftPage() {
           </dl>
 
           <div className="craft__actions">
-            <button type="button" className="craft__btn craft__btn--ghost" onClick={handleShare}>
-              {shareCopied ? 'Link copied!' : 'Share'}
+            {shareError && <p className="craft__publish-error">{shareError}</p>}
+            <button type="button" className="craft__btn craft__btn--ghost" onClick={handleShare} disabled={sharing}>
+              {sharing ? 'Preparing image…' : shareCopied ? 'Image downloaded, link copied!' : 'Share'}
             </button>
             {craft.model_url && (
               <a
