@@ -35,7 +35,10 @@ async function craftPhotoToFile(craft) {
 // 'generating' — lets CreatePage warn before navigating away mid-job (the submitted Fooocus
 // job keeps running server-side and still counts against the hourly submission budget
 // regardless of whether anyone's still watching it; see CreatePage's leave-guard).
-export default function CoCreatePanel({ onAccepted, onGeneratingChange }) {
+// `initialDesign` (optional): a full craft record ({ id, title, photos, ... }) to seed the
+// source photo with immediately, bypassing the upload/library picker — used when arriving
+// here from a craft detail page's "Co-Create with AI" button (see CreatePage.jsx).
+export default function CoCreatePanel({ onAccepted, onGeneratingChange, initialDesign }) {
   const fileInputRef = useRef(null)
   // See CreatePage.jsx's identical cameraInputRef comment — accept="image/*" alone doesn't
   // reliably surface a camera option in every Android browser/OEM chooser; a dedicated
@@ -89,6 +92,28 @@ export default function CoCreatePanel({ onAccepted, onGeneratingChange }) {
   useEffect(() => {
     onGeneratingChange?.(step === 'generating')
   }, [step, onGeneratingChange])
+
+  // Seeds the source photo from initialDesign on mount, same as picking it from the
+  // library (handlePickLibraryDesign below) — but reports failure via the top-level
+  // `error` banner rather than `libraryError`, since that only renders inside the library
+  // tab, which never mounts when a source arrives this way.
+  useEffect(() => {
+    if (!initialDesign) return
+    let cancelled = false
+    craftPhotoToFile(initialDesign)
+      .then((file) => {
+        if (cancelled) return
+        setSource({ file, previewUrl: initialDesign.photos[0] })
+        setSelectedDesign({ id: initialDesign.id, title: initialDesign.title })
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || 'Failed to load that design')
+      })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (step !== 'generating') return

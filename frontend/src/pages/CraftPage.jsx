@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AiGeneratedBadge from '../components/AiGeneratedBadge.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import { generateShareCard } from '../shareCard.js'
+import '../pages/Home.css'
 import './CraftPage.css'
+
+const EXPLORE_MORE_LIMIT = 12
 
 // Real View screen: loads the craft detail (incl. model_url + owner_name via Supabase),
 // renders the 3D model via <model-viewer>, and shows read-only metadata.
@@ -26,6 +29,10 @@ export default function CraftPage() {
   const [likeCount, setLikeCount] = useState(0)
   const [liked, setLiked] = useState(false)
   const [likeSubmitting, setLikeSubmitting] = useState(false)
+
+  // "Explore More" strip at the end of the card — other public crafts, most recent first.
+  const [exploreCrafts, setExploreCrafts] = useState([])
+  const [exploreOwnerNames, setExploreOwnerNames] = useState({})
 
   const modelViewerRef = useRef(null)
   // "x y z" scale-multiplier string once known, or null before that / when no height_cm is
@@ -86,6 +93,19 @@ export default function CraftPage() {
     } finally {
       setSharing(false)
     }
+  }
+
+  // Hands this craft to /create as a ready-made co-creation source, so the flow lands
+  // straight in Co-Create mode with the photo already picked instead of making the user
+  // find it again in the library picker (see CreatePage's cocreateSource handling and
+  // CoCreatePanel's initialDesign prop). Guests get bounced to /welcome first, same as
+  // handleToggleLike — co-creation needs an account (it becomes a new craft owned by them).
+  const handleCoCreate = () => {
+    if (!user) {
+      navigate('/welcome')
+      return
+    }
+    navigate('/create', { state: { cocreateSource: craft } })
   }
 
   const handlePublish = async () => {
@@ -230,6 +250,40 @@ export default function CraftPage() {
     }
   }, [craftId])
 
+  // "Explore More" row at the bottom of the page — other public crafts to browse next,
+  // same is_public-only scope as Explore/HomePage's featured row. Independent of the main
+  // craft-detail load above so a slow/failed fetch here never blocks the page's primary
+  // content.
+  useEffect(() => {
+    let cancelled = false
+    const loadExploreMore = async () => {
+      const { data, error: dbError } = await supabase
+        .from('crafts')
+        .select('*')
+        .eq('is_public', true)
+        .neq('id', craftId)
+        .order('created_at', { ascending: false })
+        .limit(EXPLORE_MORE_LIMIT)
+      if (cancelled || dbError) return
+      setExploreCrafts(data || [])
+
+      const ownerIds = [...new Set((data || []).map((c) => c.owner_id))]
+      if (ownerIds.length > 0) {
+        const { data: owners } = await supabase
+          .from('public_profiles')
+          .select('id, full_name')
+          .in('id', ownerIds)
+        if (!cancelled && owners) {
+          setExploreOwnerNames(Object.fromEntries(owners.map((o) => [o.id, o.full_name])))
+        }
+      }
+    }
+    loadExploreMore()
+    return () => {
+      cancelled = true
+    }
+  }, [craftId])
+
   // Two-phase: the model first loads at its native (arbitrary) scale so getDimensions()
   // can read its actual authored height, then — only if craft.height_cm is set — we swap to
   // an <extra-model> (the only way this model-viewer version exposes a scale multiplier for
@@ -276,6 +330,13 @@ export default function CraftPage() {
   }
 
   const isOwner = user && craft.owner_id === user.id
+  // Mirrors CreatePage's canCoCreate (and guard_craft_image_source() in schema.sql, the
+  // real enforcement) — visitors and super admins can co-create, artisans have their own
+  // upload flow instead. Guests (no user yet) still see the button since most anonymous
+  // viewers are visitors by default; handleCoCreate sends them to log in first.
+  const canCoCreate = !user || user.is_super_admin || user.role === 'visitor'
+
+  const getExploreThumbnail = (c) => (c.photos && c.photos.length > 0 ? c.photos[0] : null)
 
   const metaRows = [
     ['Craft type', craft.craft_type],
@@ -312,19 +373,48 @@ export default function CraftPage() {
         </button>
         <h1 className="craft__title">{craft.title}</h1>
         {craft.image_source === 'ai_generated' && <AiGeneratedBadge className="craft__ai-badge" />}
-        {isOwner && (
+
+        <div className="craft__header-actions">
           <button
             type="button"
-            className="craft__edit"
-            aria-label="Edit details"
-            onClick={() => navigate(`/craft/${craftId}/metadata`)}
+            className="craft__icon-btn"
+            aria-label="Share"
+            onClick={handleShare}
+            disabled={sharing}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
           </button>
-        )}
+          {canCoCreate && (
+            <button
+              type="button"
+              className="craft__icon-btn craft__icon-btn--ai"
+              aria-label="Co-Create with AI"
+              onClick={handleCoCreate}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none">
+                <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+                <path d="M19 3l.6 1.7L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.3L19 3z" />
+              </svg>
+            </button>
+          )}
+          {isOwner && (
+            <button
+              type="button"
+              className="craft__icon-btn craft__icon-btn--edit"
+              aria-label="Edit details"
+              onClick={() => navigate(`/craft/${craftId}/metadata`)}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="craft__content">
@@ -408,19 +498,19 @@ export default function CraftPage() {
           </dl>
 
           <div className="craft__actions">
+            {canCoCreate && (
+              <button type="button" className="craft__btn craft__btn--ai" onClick={handleCoCreate}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none" aria-hidden="true">
+                  <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+                  <path d="M19 3l.6 1.7L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.3L19 3z" />
+                </svg>
+                Co-Create with AI
+              </button>
+            )}
             {shareError && <p className="craft__publish-error">{shareError}</p>}
             <button type="button" className="craft__btn craft__btn--ghost" onClick={handleShare} disabled={sharing}>
               {sharing ? 'Preparing image…' : shareCopied ? 'Image downloaded, link copied!' : 'Share'}
             </button>
-            {craft.model_url && (
-              <a
-                className="craft__btn craft__btn--primary"
-                href={craft.model_url}
-                download
-              >
-                Download
-              </a>
-            )}
             {publishError && <p className="craft__publish-error">{publishError}</p>}
             {!craft.is_public && (
               <button
@@ -434,6 +524,37 @@ export default function CraftPage() {
             )}
           </div>
         </div>
+
+        {exploreCrafts.length > 0 && (
+          <div className="home__featured-section craft__explore-section">
+            <div className="home__section-header">
+              <h2 className="home__section-title">Explore More</h2>
+              <Link to="/explore" className="home__section-link">View all</Link>
+            </div>
+            <div className="home__featured-row">
+              {exploreCrafts.map((c) => (
+                <article
+                  key={c.id}
+                  className="home__featured-card"
+                  onClick={() => navigate(`/craft/${c.id}`)}
+                >
+                  <div className="home__featured-image-wrapper">
+                    {getExploreThumbnail(c) ? (
+                      <img src={getExploreThumbnail(c)} alt={c.title} className="home__featured-image" loading="lazy" />
+                    ) : (
+                      <div className="home__thumb-placeholder home__thumb-placeholder--featured" />
+                    )}
+                    {c.image_source === 'ai_generated' && <AiGeneratedBadge />}
+                  </div>
+                  <div className="home__featured-body">
+                    <h3 className="home__featured-title">{c.title}</h3>
+                    <p className="home__featured-subtitle">By {exploreOwnerNames[c.owner_id] || 'Unknown creator'}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -115,7 +115,7 @@ export default function HomePage() {
             </div>
 
             <div className="home__section-header home__recent-header">
-              <h2 className="home__section-title">Recent Uploads</h2>
+              <h2 className="home__section-title">Recent Designs</h2>
             </div>
 
             {recentCrafts.length > 0 ? (

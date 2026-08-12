@@ -49,17 +49,47 @@
   border-radius: 50%;
 }
 
-.craft__edit {
+/* Trailing icon-button group: Share, Co-Create, Edit (owner-only) — clustered together
+   at the header's right edge via margin-left:auto on the group itself, rather than on
+   whichever button happens to render first (Edit is conditional on isOwner). */
+.craft__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.craft__icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  margin-left: auto;
-  padding: 4px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: none;
+  border-radius: 50%;
   background: transparent;
-  color: var(--terracotta-900);
+  color: var(--text-primary);
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.craft__icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.craft__icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.craft__icon-btn--ai {
+  color: #6c5ecb;
+}
+
+.craft__icon-btn--edit {
+  color: var(--terracotta-900);
 }
 
 .craft__content {
@@ -251,6 +281,22 @@
   color: var(--terracotta-900);
 }
 
+/* Same purple as .ai-badge (index.css) — the app's one accent for "AI" features, kept
+   distinct from the terracotta brand color used by Share/Download/Publish so this reads
+   as a different kind of action (starts a new flow) rather than another utility button. */
+.craft__btn--ai {
+  gap: 8px;
+  background: linear-gradient(135deg, #6c5ecb, #8b7ff0);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(108, 94, 203, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.craft__btn--ai:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(108, 94, 203, 0.4);
+}
+
 .craft__publish-error {
   margin: 0;
   color: var(--error);
@@ -264,6 +310,16 @@
   color: var(--error);
   font-size: 15px;
   text-align: center;
+}
+
+/* "Explore More" row, reusing Home.css's featured-card styling for visual consistency
+   with the home page. craft__content already supplies the page's horizontal gutter, so
+   the header/row's own default 0 16px padding (meant for home__content, which has none)
+   is zeroed here to avoid double-indenting relative to craft__card above it. The row
+   itself still scrolls independently on the x-axis via home__featured-row's overflow-x. */
+.craft__explore-section .home__section-header,
+.craft__explore-section .home__featured-row {
+  padding: 0;
 }
 
 @media (min-width: 768px) {

@@ -60,6 +60,11 @@ export default function CreatePage() {
   const [coCreateGenerating, setCoCreateGenerating] = useState(false)
   const [pendingLeaveAction, setPendingLeaveAction] = useState(null)
 
+  // Set only when landing here from a craft detail page's "Co-Create with AI" button (see
+  // CraftPage's handleCoCreate) — the full craft record, handed straight to CoCreatePanel
+  // so it can seed its source photo without a redundant library search.
+  const [cocreateInitialDesign, setCocreateInitialDesign] = useState(null)
+
   useEffect(() => {
     let cancelled = false
     supabase
@@ -89,6 +94,18 @@ export default function CreatePage() {
       setMode('upload')
     }
     clearRecoveryPhoto(recoverCraftId)
+    navigate(location.pathname, { replace: true, state: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Landed here from CraftPage's "Co-Create with AI" button — jump straight into Co-Create
+  // mode with that craft as the starting design (consumed once, same replace-state pattern
+  // as the recovery effect above, so it can't leak into a later unrelated visit).
+  useEffect(() => {
+    const source = location.state?.cocreateSource
+    if (!source) return
+    setCocreateInitialDesign(source)
+    setMode('cocreate')
     navigate(location.pathname, { replace: true, state: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -312,7 +329,11 @@ export default function CreatePage() {
               )}
 
               {mode === 'cocreate' ? (
-                <CoCreatePanel onAccepted={handleCoCreateAccepted} onGeneratingChange={setCoCreateGenerating} />
+                <CoCreatePanel
+                  onAccepted={handleCoCreateAccepted}
+                  onGeneratingChange={setCoCreateGenerating}
+                  initialDesign={cocreateInitialDesign}
+                />
               ) : (
                 <>
                   <section className="create__section">

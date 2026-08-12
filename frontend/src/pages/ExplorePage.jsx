@@ -103,24 +103,24 @@ export default function ExplorePage() {
             </div>
 
             {visibleCrafts.length > 0 ? (
-              <div className="home__recent-list">
+              <div className="explore__grid">
                 {visibleCrafts.map((craft) => (
                   <article
                     key={craft.id}
-                    className="home__recent-row"
+                    className="home__featured-card explore__card"
                     onClick={() => navigate(`/craft/${craft.id}`)}
                   >
-                    <div className="home__recent-thumbnail-wrapper">
+                    <div className="home__featured-image-wrapper">
                       {getCraftThumbnail(craft) ? (
-                        <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__recent-thumbnail" loading="lazy" />
+                        <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__featured-image" loading="lazy" />
                       ) : (
-                        <div className="home__recent-placeholder" />
+                        <div className="home__thumb-placeholder home__thumb-placeholder--featured" />
                       )}
                       {craft.image_source === 'ai_generated' && <AiGeneratedBadge />}
                     </div>
-                    <div className="home__recent-body">
-                      <h3 className="home__recent-title">{craft.title}</h3>
-                      <p className="home__recent-subtitle">By {ownerNames[craft.owner_id] || 'Unknown creator'}</p>
+                    <div className="home__featured-body">
+                      <h3 className="home__featured-title">{craft.title}</h3>
+                      <p className="home__featured-subtitle">By {ownerNames[craft.owner_id] || 'Unknown creator'}</p>
                     </div>
                   </article>
                 ))}
