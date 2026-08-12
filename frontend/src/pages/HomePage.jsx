@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -9,6 +9,28 @@ import './Home.css'
 
 const CATEGORY_CHIPS = ['Pottery', 'Terracotta', 'Wood', 'Metal']
 
+// Each banner's own baked-in copy already points at a specific next step (or, for the
+// mission banner, summarizes the platform) — href just makes that real navigation instead
+// of a static image. /library is a ProtectedRoute like everywhere else it's linked from;
+// a guest tapping it gets the normal sign-in bounce, nothing special-cased here.
+const HERO_BANNERS = [
+  {
+    src: '/brand/hero_banners/paths_hero_01_preserving_heritage.png',
+    alt: 'Preserving Heritage. Empowering Futures. PATHS is a digital platform for pottery and craft heritage — we document, digitize and reimagine traditional crafts through design thinking and technology.',
+    href: '/about',
+  },
+  {
+    src: '/brand/hero_banners/paths_hero_02_tradition_to_innovation.png',
+    alt: 'From Tradition to Innovation, Together. Explore, learn and co-create with artisans, designers and communities — PATHS connects ideas to real impact.',
+    href: '/explore',
+  },
+  {
+    src: '/brand/hero_banners/paths_hero_03_explore_understand_reimagine.png',
+    alt: 'Explore. Understand. Reimagine. A living library of pottery and crafts — with stories, 3D models, techniques and ideas that inspire new creations.',
+    href: '/library',
+  },
+]
+
 export default function HomePage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
@@ -17,6 +39,24 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+
+  // Hero banner carousel: native horizontal scroll-snap (touch/trackpad swipe just works)
+  // plus dots for click navigation — heroIndex is derived from scroll position rather than
+  // driving it, so the two never fight each other.
+  const [heroIndex, setHeroIndex] = useState(0)
+  const heroTrackRef = useRef(null)
+
+  const handleHeroScroll = () => {
+    const el = heroTrackRef.current
+    if (!el) return
+    setHeroIndex(Math.round(el.scrollLeft / el.clientWidth))
+  }
+
+  const scrollToHero = (index) => {
+    const el = heroTrackRef.current
+    if (!el) return
+    el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const fetchCrafts = async () => {
@@ -66,7 +106,27 @@ export default function HomePage() {
       <AppNav active="home" />
 
       <section className="home__content">
-        <h1 className="home__title">Explore Crafts</h1>
+        <div className="home__hero">
+          <div className="home__hero-track" ref={heroTrackRef} onScroll={handleHeroScroll}>
+            {HERO_BANNERS.map((banner, i) => (
+              <Link key={banner.href} to={banner.href} className="home__hero-slide">
+                <img src={banner.src} alt={banner.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+              </Link>
+            ))}
+          </div>
+          <div className="home__hero-dots">
+            {HERO_BANNERS.map((banner, i) => (
+              <button
+                key={banner.href}
+                type="button"
+                className={`home__hero-dot ${heroIndex === i ? 'home__hero-dot--active' : ''}`}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-current={heroIndex === i}
+                onClick={() => scrollToHero(i)}
+              />
+            ))}
+          </div>
+        </div>
 
         {loading ? (
           <LoadingScreen message="Loading crafts..." inline />

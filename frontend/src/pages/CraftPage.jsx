@@ -34,6 +34,11 @@ export default function CraftPage() {
   const [exploreCrafts, setExploreCrafts] = useState([])
   const [exploreOwnerNames, setExploreOwnerNames] = useState({})
 
+  // Viewer toggle: 3D model vs. the original source photo. '3d' is the default — only
+  // matters when the craft actually has both (see hasModel/hasPhoto/activeMode below); a
+  // craft with just one media type always shows that one regardless of this state.
+  const [viewMode, setViewMode] = useState('3d')
+
   const modelViewerRef = useRef(null)
   // "x y z" scale-multiplier string once known, or null before that / when no height_cm is
   // set. InstantMesh's single-image reconstruction has no way to know a model's real
@@ -338,6 +343,12 @@ export default function CraftPage() {
 
   const getExploreThumbnail = (c) => (c.photos && c.photos.length > 0 ? c.photos[0] : null)
 
+  const hasModel = Boolean(craft.model_url)
+  const hasPhoto = Boolean(craft.photos && craft.photos.length > 0)
+  // Falls back to whichever media actually exists — viewMode only matters (and the toggle
+  // only renders) when both are available; a craft with just one media type always shows it.
+  const activeMode = viewMode === 'image' && hasPhoto ? 'image' : hasModel ? '3d' : hasPhoto ? 'image' : '3d'
+
   const metaRows = [
     ['Craft type', craft.craft_type],
     ['Material', craft.material],
@@ -418,44 +429,81 @@ export default function CraftPage() {
       </header>
 
       <div className="craft__content">
-        {craft.model_url ? (
-          <model-viewer
-            ref={modelViewerRef}
-            className="craft__viewer"
-            src={computedScale ? undefined : craft.model_url}
-            alt={craft.title}
-            camera-controls
-            auto-rotate
-            ar
-            ar-modes="webxr scene-viewer quick-look"
-            ar-scale={craft.height_cm != null ? 'fixed' : 'auto'}
-            // Best-effort mitigation for a known category of issue with this library
-            // version's iOS AR path: without a pre-made .usdz (ios-src), it converts the
-            // GLB to USDZ client-side via three.js's USDZExporter on every "View in AR" tap,
-            // and that exporter can drop/mis-map some texture setups — capping the export
-            // texture size is a commonly-cited workaround, not a guaranteed fix (couldn't
-            // verify on real iOS hardware this session). A real fix would need either a
-            // proper server-side USDZ pipeline (not built) or changes to InstantMesh's own
-            // GLB/material export, which is out of this repo's scope (AGENTS.md rule 2).
-            ar-usdz-max-texture-size="2048"
-            style={{ width: '100%', height: '400px' }}
-          >
-            {computedScale && <extra-model src={craft.model_url} scale={computedScale} />}
-            {/* model-viewer auto-hides this slotted button on devices/browsers that can't
-                do AR (no usdz for iOS Quick Look, no WebXR/Scene Viewer support, desktop) —
-                no manual capability check needed. */}
-            <button slot="ar-button" type="button" className="craft__ar-btn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z" />
-                <path d="M12 22V12" />
-                <path d="M20 6.5L12 12 4 6.5" />
-              </svg>
-              View in AR
-            </button>
-          </model-viewer>
-        ) : (
-          <div className="craft__no-model">No 3D model yet — it may still be processing.</div>
-        )}
+        <div className="craft__media">
+          {activeMode === '3d' && hasModel ? (
+            <model-viewer
+              ref={modelViewerRef}
+              className="craft__viewer"
+              src={computedScale ? undefined : craft.model_url}
+              alt={craft.title}
+              camera-controls
+              auto-rotate
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              ar-scale={craft.height_cm != null ? 'fixed' : 'auto'}
+              // Best-effort mitigation for a known category of issue with this library
+              // version's iOS AR path: without a pre-made .usdz (ios-src), it converts the
+              // GLB to USDZ client-side via three.js's USDZExporter on every "View in AR" tap,
+              // and that exporter can drop/mis-map some texture setups — capping the export
+              // texture size is a commonly-cited workaround, not a guaranteed fix (couldn't
+              // verify on real iOS hardware this session). A real fix would need either a
+              // proper server-side USDZ pipeline (not built) or changes to InstantMesh's own
+              // GLB/material export, which is out of this repo's scope (AGENTS.md rule 2).
+              ar-usdz-max-texture-size="2048"
+              style={{ width: '100%', height: '400px' }}
+            >
+              {computedScale && <extra-model src={craft.model_url} scale={computedScale} />}
+              {/* model-viewer auto-hides this slotted button on devices/browsers that can't
+                  do AR (no usdz for iOS Quick Look, no WebXR/Scene Viewer support, desktop) —
+                  no manual capability check needed. */}
+              <button slot="ar-button" type="button" className="craft__ar-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z" />
+                  <path d="M12 22V12" />
+                  <path d="M20 6.5L12 12 4 6.5" />
+                </svg>
+                View in AR
+              </button>
+            </model-viewer>
+          ) : activeMode === 'image' && hasPhoto ? (
+            <img src={craft.photos[0]} alt={craft.title} className="craft__photo" />
+          ) : (
+            <div className="craft__no-model">No 3D model yet — it may still be processing.</div>
+          )}
+
+          {hasModel && hasPhoto && (
+            <div className="craft__view-toggle" role="tablist" aria-label="Viewer mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeMode === '3d'}
+                className={`craft__view-toggle-btn ${activeMode === '3d' ? 'craft__view-toggle-btn--active' : ''}`}
+                onClick={() => setViewMode('3d')}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z" />
+                  <path d="M12 22V12" />
+                  <path d="M20 6.5L12 12 4 6.5" />
+                </svg>
+                3D
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeMode === 'image'}
+                className={`craft__view-toggle-btn ${activeMode === 'image' ? 'craft__view-toggle-btn--active' : ''}`}
+                onClick={() => setViewMode('image')}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
+                </svg>
+                Photo
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="craft__card">
           <p className="craft__story">{craft.story}</p>
