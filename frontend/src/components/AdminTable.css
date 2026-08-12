@@ -1,0 +1,232 @@
+.admin-table__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-table__search {
+  flex: 1 1 220px;
+  min-width: 160px;
+  padding: 8px 12px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  background: #fff;
+}
+
+.admin-table__count {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.admin-table__btn {
+  padding: 7px 14px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-table__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-table__btn--primary {
+  background: var(--terracotta-900);
+  border-color: var(--terracotta-900);
+  color: #fff;
+}
+
+.admin-table__btn--danger {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.admin-table__error {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #fdeceb;
+  color: var(--error);
+  font-size: 13px;
+}
+
+.admin-table__scroll {
+  overflow-x: auto;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.admin-table__grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-table__grid th {
+  text-align: left;
+  padding: 9px 12px;
+  background: var(--surface-container-low);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--outline-cream);
+  position: sticky;
+  top: 0;
+}
+
+.admin-table__grid td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--outline-cream);
+  color: var(--text-primary);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-table__grid tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table__empty {
+  text-align: center;
+  color: var(--text-faint);
+  padding: 24px 12px !important;
+  white-space: normal;
+}
+
+.admin-table__actions-head {
+  width: 1%;
+}
+
+.admin-table__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-table__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.admin-table__pager button {
+  padding: 6px 12px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.admin-table__pager button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.admin-table__modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 26, 18, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.admin-table__modal {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.admin-table__modal-title {
+  margin: 0 0 16px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-table__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-table__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.admin-table__field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.admin-table__field input[type="text"],
+.admin-table__field input[type="number"],
+.admin-table__field select,
+.admin-table__field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.admin-table__field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  align-self: flex-start;
+}
+
+.admin-table__mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+.admin-table__readonly {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface-container-low);
+  color: var(--text-faint);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.admin-table__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}

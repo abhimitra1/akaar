@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AppNav from '../components/AppNav.jsx'
+import AiGeneratedBadge from '../components/AiGeneratedBadge.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import './Home.css'
 
@@ -52,16 +53,12 @@ export default function HomePage() {
   const visibleCrafts = selectedCategory
     ? crafts.filter(c => c.craft_type === selectedCategory)
     : crafts
-  const featuredCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 3)
+  const featuredCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 8)
   const recentCrafts = visibleCrafts.filter(c => c.is_public).slice(0, 5)
 
   const getCraftThumbnail = craft => {
     // photos[] holds public Storage URLs directly (see CreatePage upload).
     return craft.photos && craft.photos.length > 0 ? craft.photos[0] : null
-  }
-
-  if (loading) {
-    return <LoadingScreen message="Loading crafts..." />
   }
 
   return (
@@ -71,97 +68,96 @@ export default function HomePage() {
       <section className="home__content">
         <h1 className="home__title">Explore Crafts</h1>
 
-        {featuredCrafts.length > 0 && (
-          <div className="home__featured-section">
-            <div className="home__section-header">
-              <h2 className="home__section-title">Featured Collection</h2>
-              <Link to="/explore" className="home__section-link">View all</Link>
-            </div>
-            <div className="home__featured-row">
-              {featuredCrafts.map(craft => (
-                <article key={craft.id} className="home__featured-card" onClick={() => navigate(`/craft/${craft.id}`)}>
-                  <div className="home__featured-image-wrapper">
-                    {getCraftThumbnail(craft) ? (
-                      <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__featured-image" loading="lazy" />
-                    ) : (
-                      <div className="home__featured-placeholder" />
-                    )}
-                    <span className="home__featured-badge">Featured</span>
-                  </div>
-                  <div className="home__featured-body">
-                    <h3 className="home__featured-title">{craft.title}</h3>
-                    <p className="home__featured-subtitle">By {ownerNames[craft.owner_id] || 'Unknown creator'}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="home__filters">
-          <div className="home__filter-row">
-            {CATEGORY_CHIPS.map(chip => (
-              <button
-                key={chip}
-                className={`home__chip ${selectedCategory === chip ? 'home__chip--active' : ''}`}
-                onClick={() => setSelectedCategory(chip === selectedCategory ? '' : chip)}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="home__section-header home__recent-header">
-          <h2 className="home__section-title">Recent Uploads</h2>
-        </div>
-
-        {recentCrafts.length > 0 ? (
-          <div className="home__recent-list">
-            {recentCrafts.map(craft => (
-              <article
-                key={craft.id}
-                className="home__recent-row"
-                onClick={() => navigate(`/craft/${craft.id}`)}
-              >
-                <div className="home__recent-thumbnail-wrapper">
-                  {getCraftThumbnail(craft) ? (
-                    <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__recent-thumbnail" loading="lazy" />
-                  ) : (
-                    <div className="home__recent-placeholder" />
-                  )}
-                </div>
-                <div className="home__recent-body">
-                  <h3 className="home__recent-title">{craft.title}</h3>
-                  <p className="home__recent-subtitle">By {ownerNames[craft.owner_id] || 'Unknown creator'}</p>
-                </div>
-                <button
-                  className="home__recent-menu-btn"
-                  aria-label="More options"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
-                  </svg>
-                </button>
-              </article>
-            ))}
-          </div>
+        {loading ? (
+          <LoadingScreen message="Loading crafts..." inline />
         ) : (
-          <div className="home__empty-state">
-            <div className="home__empty-icon-circle">
-              <svg className="home__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5.5 3l1.1 2.2L8.8 6.3 6.6 7.4 5.5 9.6 4.4 7.4 2.2 6.3l2.2-1.1L5.5 3z" />
-                <path d="M18.5 5.5l.9 1.7 1.7.8-1.7.8-.9 1.7-.9-1.7-1.7-.8 1.7-.8.9-1.7z" />
-                <path d="M3.5 10.2l8.5-3.8 8.5 3.8" />
-                <path d="M3.5 10.2v6.8l8.5 3.8 8.5-3.8v-6.8" />
-                <path d="M3.5 10.2l8.5 3.8 8.5-3.8" />
-                <path d="M12 14v6.8" />
-              </svg>
+          <>
+            {featuredCrafts.length > 0 && (
+              <div className="home__featured-section">
+                <div className="home__section-header">
+                  <h2 className="home__section-title">Featured Collection</h2>
+                  <Link to="/explore" className="home__section-link">View all</Link>
+                </div>
+                <div className="home__featured-row">
+                  {featuredCrafts.map(craft => (
+                    <article key={craft.id} className="home__featured-card" onClick={() => navigate(`/craft/${craft.id}`)}>
+                      <div className="home__featured-image-wrapper">
+                        {getCraftThumbnail(craft) ? (
+                          <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__featured-image" loading="lazy" />
+                        ) : (
+                          <div className="home__featured-placeholder" />
+                        )}
+                        <span className="home__featured-badge">Featured</span>
+                        {craft.image_source === 'ai_generated' && <AiGeneratedBadge />}
+                      </div>
+                      <div className="home__featured-body">
+                        <h3 className="home__featured-title">{craft.title}</h3>
+                        <p className="home__featured-subtitle">By {ownerNames[craft.owner_id] || 'Unknown creator'}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="home__filters">
+              <div className="home__filter-row">
+                {CATEGORY_CHIPS.map(chip => (
+                  <button
+                    key={chip}
+                    className={`home__chip ${selectedCategory === chip ? 'home__chip--active' : ''}`}
+                    onClick={() => setSelectedCategory(chip === selectedCategory ? '' : chip)}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
             </div>
-            <p className="home__empty-title">No crafts documented yet.</p>
-            <p className="home__empty-sub">Be the first to preserve a craft's story as a digital twin.</p>
-          </div>
+
+            <div className="home__section-header home__recent-header">
+              <h2 className="home__section-title">Recent Uploads</h2>
+            </div>
+
+            {recentCrafts.length > 0 ? (
+              <div className="home__recent-list">
+                {recentCrafts.map(craft => (
+                  <article
+                    key={craft.id}
+                    className="home__recent-row"
+                    onClick={() => navigate(`/craft/${craft.id}`)}
+                  >
+                    <div className="home__recent-thumbnail-wrapper">
+                      {getCraftThumbnail(craft) ? (
+                        <img src={getCraftThumbnail(craft)} alt={craft.title} className="home__recent-thumbnail" loading="lazy" />
+                      ) : (
+                        <div className="home__recent-placeholder" />
+                      )}
+                      {craft.image_source === 'ai_generated' && <AiGeneratedBadge />}
+                    </div>
+                    <div className="home__recent-body">
+                      <h3 className="home__recent-title">{craft.title}</h3>
+                      <p className="home__recent-subtitle">By {ownerNames[craft.owner_id] || 'Unknown creator'}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="home__empty-state">
+                <div className="home__empty-icon-circle">
+                  <svg className="home__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5.5 3l1.1 2.2L8.8 6.3 6.6 7.4 5.5 9.6 4.4 7.4 2.2 6.3l2.2-1.1L5.5 3z" />
+                    <path d="M18.5 5.5l.9 1.7 1.7.8-1.7.8-.9 1.7-.9-1.7-1.7-.8 1.7-.8.9-1.7z" />
+                    <path d="M3.5 10.2l8.5-3.8 8.5 3.8" />
+                    <path d="M3.5 10.2v6.8l8.5 3.8 8.5-3.8v-6.8" />
+                    <path d="M3.5 10.2l8.5 3.8 8.5-3.8" />
+                    <path d="M12 14v6.8" />
+                  </svg>
+                </div>
+                <p className="home__empty-title">No crafts documented yet.</p>
+                <p className="home__empty-sub">Be the first to preserve a craft's story as a digital twin.</p>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

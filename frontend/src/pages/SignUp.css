@@ -18,7 +18,9 @@
 
 /* Header bar: terracotta gradient with a frosted-glass overlay layer. */
 .signup__header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 12px;

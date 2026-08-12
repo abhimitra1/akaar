@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import PathsMark from './PathsMark.jsx'
 
 const NAV_ITEMS = [
@@ -44,11 +45,14 @@ const HOME_PATH_EXTRA = <polyline points="9 22 9 12 15 12 15 22" />
 // Craft view) keep their own simpler back+title header instead — matches the existing
 // pattern from before this was extracted. Reuses Home.css's `home__*` classes verbatim.
 export default function AppNav({ active }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
   return (
     <>
       <nav className="home__sidebar">
         <div className="home__sidebar-brand">
-          <PathsMark size={24} />
+          <PathsMark size={48} />
           <span>PATHS</span>
         </div>
         <div className="home__sidebar-tagline">Design Thinking by Thinking Design</div>
@@ -83,13 +87,25 @@ export default function AppNav({ active }) {
               <span>{item.label}</span>
             </Link>
           ))}
+          {user?.is_super_admin && (
+            <Link
+              to="/admin"
+              className={`home__sidebar-item ${active === 'admin' ? 'home__sidebar-item--active' : ''}`}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5l8-3z" />
+              </svg>
+              <span>Admin</span>
+            </Link>
+          )}
         </div>
 
         <div className="home__sidebar-footer">
           Preserving craft heritage, built at{' '}
           <a href="https://sofn.vercel.app/" target="_blank" rel="noopener noreferrer">Future Nexus Labs</a>
           {', '}
-          <a href="https://cutm.ac.in" target="_blank" rel="noopener noreferrer">Centurion University</a>
+          <a href="https://cutm.ac.in" target="_blank" rel="noopener noreferrer">Centurion University. </a>
+          <a href="/whitepaper.html" target="_blank" rel="noopener noreferrer">Read Whitepaper</a>
         </div>
       </nav>
 
@@ -99,10 +115,13 @@ export default function AppNav({ active }) {
             Hidden on desktop, where the brand is hidden too — see Home.css. */}
         <div className="home__topbar-spacer" aria-hidden="true" />
         <div className="home__brand">
-          <PathsMark size={20} />
+          <PathsMark size={36} />
           <span>PATHS</span>
         </div>
-        <button className="home__icon-btn" aria-label="Search">
+        {/* Was purely decorative (no onClick at all) — ExplorePage already has the real
+            search box (title/story text search + craft-type filters), this just gets
+            there. */}
+        <button className="home__icon-btn" aria-label="Search" onClick={() => navigate('/explore')}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>

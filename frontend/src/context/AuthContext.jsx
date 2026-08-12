@@ -68,7 +68,8 @@ export function AuthProvider({ children }) {
     // Full-page redirect to Google, then back to redirectTo — supabase-js picks up the
     // session from the URL automatically on load, firing onAuthStateChange above. No
     // separate callback route needed. Profile row comes from the same handle_new_user()
-    // trigger as email signup; Google's metadata just won't fill role/institution/department.
+    // trigger as email signup; Google's metadata just won't fill institution/department
+    // (role is never taken from metadata either way — see handle_new_user() in schema.sql).
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
@@ -77,11 +78,11 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signup = useCallback(async (fields) => {
-    const { email, password, full_name, role, institution, department } = fields
+    const { email, password, full_name, institution, department } = fields
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name, role, institution, department } },
+      options: { data: { full_name, institution, department } },
     })
     if (error) throw new Error(error.message)
     return data
@@ -91,9 +92,10 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }, [])
 
-  // Re-pulls the profile row into context after an update elsewhere (e.g.
-  // CompleteProfilePage) — plain table updates don't fire onAuthStateChange, so without
-  // this the cached profile (and its role) would stay stale until the next auth event.
+  // Re-pulls the profile row into context after an update elsewhere (e.g. AccountPage's
+  // edit form or its "Apply to become an Artisan" button) — plain table updates don't fire
+  // onAuthStateChange, so without this the cached profile would stay stale until the next
+  // auth event.
   const refreshProfile = useCallback(async () => {
     if (!session) return
     setProfile(await fetchProfile(session.user.id))

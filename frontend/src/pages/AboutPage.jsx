@@ -1,8 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
 import LearningLoopRing from '../components/LearningLoopRing'
 import { LEARNING_LOOP_PHASES } from '../data/learningLoop'
+import { MILESTONES } from '../data/milestones'
 import './Policy.css'
 import './About.css'
+
+const MILESTONE_STATUS_LABEL = {
+  done: 'Done',
+  'in-progress': 'In progress',
+  upcoming: 'Ahead',
+}
 
 // Public page (no ProtectedRoute) — the project's story, mission, and credits. Linked from
 // AppNav's desktop-sidebar secondary nav, and from AccountPage's footer for mobile parity
@@ -27,6 +34,9 @@ export default function AboutPage() {
         <section className="about__hero">
           <p className="about__tagline">Design Thinking by Thinking Design</p>
           <p className="about__fullname">Pottery - Art - Technology - Heritage &amp; Sustainability</p>
+          <a className="about__whitepaper-link" href="/whitepaper.html" target="_blank" rel="noopener noreferrer">
+            Read Whitepaper
+          </a>
         </section>
 
         <section className="policy__section">
@@ -82,6 +92,34 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="policy__section">
+          <h2>Our goal</h2>
+          <p>
+            The whitepaper's central commitment: ring-fence the making act — throwing,
+            glazing, firing stay wholly human — and let computation handle only what comes
+            before it (turning a vague idea into an exact target) and after it (proving the
+            fired piece matches that target). Read the full case in the{' '}
+            <a href="/whitepaper.html" target="_blank" rel="noopener noreferrer">whitepaper</a>.
+          </p>
+
+          <h3 className="about__milestones-heading">Where we are today</h3>
+          <ol className="about__milestones">
+            {MILESTONES.map((m) => (
+              <li key={m.title} className={`about__milestone about__milestone--${m.status}`}>
+                <span className="about__milestone-dot" aria-hidden="true" />
+                <div className="about__milestone-head">
+                  <i className="about__milestone-stage">{m.stage}</i>
+                  <span className={`about__milestone-status about__milestone-status--${m.status}`}>
+                    {MILESTONE_STATUS_LABEL[m.status]}
+                  </span>
+                </div>
+                <div className="about__milestone-title">{m.title}</div>
+                <p className="about__milestone-desc">{m.desc}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="policy__section">

@@ -180,6 +180,15 @@
   letter-spacing: 0.5px;
 }
 
+.home__featured-image-wrapper .ai-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
 .home__featured-body {
   padding: 12px;
 }
@@ -268,12 +277,23 @@
 }
 
 .home__recent-thumbnail-wrapper {
+  position: relative;
   width: 48px;
   height: 48px;
   border-radius: 8px;
   overflow: hidden;
   margin-right: 12px;
   background: var(--outline-cream);
+}
+
+.home__recent-thumbnail-wrapper .ai-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--surface);
 }
 
 .home__recent-thumbnail {
@@ -445,7 +465,7 @@
   .home__sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     color: var(--terracotta-900);
     font-family: var(--font-display);
     font-weight: 700;

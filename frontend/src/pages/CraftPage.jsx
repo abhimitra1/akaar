@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import AiGeneratedBadge from '../components/AiGeneratedBadge.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import './CraftPage.css'
 
@@ -273,6 +274,7 @@ export default function CraftPage() {
           </svg>
         </button>
         <h1 className="craft__title">{craft.title}</h1>
+        {craft.image_source === 'ai_generated' && <AiGeneratedBadge className="craft__ai-badge" />}
         {isOwner && (
           <button
             type="button"

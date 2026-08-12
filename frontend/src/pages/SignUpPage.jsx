@@ -4,9 +4,6 @@ import { useAuth } from '../context/AuthContext.jsx'
 import PasswordField from '../components/PasswordField.jsx'
 import './SignUp.css'
 
-// Matches models.py User.role enum (excluding "visitor" = guest).
-const ROLES = ['student', 'artisan', 'faculty', 'researcher', 'designer']
-
 export default function SignUpPage() {
   const { signup, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
@@ -14,7 +11,6 @@ export default function SignUpPage() {
     full_name: '',
     email: '',
     password: '',
-    role: ROLES[0],
     institution: '',
     department: '',
   })
@@ -42,7 +38,7 @@ export default function SignUpPage() {
     setError('')
     setGoogleLoading(true)
     try {
-      await loginWithGoogle() // redirects away; CompleteProfilePage collects role/institution/department after
+      await loginWithGoogle() // redirects away; picks up the session from the URL on return
     } catch (err) {
       setError(err.message || 'Google sign-in failed')
       setGoogleLoading(false)
@@ -110,21 +106,6 @@ export default function SignUpPage() {
               autoComplete="new-password"
             />
           </label>
-
-          {/* Role is NOT wrapped in a <label> — iOS Safari fails to open the native picker
-              for selects nested inside labels; use htmlFor/id instead. */}
-          <div className="field">
-            <label className="field__label" htmlFor="role">
-              Role
-            </label>
-            <select id="role" name="role" value={form.role} onChange={handleChange}>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <label className="field">
             <span className="field__label">Institution</span>

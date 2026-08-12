@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 130" width="920" height="260">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 130" width="840" height="260">
   <!-- PATHS "Wheel Rings" horizontal lockup — icon + wordmark + tagline, ink-on-transparent.
        Source: Claude Design "PATHS logo directions" / PATHS Logo - Wheel Rings.dc.html.
        Wordmark uses Space Grotesk, tagline uses Spectral italic — if the viewing app/OS
@@ -8,6 +8,6 @@
     <circle cx="50" cy="50" r="24" fill="none" stroke="#C1662E" stroke-width="10" />
     <circle cx="50" cy="50" r="9" fill="#2A241F" />
   </g>
-  <text x="150" y="68" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="34" letter-spacing="4" fill="#2A241F">PATHS</text>
-  <text x="150" y="92" font-family="'Spectral', serif" font-style="italic" font-size="15" fill="#8A7A63">Design Thinking by Thinking Design</text>
+  <text x="112" y="68" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="34" letter-spacing="4" fill="#2A241F">PATHS</text>
+  <text x="112" y="92" font-family="'Spectral', serif" font-style="italic" font-size="15" fill="#8A7A63">Design Thinking by Thinking Design</text>
 </svg>

@@ -1,12 +1,13 @@
 import { Route, Routes } from 'react-router-dom'
+import AdminRoute from './components/AdminRoute.jsx'
 import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
+import AdminPage from './pages/AdminPage.jsx'
 import BrandingPage from './pages/BrandingPage.jsx'
-import CompleteProfilePage from './pages/CompleteProfilePage.jsx'
 import CraftPage from './pages/CraftPage.jsx'
 import CreatePage from './pages/CreatePage.jsx'
 import ExplorePage from './pages/ExplorePage.jsx'
@@ -44,14 +45,6 @@ function App() {
             }
           />
           <Route
-            path="/complete-profile"
-            element={
-              <ProtectedRoute>
-                <CompleteProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/library"
             element={
               <ProtectedRoute>
@@ -65,6 +58,14 @@ function App() {
               <ProtectedRoute>
                 <AccountPage />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
             }
           />
           {/* Guest-accessible per AGENTS.md §3 Phase 1 (browse/search doesn't require sign-in). */}

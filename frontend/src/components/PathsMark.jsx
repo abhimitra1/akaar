@@ -15,7 +15,7 @@ export default function PathsMark({ variant = 'ink', size = 28, className }) {
   const strokeColor = variant === 'onDark' ? CREAM : INK
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox="8 8 84 84"
       width={size}
       height={size}
       className={className}

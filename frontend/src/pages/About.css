@@ -20,6 +20,22 @@
   color: var(--text-faint);
 }
 
+.about__whitepaper-link {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.about__whitepaper-link:hover {
+  background: #7d3800;
+}
+
 .about__credits {
   display: flex;
   flex-direction: column;
@@ -221,4 +237,111 @@
   font-size: 10.5px;
   color: var(--text-faint);
   margin-right: 6px;
+}
+
+/* Vertical "loading line" of milestones: each <li>'s left border is one segment of the
+   line running down to the next milestone. A segment is solid terracotta once its own
+   milestone is done (progress has passed through it), dashed/muted otherwise — so the
+   line reads as a progress track that runs out exactly where real progress does. */
+.about__milestones-heading {
+  margin: 22px 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.about__milestones {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.about__milestone {
+  position: relative;
+  margin-left: 6px;
+  padding: 0 0 22px 24px;
+  border-left: 2px dashed var(--outline-cream);
+}
+
+.about__milestone:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.about__milestone--done {
+  border-left-style: solid;
+  border-left-color: var(--terracotta-900);
+}
+
+.about__milestone-dot {
+  position: absolute;
+  left: -8px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--outline-cream);
+}
+
+.about__milestone--done .about__milestone-dot {
+  background: var(--terracotta-900);
+  border-color: var(--terracotta-900);
+}
+
+.about__milestone--in-progress .about__milestone-dot {
+  border-color: var(--terracotta-900);
+  box-shadow: 0 0 0 4px rgba(151, 68, 0, 0.14);
+}
+
+.about__milestone-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.about__milestone-stage {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-style: normal;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.about__milestone-status {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  color: var(--text-faint);
+  background: var(--surface-container-low);
+}
+
+.about__milestone-status--done {
+  color: #fff;
+  background: var(--terracotta-900);
+}
+
+.about__milestone-status--in-progress {
+  color: var(--terracotta-900);
+  background: var(--bg-cream);
+}
+
+.about__milestone-title {
+  margin-top: 3px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.about__milestone-desc {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }

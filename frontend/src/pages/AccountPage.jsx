@@ -12,9 +12,29 @@ import './Account.css'
 // password + sign out. Avatar upload, active sessions, 2FA, notification prefs, and
 // delete-account are phase 2 / need an admin API this backendless app doesn't have
 // (§9) — not built.
+const chevron = (
+  <svg
+    className="account__link-chevron"
+    viewBox="0 0 24 24"
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M9 18l6-6-6-6" />
+  </svg>
+)
+
 export default function AccountPage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, refreshProfile } = useAuth()
+
+  const [applyingArtisan, setApplyingArtisan] = useState(false)
+  const [applyError, setApplyError] = useState('')
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
@@ -54,6 +74,27 @@ export default function AccountPage() {
       setProfileError(err.message || 'Failed to save profile')
     } finally {
       setSavingProfile(false)
+    }
+  }
+
+  // Visitor-only self-service request — doesn't grant anything itself (role is
+  // admin-assigned only, see guard_profile_privileges() in schema.sql). Just timestamps
+  // the request so a super admin can spot it in /admin's Profiles tab and flip role to
+  // 'artisan' by hand; no auto-approval, rejection, or notification flow yet.
+  const handleApplyArtisan = async () => {
+    setApplyError('')
+    setApplyingArtisan(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ artisan_requested_at: new Date().toISOString() })
+        .eq('id', user.id)
+      if (error) throw new Error(error.message)
+      await refreshProfile()
+    } catch (err) {
+      setApplyError(err.message || 'Failed to submit application')
+    } finally {
+      setApplyingArtisan(false)
     }
   }
 
@@ -113,6 +154,31 @@ export default function AccountPage() {
                 <span className="account__label">Role</span>
                 <span className="account__value account__value--badge">{user.role || 'visitor'}</span>
               </div>
+
+              {/* Role itself is admin-assigned only (see guard_profile_privileges() in
+                  schema.sql) — this just timestamps a request for a super admin to act on
+                  in /admin, it doesn't grant anything on its own. */}
+              {(user.role || 'visitor') === 'visitor' && !user.is_super_admin && (
+                user.artisan_requested_at ? (
+                  <p className="account__note">
+                    Artisan application submitted {new Date(user.artisan_requested_at).toLocaleDateString()} —
+                    pending review.
+                  </p>
+                ) : (
+                  <>
+                    {applyError && <div className="create__error" role="alert">{applyError}</div>}
+                    <button
+                      type="button"
+                      className="craft__btn craft__btn--ghost account__btn"
+                      disabled={applyingArtisan}
+                      onClick={handleApplyArtisan}
+                    >
+                      {applyingArtisan ? 'Submitting…' : 'Apply to become an Artisan'}
+                    </button>
+                  </>
+                )
+              )}
+
               <div className="account__row">
                 <span className="account__label">Institution</span>
                 <span className="account__value">{user.institution || '—'}</span>
@@ -200,23 +266,32 @@ export default function AccountPage() {
           </button>
         </div>
 
-        <Link to="/about" className="craft__btn craft__btn--ghost account__btn">
-          About PATHS
-        </Link>
+        <div className="account__card account__links">
+          <Link to="/about" className="account__link-row">
+            <span>About PATHS</span>
+            {chevron}
+          </Link>
+          <Link to="/branding" className="account__link-row">
+            <span>Branding</span>
+            {chevron}
+          </Link>
+          <Link to="/policy" className="account__link-row">
+            <span>Privacy &amp; AI Policy</span>
+            {chevron}
+          </Link>
+          <Link to="/terms" className="account__link-row">
+            <span>Terms &amp; Conditions</span>
+            {chevron}
+          </Link>
+          {user?.is_super_admin && (
+            <Link to="/admin" className="account__link-row">
+              <span>Admin</span>
+              {chevron}
+            </Link>
+          )}
+        </div>
 
-        <Link to="/branding" className="craft__btn craft__btn--ghost account__btn">
-          Branding
-        </Link>
-
-        <Link to="/policy" className="craft__btn craft__btn--ghost account__btn">
-          Privacy &amp; AI Policy
-        </Link>
-
-        <Link to="/terms" className="craft__btn craft__btn--ghost account__btn">
-          Terms &amp; Conditions
-        </Link>
-
-        <button type="button" className="craft__btn craft__btn--ghost account__btn account__signout" onClick={handleSignOut}>
+        <button type="button" className="account__signout" onClick={handleSignOut}>
           Sign out
         </button>
       </section>

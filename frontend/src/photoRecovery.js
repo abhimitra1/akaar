@@ -28,12 +28,12 @@ function dataUrlToFile(dataUrl, name) {
 
 // Best-effort only (quota exceeded, private browsing, unreadable file) — must never block
 // the actual generation request, so failures here are swallowed, not surfaced.
-export async function saveRecoveryPhoto(craftId, file, parentDesign) {
+export async function saveRecoveryPhoto(craftId, file, parentDesign, isAiGenerated) {
   try {
     const dataUrl = await fileToDataUrl(file)
     localStorage.setItem(
       KEY_PREFIX + craftId,
-      JSON.stringify({ dataUrl, name: file.name, parentDesign: parentDesign || null })
+      JSON.stringify({ dataUrl, name: file.name, parentDesign: parentDesign || null, isAiGenerated: Boolean(isAiGenerated) })
     )
   } catch {
     // Ignore — see comment above.
@@ -44,8 +44,13 @@ export function loadRecoveryPhoto(craftId) {
   try {
     const raw = localStorage.getItem(KEY_PREFIX + craftId)
     if (!raw) return null
-    const { dataUrl, name, parentDesign } = JSON.parse(raw)
-    return { file: dataUrlToFile(dataUrl, name), previewUrl: dataUrl, parentDesign: parentDesign || null }
+    const { dataUrl, name, parentDesign, isAiGenerated } = JSON.parse(raw)
+    return {
+      file: dataUrlToFile(dataUrl, name),
+      previewUrl: dataUrl,
+      parentDesign: parentDesign || null,
+      isAiGenerated: Boolean(isAiGenerated),
+    }
   } catch {
     return null
   }

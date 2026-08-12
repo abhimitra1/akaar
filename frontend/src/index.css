@@ -77,3 +77,21 @@ body {
   font-weight: 700;
   text-decoration: underline;
 }
+
+/* components/AiGeneratedBadge.jsx — base look only; each page positions it in context
+   (absolute over a thumbnail, inline next to a title, etc. — see that page's own CSS).
+   Violet, matching the Learning Loop diagram's "Reimagine & Co-create" phase color
+   (frontend/src/data/learningLoop.js) — the app's one consistent color for "AI-touched". */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #fff;
+  background: #6c5ecb;
+}
+
+.ai-badge svg {
+  width: 60%;
+  height: 60%;
+}

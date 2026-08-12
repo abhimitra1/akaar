@@ -53,7 +53,9 @@
 
 /* Header bar: terracotta gradient with frosted-glass overlay layer (same as Welcome/SignUp) */
 .signin__header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 12px;

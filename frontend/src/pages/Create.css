@@ -16,7 +16,9 @@
 
 /* Header bar: terracotta gradient + frosted-glass overlay (matches auth screens). */
 .create__header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 12px;

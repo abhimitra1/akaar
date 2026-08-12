@@ -12,6 +12,12 @@
   text-align: center;
 }
 
+.loading-screen--inline {
+  min-height: 240px;
+  padding: 48px 24px;
+  background: transparent;
+}
+
 .loading-screen__spinner {
   width: 36px;
   height: 36px;

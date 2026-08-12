@@ -6,7 +6,7 @@ import './Create.css'
 
 // Shown once per account, right after signup (or retroactively to already-signed-up users
 // the first time they land here — see ProfileGate.jsx) — blocks every other route until
-// profiles.terms_accepted_at is set. Mirrors CompleteProfilePage's shape/styling.
+// profiles.terms_accepted_at is set.
 export default function AcceptTermsPage() {
   const { user, refreshProfile } = useAuth()
   const navigate = useNavigate()

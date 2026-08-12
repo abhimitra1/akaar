@@ -65,6 +65,12 @@
   font-size: 14px;
 }
 
+.account__note {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
 .account__btn {
   margin-top: 4px;
 }
@@ -75,8 +81,59 @@
   gap: 10px;
 }
 
+/* Grouped settings list (About/Branding/Policy/Terms/Admin) — was six identical full-width
+   pill buttons stacked with gaps, which read as a repetitive wall with no hierarchy and no
+   visual distinction for "Sign out" (a different, session-ending kind of action). Reworked
+   as one card of left-aligned rows with a trailing chevron, matching account__card's
+   existing visual language instead of introducing a third button style. */
+.account__links {
+  gap: 0;
+  padding: 4px 12px;
+}
+
+.account__link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid var(--outline-cream);
+}
+
+.account__link-row:last-child {
+  border-bottom: none;
+}
+
+.account__link-row:active {
+  opacity: 0.6;
+}
+
+.account__link-chevron {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+}
+
+/* Kept visually separate from account__links on purpose (own outline, error-toned) —
+   ending your session is a different kind of action from a settings link, not just
+   another row in the same list. */
 .account__signout {
-  margin: 0 16px 32px;
+  display: block;
+  width: auto;
+  margin: 20px 16px 32px;
+  padding: 14px 16px;
+  border: 1px solid var(--error);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--error);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
 }
 
 @media (min-width: 768px) {

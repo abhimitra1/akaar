@@ -7,7 +7,9 @@
 
 /* Header bar: frosted glass over the page, like other screens. */
 .craft__header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -38,6 +40,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.craft__ai-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
 }
 
 .craft__edit {

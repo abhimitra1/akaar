@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#974400">
+<meta name="description" content="PATHS: A Physical–Digital–Physical Framework for Industry 5.0 Augmentation of Traditional Pottery Craft">
+<title>PATHS — A Physical–Digital–Physical Framework for Industry 5.0 Augmentation of Traditional Craft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --panel:#faf6f0; --panel-2:#f4ede3; --line:#e3d8c8; --line-soft:#efe7db;
+  --ink:#231a12; --ink-2:#4a3b2c; --ink-dim:#7a6a56; --ink-faint:#a89884;
+  --terra:#974400; --ember:#c8641c; --celadon:#3f9b83; --violet:#6c5ecb; --clay:#b8863b;
+  --maxw:860px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:"Spectral",Georgia,serif;font-size:16.5px;line-height:1.68;-webkit-font-smoothing:antialiased}
+.sheet{max-width:var(--maxw);margin:0 auto;padding:0 24px 100px}
+
+/* ---------- toolbar ---------- */
+.toolbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.toolbar-in{max-width:var(--maxw);margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:14px}
+.tb-brand{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--terra);font-weight:600}
+.tb-sub{font-family:"Inter",sans-serif;font-size:11.5px;color:var(--ink-faint);flex:1;letter-spacing:.02em}
+.btn{font-family:"Inter",sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.01em;border:1px solid var(--terra);background:var(--terra);color:#fff;padding:8px 15px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.btn:hover{background:#7d3800;border-color:#7d3800}
+.btn.ghost{background:transparent;color:var(--terra)}
+.btn.ghost:hover{background:var(--panel);color:var(--terra)}
+.btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- masthead ---------- */
+.masthead{padding:52px 0 0;border-bottom:2px solid var(--ink);margin-bottom:0}
+.venue{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:26px}
+.venue b{color:var(--terra);font-weight:600}
+h1.doctitle{font-family:"Spectral",serif;font-weight:700;font-size:clamp(27px,4.4vw,39px);line-height:1.18;letter-spacing:-.018em;margin-bottom:12px}
+.subtitle{font-family:"Spectral",serif;font-style:italic;font-size:clamp(16px,2.2vw,19px);color:var(--ink-dim);line-height:1.45;margin-bottom:28px}
+.authors{font-family:"Inter",sans-serif;font-size:14.5px;line-height:1.75;margin-bottom:6px}
+.authors .nm{font-weight:700;color:var(--ink)}
+.authors sup{color:var(--terra);font-weight:700;font-size:10px}
+.affil{font-family:"Inter",sans-serif;font-size:12px;color:var(--ink-dim);line-height:1.7;margin-bottom:26px}
+.affil sup{color:var(--terra);font-weight:700}
+.roleline{font-family:"Inter",sans-serif;font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.roleline b{color:var(--ink);font-weight:600}
+
+/* ---------- abstract ---------- */
+.abstract{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--terra);border-radius:0 10px 10px 0;padding:22px 24px;margin:30px 0 0}
+.abstract h2{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--terra);font-weight:600;margin-bottom:12px}
+.abstract p{font-size:15px;line-height:1.7;color:var(--ink-2);text-align:justify;hyphens:auto}
+.keywords{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-dim)}
+.keywords b{font-family:"Inter",sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);font-weight:700}
+
+/* ---------- toc ---------- */
+.toc{border:1px solid var(--line);border-radius:10px;padding:20px 24px;margin:28px 0 0;background:#fff}
+.toc h2{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-dim);font-weight:600;margin-bottom:14px}
+.toc ol{list-style:none;counter-reset:toc;columns:2;column-gap:34px}
+.toc li{counter-increment:toc;font-family:"Inter",sans-serif;font-size:13px;line-height:1.55;margin-bottom:7px;break-inside:avoid}
+.toc li:before{content:counter(toc) ".";color:var(--terra);font-weight:700;margin-right:7px;font-family:"IBM Plex Mono",monospace;font-size:11.5px}
+.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{color:var(--terra);border-bottom-color:var(--terra)}
+
+/* ---------- body ---------- */
+section{margin-top:42px}
+h2.sec{font-family:"Inter",sans-serif;font-weight:700;font-size:19px;letter-spacing:-.01em;color:var(--ink);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:16px;display:flex;gap:11px;align-items:baseline}
+h2.sec .n{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--terra);font-weight:600}
+h3.sub{font-family:"Inter",sans-serif;font-weight:650;font-size:15px;color:var(--ink);margin:24px 0 9px;display:flex;gap:9px;align-items:baseline}
+h3.sub .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--clay);font-weight:600}
+h4.subsub{font-family:"Inter",sans-serif;font-weight:650;font-size:13.5px;color:var(--ink-2);margin:18px 0 6px;letter-spacing:.01em}
+p{margin-bottom:13px;text-align:justify;hyphens:auto}
+p.lead{font-size:17px;color:var(--ink-2)}
+ul.body,ol.body{margin:6px 0 15px 22px}
+ul.body li,ol.body li{margin-bottom:7px;line-height:1.62}
+ul.body li::marker{color:var(--terra)}
+ol.body li::marker{color:var(--terra);font-family:"IBM Plex Mono",monospace;font-size:13px}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:italic}
+a.cite{color:var(--terra);text-decoration:none;font-family:"Inter",sans-serif;font-size:12px;font-weight:600;vertical-align:.15em;padding:0 .5px}
+a.cite:hover{text-decoration:underline}
+code{font-family:"IBM Plex Mono",monospace;font-size:13px;background:var(--panel-2);padding:1.5px 5px;border-radius:4px;color:var(--terra)}
+
+/* ---------- callouts ---------- */
+.callout{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:17px 20px;margin:20px 0}
+.callout .lbl{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--terra);font-weight:600;margin-bottom:8px}
+.callout p{font-size:14.5px;margin-bottom:0;color:var(--ink-2)}
+.callout p+p{margin-top:9px}
+.eqn{background:#fff;border:1px solid var(--line);border-radius:8px;padding:15px 18px;margin:16px 0;font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink);text-align:center;line-height:1.9;overflow-x:auto}
+.eqn .no{float:right;color:var(--ink-faint);font-size:12px}
+
+/* ---------- figures & tables ---------- */
+figure{margin:26px 0;break-inside:avoid}
+figure .frame{border:1px solid var(--line);border-radius:12px;background:#fff;padding:20px 16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block;overflow:visible}
+figcaption{font-family:"Inter",sans-serif;font-size:12.5px;line-height:1.6;color:var(--ink-dim);margin-top:11px;padding-left:2px}
+figcaption b{color:var(--terra);font-weight:700}
+table{width:100%;border-collapse:collapse;font-family:"Inter",sans-serif;font-size:12.7px;margin:6px 0 0}
+table caption{caption-side:top;text-align:left;font-family:"Inter",sans-serif;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.6}
+table caption b{color:var(--terra);font-weight:700}
+th{background:var(--panel-2);text-align:left;font-weight:650;color:var(--ink);padding:9px 11px;border-bottom:1.5px solid var(--ink-2);font-size:11.5px;letter-spacing:.02em}
+td{padding:8px 11px;border-bottom:1px solid var(--line-soft);color:var(--ink-2);vertical-align:top;line-height:1.5}
+tbody tr:nth-child(even){background:#fdfbf8}
+td.k{font-weight:600;color:var(--ink);white-space:nowrap}
+td.mono{font-family:"IBM Plex Mono",monospace;font-size:11.5px}
+.tbl-wrap{margin:24px 0;break-inside:avoid;overflow-x:auto}
+
+/* ---------- refs ---------- */
+ol.refs{list-style:none;counter-reset:ref;margin-top:8px}
+ol.refs li{counter-increment:ref;position:relative;padding-left:34px;margin-bottom:10px;font-size:13.4px;line-height:1.55;color:var(--ink-2);break-inside:avoid}
+ol.refs li:before{content:"["counter(ref)"]";position:absolute;left:0;top:0;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--terra);font-weight:600}
+ol.refs li a{color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-faint);word-break:break-word}
+ol.refs li a:hover{color:var(--terra);border-bottom-color:var(--terra)}
+ol.refs li i{font-style:italic}
+
+.footer{margin-top:52px;padding-top:20px;border-top:2px solid var(--ink);font-family:"Inter",sans-serif;font-size:11.5px;color:var(--ink-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+@media (max-width:680px){
+  body{font-size:15.5px}
+  .sheet{padding:0 16px 70px}
+  .toc ol{columns:1}
+  .toolbar-in{padding:9px 16px}
+  .tb-sub{display:none}
+}
+
+/* ---------- print ---------- */
+@page{size:A4;margin:17mm 16mm 17mm 16mm}
+@media print{
+  body{font-size:10.2pt;line-height:1.5}
+  .toolbar,.noprint{display:none !important}
+  .sheet{max-width:100%;padding:0}
+  .masthead{padding-top:0}
+  h1.doctitle{font-size:21pt}
+  .subtitle{font-size:11.5pt}
+  h2.sec{font-size:12.5pt;margin-top:16pt;page-break-after:avoid}
+  h3.sub,h4.subsub{page-break-after:avoid}
+  section{margin-top:14pt;page-break-inside:auto}
+  figure,.tbl-wrap,.callout,.eqn{page-break-inside:avoid}
+  figure .frame{padding:9pt 6pt}
+  table{font-size:8.4pt}
+  th,td{padding:4pt 6pt}
+  .abstract{background:#faf6f0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .toc{page-break-after:always}
+  ol.refs li{font-size:8.6pt}
+  a.cite{font-size:8.5pt}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  .pb{page-break-before:always}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar noprint">
+  <div class="toolbar-in">
+    <span class="tb-brand">PATHS</span>
+    <span class="tb-sub">Working Paper · v1.0 · August 2026</span>
+    <button class="btn ghost" onclick="document.getElementById('refs').scrollIntoView()">References</button>
+    <button class="btn" onclick="window.print()">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      Download PDF
+    </button>
+  </div>
+</div>
+
+<div class="sheet">
+
+<header class="masthead">
+  <div class="venue">
+    <span>Working Paper · <b>Centurion University of Technology &amp; Management</b></span>
+    <span>Industry 5.0 · Craft Innovation · Aug 2026</span>
+  </div>
+
+  <h1 class="doctitle">PATHS: A Physical–Digital–Physical Framework for Industry&nbsp;5.0 Augmentation of Traditional Pottery Craft</h1>
+  <p class="subtitle">Convergence of generative AI, digital twins and hybrid reality in service of the artisan's hand — architecture, pedagogy, and a pre-registered pilot protocol</p>
+
+  <div class="authors">
+    <span class="nm">Prof. Mukti Kanta Mishra</span><sup>1</sup> &nbsp;·&nbsp;
+    <span class="nm">Abhi Mitra</span><sup>2</sup>
+  </div>
+  <div class="affil">
+    <sup>1</sup> Centurion University of Technology and Management, Odisha, India &nbsp; — &nbsp; <i>Corresponding author</i><br>
+    <sup>2</sup> Independent Researcher — System Architecture, Workflow Design and Implementation<br>
+    <span style="color:var(--ink-2)"><b>Technical Support:</b> Sunny Singh</span>
+  </div>
+</header>
+
+<div class="abstract">
+  <h2>Abstract</h2>
+  <p>Traditional pottery and terracotta clusters in India sustain an estimated 6.47&nbsp;million handloom and handicraft artisans <a href="#r27" class="cite">[27]</a>, yet the makers capture a minority of final value because trader intermediaries function as the sole market interface <a href="#r29" class="cite">[29]</a>. Prevailing digital interventions either bypass the artisan entirely — substituting machine production for the hand — or stop at e-commerce listing, which changes the shelf but not the structure. This paper introduces <b>PATHS</b> (Pottery · Art · Technology · Heritage &amp; Sustainability), a reference framework in which computational capability is deployed strictly upstream and downstream of the making act, never inside it. PATHS is organised as a <i>Physical–Digital–Physical</i> (PDP) cycle instantiated across six operational stages and twelve pedagogical stages, supported by four technology layers: multimodal and generative vision AI, a digital-twin and digital-thread substrate, augmented and hybrid reality, and computer-vision verification. We formalise the framework's central economic mechanism — the <b>digital multiplier</b>, a constrained combinatorial expansion of one artisan-authored master model along six orthogonal variation axes under invariant-preservation constraints — and show that it yields catalogue breadth without craft dilution. We map the framework against the European Commission's three Industry 5.0 pillars <a href="#r1" class="cite">[1]</a> and six Sustainable Development Goals, and derive its pedagogical instantiation as a multi-track university skill course. Because PATHS is pre-deployment, we make no empirical claims of our own; instead we assemble the effect sizes reported in adjacent literature — 82% assembly-error reduction under spatially registered AR <a href="#r6" class="cite">[6]</a>, 94.9–98.0% accuracy in deep-learning ceramic defect inspection <a href="#r9" class="cite">[9]</a><a href="#r10" class="cite">[10]</a> — and specify a falsifiable twelve-month cluster pilot with six pre-registered hypotheses, defined metrics, control conditions, and stated failure criteria. The contribution is threefold: an architecture that is human-centric by construction rather than by assertion; a formal treatment of variation-under-constraint as a heritage-preserving mechanism; and an evaluation protocol that makes the framework refutable.</p>
+  <div class="keywords"><b>Keywords —</b> Industry 5.0 · digital twin · augmented reality · generative 3D reconstruction · craft heritage · co-creation · human-in-the-loop manufacturing · phygital commerce · artisan livelihoods · Sustainable Development Goals</div>
+</div>
+
+<nav class="toc noprint">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">Introduction</a></li>
+    <li><a href="#s2">Background and Related Work</a></li>
+    <li><a href="#s3">The PATHS Framework</a></li>
+    <li><a href="#s4">Reference Architecture</a></li>
+    <li><a href="#s5">The Digital Multiplier</a></li>
+    <li><a href="#s6">Artisan Value Model</a></li>
+    <li><a href="#s7">Industry 5.0 and SDG Alignment</a></li>
+    <li><a href="#s8">Pedagogical Instantiation</a></li>
+    <li><a href="#s9">Evaluation Protocol</a></li>
+    <li><a href="#s10">Limitations and Ethics</a></li>
+    <li><a href="#s11">Conclusion</a></li>
+    <li><a href="#refs">References</a></li>
+  </ol>
+</nav>
+
+<section id="s1">
+  <h2 class="sec"><span class="n">1</span> Introduction</h2>
+
+  <p class="lead">The question that organises this paper is narrow and awkward: what can a computer legitimately do for a potter?</p>
+
+  <p>The answer that Industry 4.0 supplies — automate the throwing, standardise the form, scale the output — destroys the thing being sold. A hand-thrown pot commands its price precisely because of the irregularities that automation exists to eliminate — the craftsman's knowledge is embodied in the hand and is not separable from it <a href="#r35" class="cite">[35]</a>. Any intervention that industrialises the making act converts a craft good into a commodity good and competes it against injection-moulded ceramics at a price the artisan cannot survive.</p>
+
+  <p>The answer that digital commerce supplies is thinner but safer: photograph the pot, list it, ship it. This is not wrong, but it leaves the structural problem untouched. The artisan still makes speculatively against guessed demand, still finances unsold inventory, still receives a brief that is verbal and vague, still remains anonymous behind the platform's brand. The intermediary has been replaced, not removed.</p>
+
+  <p>PATHS proceeds from a third position. The making act is <em>ring-fenced</em> — throwing, glazing, firing and judgement remain wholly human and are treated as an inviolable boundary of the system. Computation is admitted only in the two places where the artisan is currently disadvantaged: <strong>specification</strong> (converting a distant customer's vague intent into an unambiguous, dimensioned, pre-approved target) and <strong>verification</strong> (proving the fired piece matches that target, so the maker is paid without dispute). Everything between those two moments belongs to the hand.</p>
+
+  <p>This is not a rhetorical constraint but an architectural one, and it has consequences throughout the design. It determines that AI generates <i>designs</i>, not <i>objects</i>. It determines that AR is a reference overlay, not a robotic guide. It determines that computer vision measures deviation for settlement, not for rejection-by-tolerance. Section 3 makes the constraint explicit; Sections 4–6 show what follows from it.</p>
+
+  <h3 class="sub"><span class="n">1.1</span> Contributions</h3>
+  <ol class="body">
+    <li><b>A boundary-first architecture.</b> A four-layer reference architecture (§4) in which the human-inviolable zone is a first-class design object, not an ethical footnote — technology capabilities are admitted or excluded by their relationship to that boundary.</li>
+    <li><b>Formalisation of the digital multiplier.</b> A constrained combinatorial model (§5) of how one artisan-authored master expands into a large variant family while preserving a defined invariant set. We give the cardinality expression, the constraint semantics, and the mechanism by which authorship survives multiplication.</li>
+    <li><b>A structural value model.</b> An analysis (§6) of which links in the craft value chain PATHS actually alters — order arrival, payment timing, inventory risk, rework, buyer identity, price setting — separated from claims about magnitude, which we do not make.</li>
+    <li><b>A refutable pilot protocol.</b> Six pre-registered hypotheses with operational metrics, control conditions, sample frame and explicit failure criteria (§9), so that the framework can be shown to be wrong.</li>
+    <li><b>A pedagogical instantiation.</b> A four-track university skill course (§8) that treats the cluster as the laboratory and produces a verified artefact as its assessment object.</li>
+  </ol>
+</section>
+
+<section id="s2">
+  <h2 class="sec"><span class="n">2</span> Background and Related Work</h2>
+
+  <h3 class="sub"><span class="n">2.1</span> Industry 5.0 and the human-centric turn</h3>
+  <p>The European Commission's 2021 policy brief defines Industry 5.0 through three pillars — human-centricity, sustainability and resilience — explicitly repositioning the worker from a cost to be minimised to a stakeholder whose wellbeing is an objective of the production system <a href="#r1" class="cite">[1]</a>. Romero and Stahre extend this to the operational layer with the <i>Resilient Operator 5.0</i>, arguing that system resilience is downstream of operator resilience and that computing environments should therefore be symbiotic and cognitive rather than merely instructive <a href="#r2" class="cite">[2]</a>. The distinction that matters for craft is the one Industry 5.0 draws by inversion: Industry 4.0 asks what a machine can do without a person; Industry 5.0 asks what a person can do with a machine. PATHS is constructed entirely on the second question, and §7 tests the framework against each pillar in turn.</p>
+
+  <h3 class="sub"><span class="n">2.2</span> Digital twins and the digital thread</h3>
+  <p>Grieves introduced the digital twin as a triad of physical product, virtual product, and the bidirectional connection between them <a href="#r3" class="cite">[3]</a>; Tao and colleagues extended this to a five-dimensional formulation adding twin data and services <a href="#r4" class="cite">[4]</a>, and subsequent reviews have consolidated the concept's enabling technologies and industrial applications <a href="#r5" class="cite">[5]</a>. Almost all of this literature assumes a machine-executed physical process, where the twin's purpose is predictive control or simulation-driven optimisation. Craft breaks that assumption: the physical process is a human one, is not deterministic, and is not <em>meant</em> to be. PATHS therefore uses the twin in a narrower and less usual role — as a <strong>contractual artefact</strong>. The twin is the shared, unambiguous statement of what was agreed, against which the fired piece is later measured. Its function is agreement and settlement rather than control.</p>
+
+  <h3 class="sub"><span class="n">2.3</span> Augmented reality as work guidance</h3>
+  <p>The empirical basis for AR-as-guidance is unusually well established for a topic in this space. Tang et al.'s CHI 2003 between-subjects study found that spatially registered AR instructions reduced assembly error rates by 82% relative to printed manuals, with the largest effect on cumulative errors propagating from earlier mistakes <a href="#r6" class="cite">[6]</a>. More recent work in Industry 4.0 operator settings reports significant reductions in both completion time and error count <a href="#r7" class="cite">[7]</a>, though evidence is mixed for head-mounted displays as task complexity rises and workload measures often remain comparable to paper baselines <a href="#r8" class="cite">[8]</a>. PATHS reads this literature carefully rather than optimistically: the well-supported claim is that <i>spatial registration of a 3D target onto the workpiece reduces divergence from that target</i>, and that is exactly and only what stage 4 of our framework asks of AR.</p>
+
+  <h3 class="sub"><span class="n">2.4</span> Generative image-to-3D reconstruction</h3>
+  <p>Single-image 3D reconstruction has moved from research curiosity to deployable component within roughly two years. Feed-forward transformer reconstructors such as TripoSR <a href="#r20" class="cite">[20]</a> and sparse-view mesh generators such as InstantMesh <a href="#r21" class="cite">[21]</a> produce usable meshes in seconds; generation–reconstruction cycle methods improve multi-view consistency <a href="#r23" class="cite">[23]</a>; and high-fidelity asset pipelines now target production-grade detail <a href="#r22" class="cite">[22]</a>. For PATHS this capability is load-bearing but not sufficient — a generated mesh is a <i>proposal</i>, not a design. It becomes a design only after the artisan has constrained it to what clay, wheel and kiln permit, which is why stage 2 places a craft-feasibility filter between generation and twinning.</p>
+
+  <h3 class="sub"><span class="n">2.5</span> Computer-vision verification</h3>
+  <p>Automated ceramic inspection is mature enough to serve as a settlement instrument. A real-time CNN-based defect detection system for ceramic manufacturing reported 98.00% accuracy and an F1 score of 97.29% <a href="#r9" class="cite">[9]</a>; reviews of deep learning for ceramic surface defects document robust performance across glaze shrinkage, spotting, bubbling, cracking, pinholes and scratches under varied illumination <a href="#r10" class="cite">[10]</a>, and decorative-ceramic inspection work reports 94.90% test accuracy at 25 fps <a href="#r10" class="cite">[10]</a>. PATHS inverts the conventional use of this capability. In industry, CV inspection exists to <em>reject</em>. In PATHS it exists to <em>certify</em>: the mesh-deviation report is evidence that the maker delivered what was commissioned, and the residual deviation is the piece's handmade signature rather than a defect.</p>
+
+  <h3 class="sub"><span class="n">2.6</span> Co-creation, mass customisation, and craft heritage</h3>
+  <p>Prahalad and Ramaswamy located value creation in the interaction between firm and customer rather than in the firm alone <a href="#r15" class="cite">[15]</a>; Vargo and Lusch's service-dominant logic generalised this, reducing the producer's role to that of value-proposition maker with the customer as co-creator <a href="#r16" class="cite">[16]</a>. PATHS adds a third party that both literatures under-theorise: the artisan is neither firm nor customer, and holds authorship rights that neither framework assigns. Mass customisation supplies the operational counterpart — Pine's original formulation <a href="#r17" class="cite">[17]</a> and its recent AI-era revisions <a href="#r18" class="cite">[18]</a> establish that pull-based make-to-order production suppresses forecast error and finished-goods inventory, which in a craft cluster is the difference between the potter financing unsold stock and not. On the heritage side, systematic reviews of 3D technologies for intangible cultural heritage <a href="#r11" class="cite">[11]</a><a href="#r14" class="cite">[14]</a> and formal methods for digitising craft <em>processes</em> as distinct from craft <em>objects</em> <a href="#r12" class="cite">[12]</a> establish both the feasibility and the standing critique: digitisation can preserve the artefact while stranding the practice — a concern central to the UNESCO safeguarding framework, which locates heritage in living transmission rather than in the object <a href="#r34" class="cite">[34]</a>. Recent work on digital creation models for intangible-heritage crafts argues that the digital layer must generate new demand rather than merely new records <a href="#r13" class="cite">[13]</a>. PATHS responds by routing demand back to living clusters, so the archive is a by-product of continued making rather than a substitute for it.</p>
+
+  <h3 class="sub"><span class="n">2.7</span> Research gap</h3>
+  <div class="callout">
+    <div class="lbl">Gap statement</div>
+    <p>Each capability above is individually mature. What is absent is an integrated framework that (a) composes them into a closed physical–digital–physical loop, (b) treats the human making act as an architectural invariant rather than an optimisation target, (c) assigns authorship and margin to the artisan by construction, and (d) states in advance what evidence would refute it. PATHS is proposed to fill that gap.</p>
+  </div>
+</section>
+
+<section id="s3">
+  <h2 class="sec"><span class="n">3</span> The PATHS Framework</h2>
+
+  <h3 class="sub"><span class="n">3.1</span> The Physical–Digital–Physical cycle</h3>
+  <p>The framework's organising primitive is a cycle that begins and ends in physical reality, passing through a digital phase whose only justification is what it returns to the physical. This ordering is deliberate and distinguishes PATHS from digital-first craft platforms, where the physical object is an output of a digital catalogue. Here the digital phase is an <em>instrument</em> of the physical one.</p>
+
+  <figure>
+    <div class="frame">
+      <svg viewBox="0 0 820 280" role="img" aria-label="Physical to Digital to Physical cycle diagram">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#974400"/></marker>
+          <marker id="ahd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89884"/></marker>
+        </defs>
+        <rect x="14" y="52" width="238" height="150" rx="14" fill="#faf6f0" stroke="#e3d8c8"/>
+        <rect x="291" y="52" width="238" height="150" rx="14" fill="#f2f0fb" stroke="#d8d4f0"/>
+        <rect x="568" y="52" width="238" height="150" rx="14" fill="#faf6f0" stroke="#e3d8c8"/>
+
+        <text x="133" y="34" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="3" fill="#974400" font-weight="600">PHYSICAL</text>
+        <text x="410" y="34" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="3" fill="#6c5ecb" font-weight="600">DIGITAL</text>
+        <text x="687" y="34" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="3" fill="#974400" font-weight="600">PHYSICAL</text>
+
+        <text x="133" y="86" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="#231a12">Reference</text>
+        <text x="133" y="112" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">A photograph, a sketch,</text>
+        <text x="133" y="130" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">an heirloom pot — whatever</text>
+        <text x="133" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">the customer already holds.</text>
+        <text x="133" y="180" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#a89884" letter-spacing="1.2">STAGE 1</text>
+
+        <text x="410" y="86" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="#231a12">Digital twin</text>
+        <text x="410" y="112" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">Image becomes a 3D model,</text>
+        <text x="410" y="130" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">co-designed with the customer,</text>
+        <text x="410" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">frozen on artisan approval.</text>
+        <text x="410" y="180" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#a89884" letter-spacing="1.2">STAGES 2–3</text>
+
+        <text x="687" y="86" text-anchor="middle" font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="#231a12">The made piece</text>
+        <text x="687" y="112" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">The potter sees it in AR at</text>
+        <text x="687" y="130" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">true scale, makes it by hand,</text>
+        <text x="687" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="#4a3b2c">and it is verified back.</text>
+        <text x="687" y="180" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#a89884" letter-spacing="1.2">STAGES 4–6</text>
+
+        <path d="M 258 127 L 285 127" stroke="#974400" stroke-width="2" marker-end="url(#ah)"/>
+        <path d="M 535 127 L 562 127" stroke="#974400" stroke-width="2" marker-end="url(#ah)"/>
+        <path d="M 687 208 C 687 250, 133 250, 133 214" fill="none" stroke="#a89884" stroke-width="1.6" stroke-dasharray="3 5" marker-end="url(#ahd)"/>
+        <text x="410" y="262" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" letter-spacing="1.6" fill="#974400">VERIFIED DEVIATION FEEDS BACK INTO THE CRAFT-FEASIBILITY RULES</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 1.</b> The Physical–Digital–Physical cycle. The digital phase exists only to serve the return to physical making. The dashed return path closes the loop: measured deviation between fired piece and twin updates the craft-feasibility constraints applied in stage 2, so the system's model of what clay permits is learned from actual practice rather than assumed.</figcaption>
+  </figure>
+
+  <h3 class="sub"><span class="n">3.2</span> The six-stage operational journey</h3>
+  <p>Operationally the cycle resolves into six stages. Stages 1–3 are digital and customer-facing; stages 4–6 are physical and artisan-facing. The boundary between stage 3 and stage 4 is the framework's most important seam: it is the point at which a negotiable proposal becomes a committed, paid-for target, and it is also the point at which the customer's authority ends and the artisan's begins.</p>
+
+  <figure>
+    <div class="frame">
+      <svg viewBox="0 0 830 300" role="img" aria-label="Six stage journey">
+        <rect x="12" y="46" width="392" height="196" rx="12" fill="#f6f2fb" stroke="#ded9f2"/>
+        <rect x="424" y="46" width="394" height="196" rx="12" fill="#fdf6ee" stroke="#eddfcb"/>
+        <text x="208" y="34" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" letter-spacing="2.6" fill="#6c5ecb" font-weight="600">DIGITAL · CUSTOMER-FACING</text>
+        <text x="621" y="34" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" letter-spacing="2.6" fill="#974400" font-weight="600">PHYSICAL · ARTISAN-FACING</text>
+
+        <g font-family="Inter,sans-serif">
+          <g><circle cx="76" cy="86" r="17" fill="#6c5ecb"/><text x="76" y="91" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">1</text>
+          <text x="104" y="82" font-size="13.5" font-weight="700" fill="#231a12">Observing &amp; Digitizing</text>
+          <text x="104" y="100" font-size="11.5" fill="#7a6a56">Upload an image; generate a 3D model</text>
+          <text x="104" y="116" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">VISION AI · IMAGE-TO-3D · PHOTOGRAMMETRY</text></g>
+
+          <g><circle cx="76" cy="146" r="17" fill="#6c5ecb"/><text x="76" y="151" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">2</text>
+          <text x="104" y="142" font-size="13.5" font-weight="700" fill="#231a12">Ideating &amp; Co-creating</text>
+          <text x="104" y="160" font-size="11.5" fill="#7a6a56">Plain-language edits reshape the model</text>
+          <text x="104" y="176" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">PARAMETRIC · LLM INTENT · CRAFT LIMITS</text></g>
+
+          <g><circle cx="76" cy="206" r="17" fill="#6c5ecb"/><text x="76" y="211" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">3</text>
+          <text x="104" y="202" font-size="13.5" font-weight="700" fill="#231a12">Twinning &amp; Ratifying</text>
+          <text x="104" y="220" font-size="11.5" fill="#7a6a56">Design frozen as a twin; artisan accepts</text>
+          <text x="104" y="236" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">DIGITAL TWIN · THREAD · SIMULATION</text></g>
+
+          <g><circle cx="488" cy="86" r="17" fill="#974400"/><text x="488" y="91" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">4</text>
+          <text x="516" y="82" font-size="13.5" font-weight="700" fill="#231a12">Augmenting in AR</text>
+          <text x="516" y="100" font-size="11.5" fill="#7a6a56">The piece anchored 1:1 on the wheel</text>
+          <text x="516" y="116" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">AR / MR · SLAM ANCHORING · EDGE</text></g>
+
+          <g><circle cx="488" cy="146" r="17" fill="#974400"/><text x="488" y="151" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">5</text>
+          <text x="516" y="142" font-size="13.5" font-weight="700" fill="#231a12">Re-casting &amp; Crafting</text>
+          <text x="516" y="160" font-size="11.5" fill="#7a6a56">Made by hand against a 3D reference</text>
+          <text x="516" y="176" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">HUMAN-ONLY ZONE · LIVE OVERLAY</text></g>
+
+          <g><circle cx="488" cy="206" r="17" fill="#974400"/><text x="488" y="211" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">6</text>
+          <text x="516" y="202" font-size="13.5" font-weight="700" fill="#231a12">Validating</text>
+          <text x="516" y="220" font-size="11.5" fill="#7a6a56">Fired piece compared to its twin</text>
+          <text x="516" y="236" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">3D SCAN · CV INSPECTION · DEVIATION</text></g>
+        </g>
+
+        <path d="M 404 144 L 420 144" stroke="#974400" stroke-width="2" marker-end="url(#ah)"/>
+        <rect x="278" y="256" width="274" height="30" rx="8" fill="#fff" stroke="#974400" stroke-dasharray="3 3"/>
+        <text x="415" y="275" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" letter-spacing="1.3" fill="#974400">COMMITMENT SEAM · PAID AT APPROVAL</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 2.</b> The six-stage operational journey. The vertical seam between stages 3 and 4 marks the transfer of authority and of money: the customer's design agency terminates at ratification, payment is released at that same moment, and stage 5 — the making itself — is a designated human-only zone that no system component may enter.</figcaption>
+  </figure>
+
+  <h3 class="sub"><span class="n">3.3</span> The twelve-stage Learning Loop</h3>
+  <p>The six operational stages are a delivery description. For teaching and for research they are too coarse: several stages compress two distinct cognitive acts into one label. The <em>Learning Loop</em> unfolds them into twelve stages arranged in three phases, and reframes the cycle as a design-methodological one in the sense of design thinking as an iterative, human-centred discipline <a href="#r19" class="cite">[19]</a> — <i>Design Thinking — Thinking Design</i>. The first direction moves from observed need to designed artefact; the second moves from the made artefact back to a revised understanding of what should have been designed. Every turn of the loop terminates where it began, at observing.</p>
+
+  <figure>
+    <div class="frame">
+<svg viewBox="0 0 830 620" role="img" aria-label="Twelve stage learning loop">
+<defs><marker id="ah2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#974400"/></marker></defs>
+<circle cx="415" cy="300" r="190" fill="none" stroke="#ece3d6" stroke-width="2"/>
+<path d="M 426.3 110.3 A 190 190 0 0 1 584.9 385.1" fill="none" stroke="#3f9b83" stroke-width="4" stroke-linecap="round"/>
+<path d="M 500.1 469.9 A 190 190 0 0 1 329.9 469.9" fill="none" stroke="#6c5ecb" stroke-width="4" stroke-linecap="round"/>
+<path d="M 245.1 385.1 A 190 190 0 0 1 310.4 141.4" fill="none" stroke="#974400" stroke-width="4" stroke-linecap="round"/>
+<path d="M 329.9 130.1 A 190 190 0 0 1 403.7 110.3" fill="none" stroke="#a89884" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round" marker-end="url(#ah2)"/>
+<circle cx="415.0" cy="110.0" r="8" fill="#3f9b83" stroke="#fff" stroke-width="3"/>
+<text x="415.0" y="131.0" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">01</text>
+<text x="415.0" y="75.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="middle" dominant-baseline="auto">Observing</text>
+<circle cx="510.0" cy="135.5" r="8" fill="#3f9b83" stroke="#fff" stroke-width="3"/>
+<text x="499.5" y="153.6" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">02</text>
+<text x="529.0" y="104.5" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="start" dominant-baseline="auto">Imaging</text>
+<circle cx="579.5" cy="205.0" r="8" fill="#3f9b83" stroke="#fff" stroke-width="3"/>
+<text x="561.4" y="215.5" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">03</text>
+<text x="609.5" y="185.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="start" dominant-baseline="auto">Digitizing</text>
+<circle cx="605.0" cy="300.0" r="8" fill="#3f9b83" stroke="#fff" stroke-width="3"/>
+<text x="584.0" y="300.0" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">04</text>
+<text x="639.0" y="300.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="start" dominant-baseline="middle">Twinning</text>
+<circle cx="579.5" cy="395.0" r="8" fill="#3f9b83" stroke="#fff" stroke-width="3"/>
+<text x="561.4" y="384.5" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">05</text>
+<text x="609.5" y="415.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="start" dominant-baseline="hanging">Ideating</text>
+<circle cx="510.0" cy="464.5" r="8" fill="#6c5ecb" stroke="#fff" stroke-width="3"/>
+<text x="499.5" y="446.4" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">06</text>
+<text x="529.0" y="495.5" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="start" dominant-baseline="hanging">Augmenting</text>
+<circle cx="415.0" cy="490.0" r="8" fill="#6c5ecb" stroke="#fff" stroke-width="3"/>
+<text x="415.0" y="469.0" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">07</text>
+<text x="415.0" y="525.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="middle" dominant-baseline="hanging">Re-designing</text>
+<circle cx="320.0" cy="464.5" r="8" fill="#6c5ecb" stroke="#fff" stroke-width="3"/>
+<text x="330.5" y="446.4" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">08</text>
+<text x="301.0" y="495.5" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="end" dominant-baseline="hanging">Co-creating</text>
+<circle cx="250.5" cy="395.0" r="8" fill="#974400" stroke="#fff" stroke-width="3"/>
+<text x="268.6" y="384.5" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">09</text>
+<text x="220.5" y="415.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="end" dominant-baseline="hanging">Ratifying</text>
+<circle cx="225.0" cy="300.0" r="8" fill="#974400" stroke="#fff" stroke-width="3"/>
+<text x="246.0" y="300.0" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">10</text>
+<text x="191.0" y="300.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="end" dominant-baseline="middle">Re-casting</text>
+<circle cx="250.5" cy="205.0" r="8" fill="#974400" stroke="#fff" stroke-width="3"/>
+<text x="268.6" y="215.5" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">11</text>
+<text x="220.5" y="185.0" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="end" dominant-baseline="auto">Crafting</text>
+<circle cx="320.0" cy="135.5" r="8" fill="#974400" stroke="#fff" stroke-width="3"/>
+<text x="330.5" y="153.6" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#a89884" text-anchor="middle" dominant-baseline="middle">12</text>
+<text x="301.0" y="104.5" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#231a12" text-anchor="end" dominant-baseline="auto">Validating</text>
+<circle cx="415" cy="300" r="88" fill="#faf6f0" stroke="#e3d8c8"/>
+<text x="415" y="270" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" letter-spacing="3" fill="#a89884">CREATIVE CRAFT</text>
+<text x="415" y="308" text-anchor="middle" font-family="Inter,sans-serif" font-size="34" font-weight="800" fill="#231a12"><tspan fill="#974400">P</tspan>ATHS</text>
+<text x="415" y="330" text-anchor="middle" font-family="Inter,sans-serif" font-size="11.5" fill="#7a6a56">Design Thinking</text>
+<text x="415" y="346" text-anchor="middle" font-family="Inter,sans-serif" font-size="11.5" fill="#7a6a56"><tspan fill="#974400">by</tspan> Thinking Design</text>
+<rect x="45" y="548" width="242" height="52" rx="9" fill="#faf6f0" stroke="#e3d8c8"/>
+<circle cx="63" cy="566" r="5" fill="#3f9b83"/>
+<text x="77" y="570" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">A · Capture &amp; Ideate</text>
+<text x="77" y="588" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a6a56" letter-spacing="1">STAGES 01–05</text>
+<rect x="305" y="548" width="242" height="52" rx="9" fill="#faf6f0" stroke="#e3d8c8"/>
+<circle cx="323" cy="566" r="5" fill="#6c5ecb"/>
+<text x="337" y="570" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">B · Reimagine &amp; Co-create</text>
+<text x="337" y="588" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a6a56" letter-spacing="1">STAGES 06–08</text>
+<rect x="565" y="548" width="242" height="52" rx="9" fill="#faf6f0" stroke="#e3d8c8"/>
+<circle cx="583" cy="566" r="5" fill="#974400"/>
+<text x="597" y="570" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">C · Make &amp; Validate</text>
+<text x="597" y="588" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a6a56" letter-spacing="1">STAGES 09–12</text>
+</svg>    </div>
+    <figcaption><b>Figure 3.</b> The twelve-stage Learning Loop. Phase A (celadon) captures and ideates; phase B (violet) reimagines and co-creates; phase C (terracotta) makes and validates. The dashed return arc from <i>Validating</i> to <i>Observing</i> is the epistemic claim of the framework: validation is not an endpoint but a new observation, and each completed commission enlarges the design library, tightens the feasibility constraints, and improves the next specification.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <div class="lbl">The inviolable zone</div>
+    <p>Stages 10–11 (<i>Re-casting</i> and <i>Crafting</i>) constitute the framework's human-only zone. No PATHS component may automate, actuate, or mechanically assist within it. The constraint is economic as much as ethical: the handmade character <em>is</em> the product, so automating it destroys the good being sold. This is why we describe PATHS as human-centric by construction — the boundary is enforced by what the architecture omits, not by a policy layered on top of it.</p>
+  </div>
+</section>
+
+<section id="s4">
+  <h2 class="sec"><span class="n">4</span> Reference Architecture</h2>
+  <p>PATHS composes four capability layers. Layers are ordered by their distance from the physical: the intelligence layer never touches an object, the verification layer touches nothing else. Geometry moves between layers through open interchange formats — glTF for web delivery, USDZ for mobile AR <a href="#r24" class="cite">[24]</a> — so that no cluster is locked to a single vendor's pipeline. Each layer is admitted to the architecture only where it can be shown to sit outside the inviolable zone of §3.3.</p>
+
+  <figure>
+    <div class="frame">
+      <svg viewBox="0 0 830 430" role="img" aria-label="Four layer reference architecture">
+        <g font-family="Inter,sans-serif">
+        <rect x="16" y="14" width="798" height="82" rx="11" fill="#f6f2fb" stroke="#ded9f2"/>
+        <text x="34" y="42" font-size="13.5" font-weight="700" fill="#6c5ecb">L1 · Intelligence</text>
+        <text x="34" y="62" font-size="11.5" fill="#4a3b2c">Multimodal &amp; vision AI · image-to-3D generative models · LLM design assistant · generative and parametric design · AI quality scoring</text>
+        <text x="34" y="82" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">SERVES STAGES 1–2 · NEVER TOUCHES THE OBJECT</text>
+
+        <rect x="16" y="106" width="798" height="82" rx="11" fill="#eefaf6" stroke="#cfeae2"/>
+        <text x="34" y="134" font-size="13.5" font-weight="700" fill="#2f8a72">L2 · 3D &amp; Digital Twin</text>
+        <text x="34" y="154" font-size="11.5" fill="#4a3b2c">Digital twin · digital thread / lite PLM · glTF &amp; USDZ asset pipeline · shrinkage and firing simulation · geometry version control</text>
+        <text x="34" y="174" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">SERVES STAGE 3 · SINGLE SOURCE OF TRUTH FOR THE COMMISSION</text>
+
+        <rect x="16" y="198" width="798" height="82" rx="11" fill="#fdf4ec" stroke="#f0dcc8"/>
+        <text x="34" y="226" font-size="13.5" font-weight="700" fill="#c8641c">L3 · Hybrid Reality</text>
+        <text x="34" y="246" font-size="11.5" fill="#4a3b2c">ARCore / ARKit / WebAR · mixed-reality headsets · spatial computing and SLAM anchoring · projection mapping · on-device inference</text>
+        <text x="34" y="266" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">SERVES STAGE 4 · REFERENCE OVERLAY ONLY — NO ACTUATION</text>
+
+        <rect x="16" y="290" width="798" height="82" rx="11" fill="#fdf6ee" stroke="#eddfcb"/>
+        <text x="34" y="318" font-size="13.5" font-weight="700" fill="#974400">L4 · Verification &amp; Platform</text>
+        <text x="34" y="338" font-size="11.5" fill="#4a3b2c">3D scanning &amp; photogrammetry · CV inspection · mesh deviation analysis · telemetry · edge inference · provenance ledger · analytics</text>
+        <text x="34" y="358" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">SERVES STAGE 6 · CERTIFIES, DOES NOT REJECT</text>
+
+        <rect x="16" y="384" width="798" height="34" rx="9" fill="#fff" stroke="#974400" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="415" y="406" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2" fill="#974400" font-weight="600">STAGE 5 · THE ARTISAN'S HAND — NO LAYER PERMITTED</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Figure 4.</b> Four-layer reference architecture. The dashed band at the base is not a fifth layer but a designated absence: the making act is the one part of the pipeline for which no software component exists. Read upward, each layer's remit is bounded by the layer beneath it.</figcaption>
+  </figure>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 1.</b> Governing concepts mapped to operational stages. Concepts are drawn from service-dominant logic, mass-customisation and Industry 5.0 literatures; the stage mapping shows where each is operationally realised rather than merely invoked.</caption>
+      <thead><tr><th style="width:30%">Concept</th><th style="width:16%">Stages</th><th>Operational realisation in PATHS</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Customer experience (CX)</td><td class="mono">1, 2, 6</td><td>Intent capture, live co-design, and receipt of a provenance certificate with match report</td></tr>
+        <tr><td class="k">Co-creation <a href="#r15" class="cite">[15]</a><a href="#r16" class="cite">[16]</a></td><td class="mono">2, 5</td><td>Shared authorship: customer shapes in stage 2, artisan authors in stage 5; both are named</td></tr>
+        <tr><td class="k">Physical–Digital–Physical</td><td class="mono">1, 3, 6</td><td>Reference object — ratified twin — verified fired piece</td></tr>
+        <tr><td class="k">Design for manufacturability</td><td class="mono">2</td><td>Craft-feasibility constraints (wall thickness, overhang, shrinkage, kiln envelope) bound the edit space</td></tr>
+        <tr><td class="k">Mass personalisation <a href="#r17" class="cite">[17]</a><a href="#r18" class="cite">[18]</a></td><td class="mono">2, 3</td><td>Make-to-order against a ratified twin; no speculative production</td></tr>
+        <tr><td class="k">Digital thread / single source of truth</td><td class="mono">3–6</td><td>One versioned geometry lineage from proposal to certificate</td></tr>
+        <tr><td class="k">Human-in-the-loop augmentation <a href="#r2" class="cite">[2]</a></td><td class="mono">4, 5</td><td>AR supplies a spatial target; all motor and aesthetic judgement remains human</td></tr>
+        <tr><td class="k">Closed-loop quality</td><td class="mono">5, 6</td><td>Deviation report settles payment and updates stage-2 constraints</td></tr>
+        <tr><td class="k">Phygital commerce</td><td class="mono">1–3, 6</td><td>Digital purchase of a physical one-of-one, with the digital artefact retained as proof</td></tr>
+        <tr><td class="k">Craft 4.0 / inclusive innovation</td><td class="mono">4–6</td><td>Shared cluster-level hardware; no per-artisan capital requirement</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s5">
+  <h2 class="sec"><span class="n">5</span> The Digital Multiplier</h2>
+
+  <p>The economic weakness of one-of-one commissioned craft is catalogue thinness. A cluster that can show a buyer forty forms will lose to a factory that can show four thousand. The conventional resolution — hire designers to produce variants — severs the link between the maker and the design, and is the mechanism by which craft becomes craft-styled manufacture.</p>
+
+  <p>PATHS resolves this differently. A single artisan-authored master model is expanded computationally along orthogonal variation axes, subject to a constraint set that preserves what makes the piece the artisan's. We call the resulting operator the <strong>digital multiplier</strong>.</p>
+
+  <h3 class="sub"><span class="n">5.1</span> Formalisation</h3>
+  <p>Let <code>M</code> be the master model — a 3D geometry authored or ratified by the artisan, carrying an invariant set <code>I(M)</code> consisting of characteristic proportion ratios, the regional motif grammar, and the maker's signature features. Let <code>A = {a1 … a6}</code> be the six variation axes, each <code>ai</code> admitting <code>ki</code> discrete options. The raw variant space is the Cartesian product:</p>
+
+  <div class="eqn">
+    V(M) = a<sub>1</sub> × a<sub>2</sub> × … × a<sub>6</sub>,&nbsp;&nbsp; |V| = ∑i=1..6 k<sub>i</sub> <span class="no">(1)</span>
+  </div>
+
+  <p>This product is not the deliverable. Two filters are applied. First, a craft-feasibility predicate <code>φ(v)</code> rejects variants that clay, wheel or kiln cannot realise — wall-thickness minima, overhang limits, shrinkage tolerance, kiln-envelope dimensions. Second, an invariance predicate <code>ι(v)</code> rejects variants in which the master's characteristic ratios, motif grammar or signature features have been lost. The admissible family is:</p>
+
+  <div class="eqn">
+    V*(M) = { v ∈ V(M)&nbsp; : &nbsp;φ(v) ∧ ι(v) },&nbsp;&nbsp; |V*| = ρ·|V|,&nbsp; ρ ∈ (0,1] <span class="no">(2)</span>
+  </div>
+
+  <p>where <code>ρ</code> is the joint retention ratio. The design claim of the framework is that <code>ρ</code> should be <em>learned from the cluster</em>, not assumed: every completed commission contributes a measured deviation record (§3.1) that tightens <code>φ</code>, and every artisan rejection in stage 3 supplies a labelled negative example that tightens <code>ι</code>. The multiplier therefore becomes more faithful to a given cluster's practice the longer that cluster uses it.</p>
+
+  <figure>
+    <div class="frame">
+<svg viewBox="0 0 830 420" role="img" aria-label="Combinatorial growth of variant space">
+<text x="210" y="24" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Reachable variant space as each axis is enabled</text>
+<text x="210" y="41" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">LOGARITHMIC SCALE · ILLUSTRATIVE AXIS CARDINALITIES</text>
+<line x1="210.0" y1="48" x2="210.0" y2="340" stroke="#efe7db" stroke-width="1"/>
+<text x="210.0" y="358" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">1</text>
+<line x1="340.1" y1="48" x2="340.1" y2="340" stroke="#efe7db" stroke-width="1"/>
+<text x="340.1" y="358" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">10</text>
+<line x1="470.2" y1="48" x2="470.2" y2="340" stroke="#efe7db" stroke-width="1"/>
+<text x="470.2" y="358" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">100</text>
+<line x1="600.3" y1="48" x2="600.3" y2="340" stroke="#efe7db" stroke-width="1"/>
+<text x="600.3" y="358" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">1,000</text>
+<line x1="730.4" y1="48" x2="730.4" y2="340" stroke="#efe7db" stroke-width="1"/>
+<text x="730.4" y="358" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">10,000</text>
+<text x="196" y="81.3" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Form &amp; silhouette</text>
+<text x="196" y="94.3" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884">6 OPTIONS</text>
+<rect x="210" y="68.8" width="101.2" height="17" rx="4" fill="#e8ddcc"/>
+<rect x="210" y="68.8" width="39.2" height="17" rx="4" fill="#974400"/>
+<text x="319.2" y="81.3" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#4a3b2c">6</text>
+<text x="196" y="128.0" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Glaze &amp; finish</text>
+<text x="196" y="141.0" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884">8 OPTIONS</text>
+<rect x="210" y="115.5" width="218.7" height="17" rx="4" fill="#e8ddcc"/>
+<rect x="210" y="115.5" width="160.1" height="17" rx="4" fill="#974400"/>
+<text x="436.7" y="128.0" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#4a3b2c">48</text>
+<text x="196" y="174.7" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Scale &amp; set</text>
+<text x="196" y="187.7" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884">5 OPTIONS</text>
+<rect x="210" y="162.2" width="309.7" height="17" rx="4" fill="#e8ddcc"/>
+<rect x="210" y="162.2" width="250.3" height="17" rx="4" fill="#974400"/>
+<text x="527.7" y="174.7" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#4a3b2c">240</text>
+<text x="196" y="221.3" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Surface &amp; motif</text>
+<text x="196" y="234.3" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884">7 OPTIONS</text>
+<rect x="210" y="208.8" width="419.6" height="17" rx="4" fill="#e8ddcc"/>
+<rect x="210" y="208.8" width="360.3" height="17" rx="4" fill="#974400"/>
+<text x="637.6" y="221.3" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#4a3b2c">1,680</text>
+<text x="196" y="268.0" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Function</text>
+<text x="196" y="281.0" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884">4 OPTIONS</text>
+<rect x="210" y="255.5" width="497.9" height="17" rx="4" fill="#e8ddcc"/>
+<rect x="210" y="255.5" width="438.6" height="17" rx="4" fill="#974400"/>
+<text x="715.9" y="268.0" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#4a3b2c">6,720</text>
+<text x="196" y="314.7" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Edition</text>
+<text x="196" y="327.7" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884">3 OPTIONS</text>
+<rect x="210" y="302.2" width="560.0" height="17" rx="4" fill="#e8ddcc"/>
+<rect x="210" y="302.2" width="500.7" height="17" rx="4" fill="#974400"/>
+<text x="778.0" y="314.7" font-family="IBM Plex Mono,monospace" font-size="10.5" font-weight="600" fill="#4a3b2c">20,160</text>
+<rect x="210" y="378" width="13" height="13" rx="3" fill="#974400"/>
+<text x="230" y="389" font-family="Inter,sans-serif" font-size="11" fill="#4a3b2c">Craft-feasible variants (after constraint filtering, illustrative retention ρ = 0.35)</text>
+<rect x="210" y="398" width="13" height="13" rx="3" fill="#e8ddcc"/>
+<text x="230" y="409" font-family="Inter,sans-serif" font-size="11" fill="#4a3b2c">Raw combinatorial product |V| before feasibility and invariant constraints</text>
+</svg>    </div>
+    <figcaption><b>Figure 5.</b> Combinatorial growth of the variant space as each axis is enabled (log scale). Under an illustrative parameterisation (k = 6, 8, 5, 7, 4, 3) the raw product reaches 20,160 variants from one master; at an illustrative retention ratio of ρ = 0.35 roughly 7,056 remain craft-feasible and invariant-preserving. <i>These cardinalities are architectural illustrations of Equations (1)–(2), not measured results; ρ is a quantity the pilot in §9 is designed to estimate.</i></figcaption>
+  </figure>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 2.</b> The six variation axes, with the invariant each must preserve.</caption>
+      <thead><tr><th style="width:20%">Axis</th><th style="width:34%">Range of variation</th><th>Preserved invariant</th></tr></thead>
+      <tbody>
+        <tr><td class="k">1 · Form &amp; silhouette</td><td>Taller, wider, faceted, bellied</td><td>Characteristic proportion ratios (neck : body : foot)</td></tr>
+        <tr><td class="k">2 · Glaze &amp; finish</td><td>Matte, celadon, raku, soft blush, unglazed</td><td>Regional palette and firing atmosphere of the cluster</td></tr>
+        <tr><td class="k">3 · Scale &amp; set</td><td>Espresso cup through serving bowl; single or set</td><td>Wall-thickness-to-height relation; throwability</td></tr>
+        <tr><td class="k">4 · Surface &amp; motif</td><td>Carved, etched, embossed, burnished</td><td>Motif grammar — which marks may abut which</td></tr>
+        <tr><td class="k">5 · Function</td><td>Vase, planter, lamp base, vessel</td><td>Base geometry and the maker's signature foot</td></tr>
+        <tr><td class="k">6 · Edition</td><td>Everyday, festival, wedding run</td><td>Authorship attribution and provenance lineage</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="lbl">Why multiplication does not dilute</div>
+    <p>The distinction between the digital multiplier and generic generative design is the predicate <code>ι</code>. A generative system unconstrained by <code>ι</code> converges on the training distribution's mean — it produces plausible pottery, which is to say pottery belonging to no one. Constrained by <code>ι</code>, every member of <code>V*</code> inherits the master's proportions, motif grammar and signature, and every member is attributable to the artisan who authored <code>M</code>. Breadth is generated in the axes; identity is held constant in the invariants. This is the mechanism by which a cluster can present thousands of options without any of them ceasing to be its own.</p>
+  </div>
+</section>
+
+<section id="s6">
+  <h2 class="sec"><span class="n">6</span> Artisan Value Model</h2>
+
+  <p>India's handicraft sector recorded exports of ₹33,122.79 crore in 2024–25 and supports an estimated 64.66 lakh (6.47 million) handloom and handicraft artisans, with women constituting roughly 64% of the total <a href="#r27" class="cite">[27]</a><a href="#r28" class="cite">[28]</a>. Yet cluster-level studies consistently report that in rural craft clusters market channels remain underdeveloped and traders operate as the sole "market makers," extracting substantial margin while paying artisans low piece rates <a href="#r29" class="cite">[29]</a>; ethnographic work on terracotta clusters in West Bengal and Uttar Pradesh documents the resulting living conditions in detail <a href="#r30" class="cite">[30]</a><a href="#r31" class="cite">[31]</a>.</p>
+
+  <p>We are careful here about what kind of claim we are making. PATHS does not assert a specific margin uplift — no such number can be honestly produced before deployment. What can be stated in advance is <em>structural</em>: which links in the chain the framework alters, and by what mechanism. Table 3 sets this out; §9 specifies how the magnitudes would be measured.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 3.</b> Structural comparison of the order lifecycle. Each row identifies a mechanism, not a magnitude; magnitudes are the object of the pilot protocol in §9.</caption>
+      <thead><tr><th style="width:24%">Link in the chain</th><th style="width:36%">Prevailing arrangement</th><th>Under PATHS</th></tr></thead>
+      <tbody>
+        <tr><td class="k">How an order arrives</td><td>Verbal brief or a passed-around photograph</td><td>A ratified 3D twin with dimensions and tolerances</td></tr>
+        <tr><td class="k">When it is paid for</td><td>After the piece is made, sometimes after it sells</td><td>At design approval, before the wheel turns</td></tr>
+        <tr><td class="k">Who carries inventory risk</td><td>The artisan, financing unsold stock</td><td>No party — production is strictly make-to-order <a href="#r17" class="cite">[17]</a></td></tr>
+        <tr><td class="k">Rework incidence</td><td>Common; the brief was ambiguous</td><td>Reduced; the target was spatially visible <a href="#r6" class="cite">[6]</a><a href="#r7" class="cite">[7]</a></td></tr>
+        <tr><td class="k">Who the buyer knows</td><td>The trader or the retail shop</td><td>The artisan, by name, on a provenance certificate</td></tr>
+        <tr><td class="k">Margin capture</td><td>Split across successive intermediaries</td><td>Retained by the maker; platform fee disclosed</td></tr>
+        <tr><td class="k">Price setting</td><td>The artisan is told a price</td><td>The artisan sets one, informed by demand data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub"><span class="n">6.1</span> Evidence available from adjacent domains</h3>
+  <p>On the customer side, AR product display has been shown to reduce product uncertainty and improve product attitudes <a href="#r25" class="cite">[25]</a>, and reviews of augmented shopping behaviour report consistent gains in evaluation clarity <a href="#r26" class="cite">[26]</a> — relevant here because a commissioned one-of-one is precisely the case where a buyer cannot inspect before purchase. Because PATHS is pre-deployment, the honest evidentiary position is to state what the component technologies have been shown to do elsewhere, and to treat those as <em>upper-bound plausibility arguments</em> rather than predictions. Figure 6 assembles the relevant effect sizes with their sources.</p>
+
+  <figure>
+    <div class="frame">
+<svg viewBox="0 0 830 340" role="img" aria-label="Reported effect sizes from adjacent literature">
+<text x="24" y="24" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Effect sizes reported in adjacent literature — not PATHS results</text>
+<text x="24" y="40" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">PERCENT · DIFFERENT STUDIES, DIFFERENT TASKS AND POPULATIONS — NOT DIRECTLY COMPARABLE</text>
+<line x1="300.0" y1="54" x2="300.0" y2="274" stroke="#efe7db"/>
+<text x="300.0" y="294" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">0%</text>
+<line x1="395.0" y1="54" x2="395.0" y2="274" stroke="#efe7db"/>
+<text x="395.0" y="294" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">25%</text>
+<line x1="490.0" y1="54" x2="490.0" y2="274" stroke="#efe7db"/>
+<text x="490.0" y="294" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">50%</text>
+<line x1="585.0" y1="54" x2="585.0" y2="274" stroke="#efe7db"/>
+<text x="585.0" y="294" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">75%</text>
+<line x1="680.0" y1="54" x2="680.0" y2="274" stroke="#efe7db"/>
+<text x="680.0" y="294" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">100%</text>
+<text x="284" y="71" text-anchor="end" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Assembly-error reduction</text>
+<text x="284" y="86" text-anchor="end" font-family="Inter,sans-serif" font-size="10.5" fill="#7a6a56">Spatially registered AR vs. printed manual</text>
+<rect x="300" y="59" width="380" height="22" rx="5" fill="#f5efe6"/>
+<rect x="300" y="59" width="311.6" height="22" rx="5" fill="#974400"/>
+<text x="620.6" y="75" font-family="IBM Plex Mono,monospace" font-size="11.5" font-weight="600" fill="#231a12">82.0%</text>
+<text x="300" y="96" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884" letter-spacing="0.6">TANG ET AL., CHI 2003 [6]</text>
+<text x="284" y="127" text-anchor="end" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Task-time reduction</text>
+<text x="284" y="142" text-anchor="end" font-family="Inter,sans-serif" font-size="10.5" fill="#7a6a56">AR work instruction vs. paper manual</text>
+<rect x="300" y="115" width="380" height="22" rx="5" fill="#f5efe6"/>
+<rect x="300" y="115" width="82.5" height="22" rx="5" fill="#c8641c"/>
+<text x="391.5" y="131" font-family="IBM Plex Mono,monospace" font-size="11.5" font-weight="600" fill="#231a12">21.7%</text>
+<text x="300" y="152" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884" letter-spacing="0.6">REPORTED IN AR ASSEMBLY TRIALS [7][8]</text>
+<text x="284" y="183" text-anchor="end" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Inspection accuracy</text>
+<text x="284" y="198" text-anchor="end" font-family="Inter,sans-serif" font-size="10.5" fill="#7a6a56">Real-time CNN ceramic defect detection</text>
+<rect x="300" y="171" width="380" height="22" rx="5" fill="#f5efe6"/>
+<rect x="300" y="171" width="372.4" height="22" rx="5" fill="#3f9b83"/>
+<text x="681.4" y="187" font-family="IBM Plex Mono,monospace" font-size="11.5" font-weight="600" fill="#231a12">98.0%</text>
+<text x="300" y="208" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884" letter-spacing="0.6">SILVA ET AL., SENSORS 2024 [9]</text>
+<text x="284" y="239" text-anchor="end" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Inspection accuracy</text>
+<text x="284" y="254" text-anchor="end" font-family="Inter,sans-serif" font-size="10.5" fill="#7a6a56">Decorative-ceramic CV inspection (25 fps)</text>
+<rect x="300" y="227" width="380" height="22" rx="5" fill="#f5efe6"/>
+<rect x="300" y="227" width="360.6" height="22" rx="5" fill="#6c5ecb"/>
+<text x="669.6" y="243" font-family="IBM Plex Mono,monospace" font-size="11.5" font-weight="600" fill="#231a12">94.9%</text>
+<text x="300" y="264" font-family="IBM Plex Mono,monospace" font-size="9" fill="#a89884" letter-spacing="0.6">CERAMIC DEFECT DL REVIEW [10]</text>
+<rect x="24" y="294" width="782" height="34" rx="8" fill="#faf6f0" stroke="#e3d8c8"/>
+<text x="40" y="316" font-family="Inter,sans-serif" font-size="10.8" fill="#4a3b2c">Bars are drawn from independent published studies in industrial assembly and ceramic inspection. They establish that the component capabilities work in adjacent settings; they are not predictions for a craft cluster.</text>
+</svg>    </div>
+    <figcaption><b>Figure 6.</b> Published effect sizes for the component capabilities PATHS composes. Spatially registered AR reduced object-assembly errors by 82% against a printed-manual baseline <a href="#r6" class="cite">[6]</a>; deep-learning ceramic inspection reaches 94.9–98.0% accuracy <a href="#r9" class="cite">[9]</a><a href="#r10" class="cite">[10]</a>. <i>These are results from other studies on other tasks. They justify the architecture's feasibility; they do not forecast its outcomes.</i> The literature is also mixed — head-mounted AR does not uniformly outperform paper as task complexity rises <a href="#r8" class="cite">[8]</a>, which is one reason §9 specifies a tablet-first deployment.</figcaption>
+  </figure>
+
+  <h3 class="sub"><span class="n">6.2</span> Design commitments</h3>
+  <p>Value routed to the artisan is a design decision, not an emergent property. The following commitments are treated as architectural requirements and are auditable:</p>
+  <ol class="body">
+    <li><b>Named authorship.</b> Every piece and every derived variant carries the maker's name in the provenance record. Anonymous stock is not representable in the data model.</li>
+    <li><b>No skill extraction.</b> Captured process data may be used to tighten feasibility constraints (<code>φ</code>) but may not be used to train generative systems that reproduce an artisan's hand without them.</li>
+    <li><b>Paid before making.</b> Funds are released at stage-3 ratification, not on delivery or on sale.</li>
+    <li><b>Shared capital.</b> One tablet and one scanning rig per cluster; no artisan is required to purchase hardware to participate.</li>
+    <li><b>Refusal rights.</b> An artisan may decline any commission at stage 3 without penalty or ranking effect.</li>
+    <li><b>Transparent price split.</b> The maker's share, platform fee and logistics cost are disclosed to both artisan and buyer on every order.</li>
+  </ol>
+</section>
+
+<section id="s7" class="pb">
+  <h2 class="sec"><span class="n">7</span> Industry 5.0 and SDG Alignment</h2>
+
+  <h3 class="sub"><span class="n">7.1</span> The three pillars</h3>
+  <p>The European Commission's framing supplies three tests <a href="#r1" class="cite">[1]</a>. We state what each demands and what PATHS does about it, rather than asserting compliance.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 4.</b> PATHS assessed against the three Industry 5.0 pillars as defined by the European Commission <a href="#r1" class="cite">[1]</a> and operationalised for the worker layer by Romero and Stahre <a href="#r2" class="cite">[2]</a>.</caption>
+      <thead><tr><th style="width:16%">Pillar</th><th style="width:26%">What the pillar demands</th><th>Architectural response</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Human-centric</td><td>Technology serves the worker; wellbeing is an objective of the production system, not a residual</td><td>Stage 5 is a designated absence in the architecture (§4). AI is confined to specification and paperwork; throwing, glazing, firing and aesthetic judgement remain wholly human. Named authorship and refusal rights are enforced in the data model, not in policy.</td></tr>
+        <tr><td class="k">Sustainable</td><td>Production within planetary boundaries; waste and overproduction treated as design failures</td><td>Strictly make-to-order against a ratified twin — nothing is fired that is not already sold <a href="#r17" class="cite">[17]</a>. Reduced rework means fewer re-firings, and firing is the dominant energy cost per piece. Local clay, local kiln, short supply chain.</td></tr>
+        <tr><td class="k">Resilient</td><td>No single point of failure; capacity to absorb shocks in demand and supply</td><td>Demand diversified across urban and export buyers rather than one trader's order book. Payment at approval removes the artisan's exposure to inventory financing. The design archive is cluster-owned and outlives any single workshop or generation.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="lbl">The 4.0 — 5.0 inversion</div>
+    <p>Industry 4.0 asks what a machine can do without a person. Industry 5.0 asks what a person can do with a machine. Applied to craft the difference is not philosophical but commercial: the first question produces a cheaper pot that competes with injection moulding and loses; the second produces a commissioned pot that competes with nothing.</p>
+  </div>
+
+  <h3 class="sub"><span class="n">7.2</span> Sustainable Development Goals</h3>
+  <p>PATHS claims linkage to six of the seventeen SDGs <a href="#r32" class="cite">[32]</a>. Each linkage is stated as a mechanism the platform executes, not as an aspiration.</p>
+
+  <figure>
+    <div class="frame">
+<svg viewBox="0 0 830 400" role="img" aria-label="SDG alignment matrix">
+<text x="24" y="26" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Where each Sustainable Development Goal is served, by stage</text>
+<text x="24" y="42" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">MECHANISM-BASED MAPPING · NOT A SELF-ASSESSMENT SCORE</text>
+<text x="294.0" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" font-weight="600" fill="#4a3b2c">1 Observing</text>
+<text x="382.0" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" font-weight="600" fill="#4a3b2c">2 Ideating</text>
+<text x="470.0" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" font-weight="600" fill="#4a3b2c">3 Twinning</text>
+<text x="558.0" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" font-weight="600" fill="#4a3b2c">4 Augmenting</text>
+<text x="646.0" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" font-weight="600" fill="#4a3b2c">5 Crafting</text>
+<text x="734.0" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" font-weight="600" fill="#4a3b2c">6 Validating</text>
+<rect x="24" y="91" width="26" height="26" rx="6" fill="#c5192d"/>
+<text x="37" y="109" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#fff">4</text>
+<text x="60" y="109" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Quality Education</text>
+<rect x="254" y="91" width="80" height="26" rx="5" fill="#c5192d" opacity="0.88"/>
+<text x="294.0" y="109" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="342" y="91" width="80" height="26" rx="5" fill="#c5192d" opacity="0.88"/>
+<text x="382.0" y="109" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="430" y="91" width="80" height="26" rx="5" fill="#c5192d" opacity="0.88"/>
+<text x="470.0" y="109" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="518" y="91" width="80" height="26" rx="5" fill="#c5192d" opacity="0.88"/>
+<text x="558.0" y="109" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="606" y="91" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="646.0" y="109" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="694" y="91" width="80" height="26" rx="5" fill="#c5192d" opacity="0.88"/>
+<text x="734.0" y="109" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="24" y="133" width="26" height="26" rx="6" fill="#a21942"/>
+<text x="37" y="151" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#fff">8</text>
+<text x="60" y="151" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Decent Work &amp; Growth</text>
+<rect x="254" y="133" width="80" height="26" rx="5" fill="#f6f1e9" opacity="1"/>
+<rect x="342" y="133" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="382.0" y="151" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="430" y="133" width="80" height="26" rx="5" fill="#a21942" opacity="0.88"/>
+<text x="470.0" y="151" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="518" y="133" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="558.0" y="151" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="606" y="133" width="80" height="26" rx="5" fill="#a21942" opacity="0.88"/>
+<text x="646.0" y="151" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="694" y="133" width="80" height="26" rx="5" fill="#a21942" opacity="0.88"/>
+<text x="734.0" y="151" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="24" y="175" width="26" height="26" rx="6" fill="#fd6925"/>
+<text x="37" y="193" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#fff">9</text>
+<text x="60" y="193" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Industry &amp; Innovation</text>
+<rect x="254" y="175" width="80" height="26" rx="5" fill="#fd6925" opacity="0.88"/>
+<text x="294.0" y="193" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="342" y="175" width="80" height="26" rx="5" fill="#fd6925" opacity="0.88"/>
+<text x="382.0" y="193" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="430" y="175" width="80" height="26" rx="5" fill="#fd6925" opacity="0.88"/>
+<text x="470.0" y="193" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="518" y="175" width="80" height="26" rx="5" fill="#fd6925" opacity="0.88"/>
+<text x="558.0" y="193" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="606" y="175" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="646.0" y="193" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="694" y="175" width="80" height="26" rx="5" fill="#fd6925" opacity="0.88"/>
+<text x="734.0" y="193" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="24" y="217" width="26" height="26" rx="6" fill="#dd1367"/>
+<text x="37" y="235" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#fff">10</text>
+<text x="60" y="235" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Reduced Inequalities</text>
+<rect x="254" y="217" width="80" height="26" rx="5" fill="#dd1367" opacity="0.88"/>
+<text x="294.0" y="235" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="342" y="217" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="382.0" y="235" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="430" y="217" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="470.0" y="235" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="518" y="217" width="80" height="26" rx="5" fill="#f6f1e9" opacity="1"/>
+<rect x="606" y="217" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="646.0" y="235" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="694" y="217" width="80" height="26" rx="5" fill="#dd1367" opacity="0.88"/>
+<text x="734.0" y="235" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="24" y="259" width="26" height="26" rx="6" fill="#fd9d24"/>
+<text x="37" y="277" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#fff">11</text>
+<text x="60" y="277" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Sustainable Communities</text>
+<rect x="254" y="259" width="80" height="26" rx="5" fill="#fd9d24" opacity="0.88"/>
+<text x="294.0" y="277" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="342" y="259" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="382.0" y="277" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="430" y="259" width="80" height="26" rx="5" fill="#fd9d24" opacity="0.88"/>
+<text x="470.0" y="277" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="518" y="259" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="558.0" y="277" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="606" y="259" width="80" height="26" rx="5" fill="#fd9d24" opacity="0.88"/>
+<text x="646.0" y="277" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="694" y="259" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="734.0" y="277" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="24" y="301" width="26" height="26" rx="6" fill="#bf8b2e"/>
+<text x="37" y="319" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#fff">12</text>
+<text x="60" y="319" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">Responsible Production</text>
+<rect x="254" y="301" width="80" height="26" rx="5" fill="#f6f1e9" opacity="1"/>
+<rect x="342" y="301" width="80" height="26" rx="5" fill="#bf8b2e" opacity="0.88"/>
+<text x="382.0" y="319" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="430" y="301" width="80" height="26" rx="5" fill="#bf8b2e" opacity="0.88"/>
+<text x="470.0" y="319" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="518" y="301" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="558.0" y="319" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="606" y="301" width="80" height="26" rx="5" fill="#e2c9a8" opacity="1"/>
+<text x="646.0" y="319" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#6b5233">SUPPORT</text>
+<rect x="694" y="301" width="80" height="26" rx="5" fill="#bf8b2e" opacity="0.88"/>
+<text x="734.0" y="319" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#fff" font-weight="600">CORE</text>
+<rect x="24" y="358" width="782" height="30" rx="8" fill="#faf6f0" stroke="#e3d8c8"/>
+<text x="40" y="378" font-family="Inter,sans-serif" font-size="10.8" fill="#4a3b2c">CORE = the stage directly implements the goal's mechanism.  SUPPORT = the stage contributes indirectly.  Blank = no claimed linkage.</text>
+</svg>    </div>
+    <figcaption><b>Figure 7.</b> SDG-to-stage alignment matrix. A cell is marked CORE where the stage directly implements the goal's mechanism — for example SDG 12 at stage 3, where ratification converts speculative production into make-to-order. Blank cells are deliberate: we do not claim linkage where none is operative.</figcaption>
+  </figure>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 5.</b> SDG linkages by mechanism.</caption>
+      <thead><tr><th style="width:26%">Goal</th><th>Mechanism in PATHS</th></tr></thead>
+      <tbody>
+        <tr><td class="k">SDG 4 · Quality Education</td><td>A four-track university skill course delivered on a live cluster project, producing a verified physical artefact as its assessment object (§8); aligned to NEP 2020 <a href="#r33" class="cite">[33]</a></td></tr>
+        <tr><td class="k">SDG 8 · Decent Work</td><td>Payment at design approval; margin retained by the maker; commissioned rather than anonymous production</td></tr>
+        <tr><td class="k">SDG 9 · Industry &amp; Innovation</td><td>Generative AI, digital twins, AR/MR and CV inspection joined to a traditional craft in a human-centric configuration</td></tr>
+        <tr><td class="k">SDG 10 · Reduced Inequalities</td><td>Direct urban and export market access, reducing dependence on the intermediary chain <a href="#r29" class="cite">[29]</a></td></tr>
+        <tr><td class="k">SDG 11 · Sustainable Communities</td><td>Traditional forms, motifs and glazes archived as 3D masters tagged to region, community and maker <a href="#r11" class="cite">[11]</a><a href="#r12" class="cite">[12]</a>; demand routed back to village clusters</td></tr>
+        <tr><td class="k">SDG 12 · Responsible Production</td><td>Make-to-order against an approved twin: less rework, less unsold stock, less material and kiln fuel per delivered piece</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s8">
+  <h2 class="sec"><span class="n">8</span> Pedagogical Instantiation</h2>
+  <p>A framework of this kind is only testable if someone builds it, and the most durable way to have it built is to make it a curriculum. PATHS is therefore instantiated as a multi-track skill course — <i>Industry 5.0 in Traditional Art</i> — delivered with a partner potter cluster. The sequencing is deliberate and unusual: students learn the craft before they are permitted to build anything for it.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 6.</b> Course structure across four disciplinary tracks. The cluster is the laboratory; the assessment object is a verified physical artefact rather than a report.</caption>
+      <thead><tr><th style="width:17%">Track</th><th style="width:29%">Role in the platform</th><th>Assessed output</th></tr></thead>
+      <tbody>
+        <tr><td class="k">AIML (core)</td><td>Vision AI, image-to-3D reconstruction, quality scoring, constraint learning for <code>φ</code> and <code>ι</code></td><td>A working reconstruction and scoring pipeline evaluated on the cluster's own forms</td></tr>
+        <tr><td class="k">CSE</td><td>Twin pipeline, digital thread, AR application, platform and provenance ledger</td><td>A deployed co-design and AR module in cluster use</td></tr>
+        <tr><td class="k">Design</td><td>Form, motif grammar, invariant elicitation, co-creation protocol with potters</td><td>A documented invariant set <code>I(M)</code> for at least three regional forms</td></tr>
+        <tr><td class="k">BBA / MBA</td><td>Customer experience, phygital commerce, pricing, go-to-market</td><td>A CX journey and market plan for commissioned ware, with unit economics</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The learning outcomes are stated in the same register as the framework's ethics: engineers who can apply AI, 3D and AR <em>to a living craft</em> rather than to a benchmark; managers who can construct phygital customer experience around a one-of-one object; graduates who leave with a verified artefact and documented cluster fieldwork. The twelve-stage Learning Loop (Figure 3) supplies the course's week-by-week spine, and the return arc from <i>Validating</i> to <i>Observing</i> is the mechanism by which each cohort inherits the previous cohort's tightened constraints.</p>
+</section>
+
+<section id="s9" class="pb">
+  <h2 class="sec"><span class="n">9</span> Evaluation Protocol</h2>
+
+  <p>The most common failure mode in craft-technology literature is the unfalsifiable pilot: a small deployment, a set of favourable anecdotes, and no statement of what would have counted as failure. We therefore specify the evaluation in advance.</p>
+
+  <h3 class="sub"><span class="n">9.1</span> Design</h3>
+  <p>A twelve-month, single-cluster, mixed-methods pilot with a within-cluster stepped-wedge structure. Participating households are randomised to entry cohort, so that households not yet onboarded serve as concurrent controls and each household additionally serves as its own historical control against a 90-day retrospective baseline. Target frame: 25–40 artisan households in one terracotta cluster, following the sampling conventions of existing cluster studies <a href="#r29" class="cite">[29]</a><a href="#r30" class="cite">[30]</a>. Qualitative strand: semi-structured interviews at months 0, 6 and 12, coded independently of the quantitative analysis.</p>
+
+  <h3 class="sub"><span class="n">9.2</span> Hypotheses and metrics</h3>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption><b>Table 7.</b> Pre-registered hypotheses with operational metrics, comparison conditions and stated failure criteria. All metrics are defined before data collection; failure criteria are binding.</caption>
+      <thead><tr><th style="width:6%">#</th><th style="width:27%">Hypothesis</th><th style="width:29%">Operational metric</th><th>Comparison &amp; failure criterion</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">H1</td><td>A ratified twin reduces rework relative to a verbal or photographic brief</td><td>Proportion of commissions requiring one or more remakes</td><td>vs. retrospective baseline. <b>Fails</b> if rework rate does not fall, or falls by less than the baseline's own quarter-to-quarter variance</td></tr>
+        <tr><td class="mono">H2</td><td>AR reference at 1:1 reduces geometric divergence from the agreed target</td><td>Mean absolute mesh deviation (mm) between fired piece and twin</td><td>vs. same artisan working from a printed orthographic drawing. <b>Fails</b> if deviation is not lower, or if artisans report the overlay impedes throwing</td></tr>
+        <tr><td class="mono">H3</td><td>Payment at ratification reduces the artisan's working-capital exposure</td><td>Mean days between material outlay and receipt of funds; peak unsold finished stock (units)</td><td>vs. retrospective baseline. <b>Fails</b> if days-to-payment does not shorten</td></tr>
+        <tr><td class="mono">H4</td><td>Realised price per piece rises under named, commissioned sale</td><td>Realised price net of platform fee vs. prevailing wholesale rate for a matched form and size</td><td>Matched-pair comparison. <b>Fails</b> if net realised price does not exceed the wholesale rate for equivalent work</td></tr>
+        <tr><td class="mono">H5</td><td>The digital multiplier expands catalogue breadth without loss of attributed identity</td><td>Estimated retention ratio ρ (Eq. 2); artisan agreement rate that a sampled variant "is ours"</td><td>Blind panel of cluster artisans. <b>Fails</b> if agreement falls below 80%, indicating dilution</td></tr>
+        <tr><td class="mono">H6</td><td>Make-to-order reduces material and fuel waste per delivered piece</td><td>Clay consumed and kiln firings per delivered saleable piece</td><td>vs. retrospective baseline. <b>Fails</b> if per-delivered-piece consumption does not fall</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub"><span class="n">9.3</span> Timeline</h3>
+
+  <figure>
+    <div class="frame">
+<svg viewBox="0 0 830 380" role="img" aria-label="Twelve month pilot timeline">
+<text x="24" y="26" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#231a12">Twelve-month cluster pilot — phase timeline</text>
+<text x="24" y="42" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884" letter-spacing="1">MONTHS FROM PROTOCOL REGISTRATION</text>
+<line x1="250.0" y1="66" x2="250.0" y2="362" stroke="#efe7db"/>
+<text x="272.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M1</text>
+<line x1="295.0" y1="66" x2="295.0" y2="362" stroke="#efe7db"/>
+<text x="317.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M2</text>
+<line x1="340.0" y1="66" x2="340.0" y2="362" stroke="#efe7db"/>
+<text x="362.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M3</text>
+<line x1="385.0" y1="66" x2="385.0" y2="362" stroke="#efe7db"/>
+<text x="407.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M4</text>
+<line x1="430.0" y1="66" x2="430.0" y2="362" stroke="#efe7db"/>
+<text x="452.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M5</text>
+<line x1="475.0" y1="66" x2="475.0" y2="362" stroke="#efe7db"/>
+<text x="497.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M6</text>
+<line x1="520.0" y1="66" x2="520.0" y2="362" stroke="#efe7db"/>
+<text x="542.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M7</text>
+<line x1="565.0" y1="66" x2="565.0" y2="362" stroke="#efe7db"/>
+<text x="587.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M8</text>
+<line x1="610.0" y1="66" x2="610.0" y2="362" stroke="#efe7db"/>
+<text x="632.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M9</text>
+<line x1="655.0" y1="66" x2="655.0" y2="362" stroke="#efe7db"/>
+<text x="677.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M10</text>
+<line x1="700.0" y1="66" x2="700.0" y2="362" stroke="#efe7db"/>
+<text x="722.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M11</text>
+<line x1="745.0" y1="66" x2="745.0" y2="362" stroke="#efe7db"/>
+<text x="767.5" y="60" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#a89884">M12</text>
+<line x1="790.0" y1="66" x2="790.0" y2="362" stroke="#efe7db"/>
+<text x="236" y="89" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P0 · Baseline measurement</text>
+<rect x="250.0" y="77" width="86.0" height="20" rx="5" fill="#a89884"/>
+<text x="258.0" y="105" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">Cluster census, 90-day retrospective order and price data</text>
+<text x="236" y="125" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P1 · Invariant elicitation</text>
+<rect x="295.0" y="113" width="131.0" height="20" rx="5" fill="#3f9b83"/>
+<text x="303.0" y="141" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">Design track documents I(M) for 3 regional forms</text>
+<text x="236" y="161" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P2 · Twin library build</text>
+<rect x="340.0" y="149" width="176.0" height="20" rx="5" fill="#3f9b83"/>
+<text x="348.0" y="177" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">30 master models scanned and ratified by artisans</text>
+<text x="236" y="197" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P3 · Co-design module live</text>
+<rect x="430.0" y="185" width="131.0" height="20" rx="5" fill="#6c5ecb"/>
+<text x="438.0" y="213" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">Stages 1–3 in customer use; ρ estimation begins</text>
+<text x="236" y="233" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P4 · AR deployment</text>
+<rect x="520.0" y="221" width="131.0" height="20" rx="5" fill="#c8641c"/>
+<text x="528.0" y="249" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">Tablet AR at 1:1 on the wheel; stages 4–5</text>
+<text x="236" y="269" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P5 · CV verification live</text>
+<rect x="565.0" y="257" width="131.0" height="20" rx="5" fill="#974400"/>
+<text x="573.0" y="285" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">Scan-and-compare; certificates issued</text>
+<text x="236" y="305" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P6 · Full-loop operation</text>
+<rect x="655.0" y="293" width="131.0" height="20" rx="5" fill="#974400"/>
+<text x="663.0" y="321" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">All six stages; primary outcome window</text>
+<text x="236" y="341" text-anchor="end" font-family="Inter,sans-serif" font-size="11.5" font-weight="600" fill="#231a12">P7 · Analysis &amp; disclosure</text>
+<rect x="745.0" y="329" width="41.0" height="20" rx="5" fill="#231a12"/>
+<text x="753.0" y="357" font-family="Inter,sans-serif" font-size="9.8" fill="#7a6a56">Pre-registered comparisons; publication of null results</text>
+<line x1="790.0" y1="66" x2="790.0" y2="362" stroke="#974400" stroke-width="1.5" stroke-dasharray="4 3"/>
+</svg>    </div>
+    <figcaption><b>Figure 8.</b> Pilot phase timeline. Baseline measurement (P0) precedes any platform exposure. The primary outcome window is P6, when all six stages operate together; the dashed marker at month 12 is the analysis cut. Estimation of the retention ratio ρ begins at P3 and continues throughout, since it is a learned rather than a fixed quantity (§5.1).</figcaption>
+  </figure>
+
+  <div class="callout">
+    <div class="lbl">Disclosure commitment</div>
+    <p>Hypotheses, metrics and failure criteria are fixed before data collection. Results are to be published in full, including null and negative findings, and including the case in which artisans decline to continue using the platform — which we regard as the single most informative possible outcome.</p>
+  </div>
+</section>
+
+<section id="s10">
+  <h2 class="sec"><span class="n">10</span> Limitations and Ethical Considerations</h2>
+
+  <h4 class="subsub">No empirical validation yet</h4>
+  <p>Every quantitative figure in this paper is either drawn from published work on adjacent tasks (Figure 6) or is an illustrative parameterisation of the formal model (Figure 5). PATHS has not been deployed. The framework's central claims are architectural and remain untested.</p>
+
+  <h4 class="subsub">External validity of the borrowed evidence</h4>
+  <p>The AR effect sizes come from industrial assembly with novice participants performing discrete, correct-or-incorrect steps <a href="#r6" class="cite">[6]</a><a href="#r7" class="cite">[7]</a>. Throwing a pot is continuous, expert, and has no single correct execution. It is entirely possible that an overlay which helps a novice assemble a toy hinders an expert who has thrown the same form for thirty years. The literature already signals this risk: benefits attenuate as tasks grow complex and head-mounted displays do not uniformly beat paper <a href="#r8" class="cite">[8]</a>. H2 is written to detect exactly this failure.</p>
+
+  <h4 class="subsub">Digitisation as displacement</h4>
+  <p>Heritage scholarship raises a standing objection: 3D archives can preserve the artefact while the practice dies, producing a well-documented extinction <a href="#r11" class="cite">[11]</a><a href="#r12" class="cite">[12]</a><a href="#r14" class="cite">[14]</a>. PATHS's answer is structural — the archive is a by-product of live commissions rather than a museum programme — but this is an argument, not a proof, and only longitudinal cluster data can settle it.</p>
+
+  <h4 class="subsub">Extraction risk in captured process data</h4>
+  <p>The same data that tightens <code>φ</code> could, in different hands, train a generative model to reproduce an artisan's hand without the artisan. The design commitment in §6.2 forbids this, but a commitment enforced only by its authors is weak. Cluster-held data governance, with the invariant set <code>I(M)</code> and the process corpus owned collectively by the cluster rather than by the platform, is the stronger arrangement and is the one we recommend for deployment.</p>
+
+  <h4 class="subsub">Access and capability asymmetry</h4>
+  <p>Shared cluster hardware removes the capital barrier but not the literacy one. Older artisans, and artisans in clusters with weak connectivity, may be systematically excluded — which would invert the SDG 10 claim entirely. Participation rates disaggregated by age, gender and literacy are therefore a reported outcome of the pilot, not an operational footnote.</p>
+
+  <h4 class="subsub">Single-cluster generalisability</h4>
+  <p>Indian terracotta practice varies substantially by region in clay body, firing method, motif grammar and market structure <a href="#r30" class="cite">[30]</a><a href="#r31" class="cite">[31]</a>. A result from one cluster does not transfer. Replication across at least three distinct clusters is required before any general claim.</p>
+</section>
+
+<section id="s11">
+  <h2 class="sec"><span class="n">11</span> Conclusion</h2>
+
+  <p>PATHS is an argument that the interesting question for craft technology is not <em>how much</em> of the process to digitise but <em>which parts</em>, and that getting the boundary right matters more than getting the models good. The framework places computation on both sides of the making act — specification before, verification after — and forbids it inside. Everything else in the architecture follows from that single commitment: it is why the digital twin functions as a contract rather than a controller, why AR supplies a reference rather than a guide, why computer vision certifies rather than rejects, and why the digital multiplier is defined by its constraints rather than its generative capacity.</p>
+
+  <p>The framework's economic proposition is equally structural. It does not promise the artisan a larger number; it changes when payment arrives, who carries inventory risk, whose name the buyer knows, and who sets the price. Those are mechanisms that can be inspected in advance and measured afterwards, which is more than most craft-technology interventions offer.</p>
+
+  <p>What remains is to find out whether any of it survives contact with a working cluster. Section 9 specifies how we intend to find out and what would count as being wrong. The framework's value at this stage lies less in its claims than in its refutability: PATHS is stated precisely enough that a potter can render its central hypothesis false by putting the tablet down and walking back to the wheel.</p>
+</section>
+
+<section id="acks">
+  <h2 class="sec"><span class="n">–</span> Acknowledgements</h2>
+  <p style="font-size:14.5px;color:var(--ink-2)">The authors thank the artisan communities whose practice this framework is designed to serve, and whose judgement remains the only authority on whether it does. System architecture, workflow design and implementation: <b>Abhi Mitra</b>. Technical support: <b>Sunny Singh</b>. This work is developed under the Industry 5.0 and craft-innovation programme at Centurion University of Technology and Management. The authors declare no competing financial interests. No artisan data was collected in the preparation of this paper.</p>
+</section>
+
+<section id="refs" class="pb">
+  <h2 class="sec"><span class="n">–</span> References</h2>
+  <ol class="refs">
+    <li id="r1">Breque, M., De Nul, L., &amp; Petridis, A. (2021). <i>Industry 5.0: Towards a Sustainable, Human-Centric and Resilient European Industry.</i> Directorate-General for Research and Innovation, European Commission. Publications Office of the EU. <a href="https://research-and-innovation.ec.europa.eu/knowledge-publications-tools-and-data/publications/all-publications/industry-50-towards-sustainable-human-centric-and-resilient-european-industry_en" target="_blank" rel="noopener">ec.europa.eu</a></li>
+    <li id="r2">Romero, D., &amp; Stahre, J. (2021). Towards the Resilient Operator 5.0: The Future of Work in Smart Resilient Manufacturing Systems. <i>Procedia CIRP</i>, 104, 1089–1094. <a href="https://www.sciencedirect.com/science/article/pii/S2212827121010817" target="_blank" rel="noopener">sciencedirect.com</a></li>
+    <li id="r3">Grieves, M. (2014). <i>Digital Twin: Manufacturing Excellence through Virtual Factory Replication.</i> White paper. (Concept originally introduced 2003 as physical product, virtual product, and their connection.)</li>
+    <li id="r4">Tao, F., Zhang, H., Liu, A., &amp; Nee, A. Y. C. (2019). Digital Twin in Industry: State-of-the-Art. <i>IEEE Transactions on Industrial Informatics</i>, 15(4), 2405–2415.</li>
+    <li id="r5">Liu, M., Fang, S., Dong, H., &amp; Xu, C. (2021). Review of digital twin about concepts, technologies, and industrial applications. <i>Journal of Manufacturing Systems</i>, 58, 346–361. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0278612520301072" target="_blank" rel="noopener">sciencedirect.com</a></li>
+    <li id="r6">Tang, A., Owen, C., Biocca, F., &amp; Mou, W. (2003). Comparative effectiveness of augmented reality in object assembly. <i>Proceedings of the SIGCHI Conference on Human Factors in Computing Systems (CHI '03)</i>, 73–80. ACM Press. <a href="https://dl.acm.org/doi/10.1145/642611.642626" target="_blank" rel="noopener">dl.acm.org</a></li>
+    <li id="r7">Assessing user performance in augmented reality assembly guidance for Industry 4.0 operators (2024). <i>Computers in Industry</i>. <a href="https://www.sciencedirect.com/science/article/pii/S0166361524000137" target="_blank" rel="noopener">sciencedirect.com</a></li>
+    <li id="r8">Evaluating Digital Work Instructions with Augmented Reality versus Paper-based Documents for Manual, Object-Specific Repair Tasks in a Case Study with Experienced Workers (2023). arXiv:2301.07570. <a href="https://arxiv.org/pdf/2301.07570" target="_blank" rel="noopener">arxiv.org</a></li>
+    <li id="r9">Silva, V., et al. (2024). A Real-Time Automated Defect Detection System for Ceramic Pieces Manufacturing Process Based on Computer Vision with Deep Learning. <i>Sensors</i>, 24(1), 232. <a href="https://www.mdpi.com/1424-8220/24/1/232" target="_blank" rel="noopener">mdpi.com</a></li>
+    <li id="r10">Research progress in deep learning for ceramics surface defect detection (2024). <i>Measurement</i>. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0263224124018414" target="_blank" rel="noopener">sciencedirect.com</a>. See also: Inspecting Decorative Ceramic Defects by Fusing CNN and Image Recognition (2022), <i>Sensors</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9420580/" target="_blank" rel="noopener">pmc.ncbi.nlm.nih.gov</a></li>
+    <li id="r11">Skublewska-Paszkowska, M., Milosz, M., Powroznik, P., &amp; Lukasik, E. (2022). 3D technologies for intangible cultural heritage preservation — literature review for selected databases. <i>Heritage Science</i>, 10, 3. <a href="https://www.nature.com/articles/s40494-021-00633-x" target="_blank" rel="noopener">nature.com</a></li>
+    <li id="r12">Zabulis, X., et al. (2022). Digitisation of Traditional Craft Processes. <i>ACM Journal on Computing and Cultural Heritage</i>, 15(1). <a href="https://dl.acm.org/doi/full/10.1145/3494675" target="_blank" rel="noopener">dl.acm.org</a></li>
+    <li id="r13">Construction of digital creation development model of intangible cultural heritage crafts in China (2024). <i>Humanities and Social Sciences Communications</i>. <a href="https://www.nature.com/articles/s41599-024-04331-4" target="_blank" rel="noopener">nature.com</a></li>
+    <li id="r14">Ding, C., Ismail, N. A., Hussein, M. K., &amp; Hussain, N. (2025). A Systematic Review of the Traditional Handicrafts Preservation Toward Sustainable Intangible Cultural Heritage. <i>SAGE Open</i>. <a href="https://journals.sagepub.com/doi/10.1177/21582440251337837" target="_blank" rel="noopener">sagepub.com</a></li>
+    <li id="r15">Prahalad, C. K., &amp; Ramaswamy, V. (2004). Co-creating unique value with customers. <i>Strategy &amp; Leadership</i>, 32(3), 4–9.</li>
+    <li id="r16">Vargo, S. L., &amp; Lusch, R. F. (2004). Evolving to a New Dominant Logic for Marketing. <i>Journal of Marketing</i>, 68(1), 1–17.</li>
+    <li id="r17">Pine, B. J. II (1993). <i>Mass Customization: The New Frontier in Business Competition.</i> Harvard Business School Press.</li>
+    <li id="r18">Piller, F., et al. (2024). Mass Customization in the Age of AI. <i>Research-Technology Management</i>. <a href="https://www.tandfonline.com/doi/full/10.1080/08956308.2024.2350919" target="_blank" rel="noopener">tandfonline.com</a></li>
+    <li id="r19">Brown, T. (2008). Design Thinking. <i>Harvard Business Review</i>, 86(6), 84–92.</li>
+    <li id="r20">Tochilkin, D., et al. (2024). TripoSR: Fast 3D Object Reconstruction from a Single Image. arXiv:2403.02151.</li>
+    <li id="r21">Xu, J., et al. (2024). InstantMesh: Efficient 3D Mesh Generation from a Single Image with Sparse-view Large Reconstruction Models. arXiv:2404.07191.</li>
+    <li id="r22">Hunyuan3D Team (2025). Hunyuan3D 2.5: Towards High-Fidelity 3D Assets Generation with Ultimate Details. arXiv preprint.</li>
+    <li id="r23">Tang, Z., et al. (2024). Cycle3D: High-quality and Consistent Image-to-3D Generation via Generation–Reconstruction Cycle. arXiv:2407.19548. <a href="https://arxiv.org/pdf/2407.19548" target="_blank" rel="noopener">arxiv.org</a></li>
+    <li id="r24">Khronos Group. <i>glTF 2.0 Specification.</i> / Apple Inc. <i>Universal Scene Description (USDZ) for AR Quick Look.</i></li>
+    <li id="r25">Sun, C., Fang, Y., Kong, M., Chen, X., &amp; Liu, Y. (2022). Influence of augmented reality product display on consumers' product attitudes: A product uncertainty reduction perspective. <i>Journal of Retailing and Consumer Services</i>, 64. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0969698921003945" target="_blank" rel="noopener">sciencedirect.com</a></li>
+    <li id="r26">Consumer behavior in augmented shopping reality: A review, synthesis, and research agenda (2022). <i>Frontiers in Virtual Reality</i>, 3. <a href="https://www.frontiersin.org/journals/virtual-reality/articles/10.3389/frvir.2022.961236/full" target="_blank" rel="noopener">frontiersin.org</a></li>
+    <li id="r27">Press Information Bureau, Government of India (December 2025). <i>Handicrafts at the Heart of India's Rural Economy.</i> <a href="https://static.pib.gov.in/WriteReadData/specificdocs/documents/2025/dec/doc2025129724401.pdf" target="_blank" rel="noopener">pib.gov.in</a></li>
+    <li id="r28">India Brand Equity Foundation (2025). <i>Indian Handicrafts Industry: Trends, Growth &amp; Export Opportunities.</i> <a href="https://www.ibef.org/exports/handicrafts-industry-india" target="_blank" rel="noopener">ibef.org</a></li>
+    <li id="r29">Gujarat Institute of Development Research. <i>Artisan Clusters in Rural India.</i> Working Paper 227. <a href="https://gidr.ac.in/pdf/WP%20227.pdf" target="_blank" rel="noopener">gidr.ac.in</a></li>
+    <li id="r30">Terracotta — the Indigenous Craft of Bengal: A Case Study of Panchmura, Bankura, West Bengal, India. <a href="https://www.academia.edu/120557340/" target="_blank" rel="noopener">academia.edu</a></li>
+    <li id="r31">Transforming Clay: A Study of the Terracotta Craft of Gorakhpur (2025). <a href="https://www.researchgate.net/publication/399563061" target="_blank" rel="noopener">researchgate.net</a>. See also: Crafts, Innovation and Exclusion: Posers from a Terracotta Cluster in Rural Rajasthan.</li>
+    <li id="r32">United Nations (2015). <i>Transforming our World: The 2030 Agenda for Sustainable Development.</i> UN General Assembly Resolution A/RES/70/1.</li>
+    <li id="r33">Ministry of Education, Government of India (2020). <i>National Education Policy 2020.</i></li>
+    <li id="r34">UNESCO (2003). <i>Convention for the Safeguarding of the Intangible Cultural Heritage.</i></li>
+    <li id="r35">Sennett, R. (2008). <i>The Craftsman.</i> Yale University Press.</li>
+  </ol>
+</section>
+
+<div class="footer">
+  <span>PATHS Working Paper · v1.0 · August 2026</span>
+  <span>Mishra · Mitra · Singh</span>
+</div>
+
+</div>
+</body>
+</html>

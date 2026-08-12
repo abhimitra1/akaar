@@ -16,7 +16,7 @@ thing" version.
 necessarily the order you need to run them — each file's own comment says what it
 depends on, if anything).
 
-**Status as of 2026-08-10:**
+**Status as of 2026-08-12:**
 
 | File | Applied? |
 |---|---|
@@ -25,6 +25,10 @@ depends on, if anything).
 | `003_terms_accepted_at.sql` | Not yet — run this before signup/login will work at all (every authenticated route redirects to `/accept-terms`, which needs this column to exist) |
 | `004_height_cm.sql` | Not yet — run this before MetadataPage's "Height (cm)" field / CraftPage's real-scale AR will work |
 | `005_likes.sql` | **Already live** — the `public.likes` table already existed on the running project (verified via a direct query, not assumed) before this file was written; it's here so a fresh project gets it too. |
+| `006_super_admin.sql` | Not yet — run this before `/admin` will work at all (adds `is_super_admin`/`image_source`/`job_type`, the admin RLS policies, and grants apon555@gmail.com admin). If that email hasn't signed up yet, re-run just the final `update` statement afterward — the rest is safe to leave as-is. |
+| `007_role_restructure.sql` | Not yet — run this (after `006`) before signup/role behavior matches the app: collapses `role` to `visitor`/`artisan` only, resets every existing profile to `visitor` except apon555@gmail.com and ss5494602@gmail.com (`artisan`), adds `artisan_requested_at`, and adds the triggers that block self-escalation of role/is_super_admin/unlimited_creations and enforce the visitor=co-create / artisan=upload split on `crafts.image_source`. |
+| `008_backfill_ai_generated.sql` | Not yet — run this (after `006`) to fix the AI badge not showing on craft cards for pre-existing AI co-creations: every row from before `image_source` existed got backfilled to `'original'` regardless of how it was actually made. This re-tags the recoverable subset (anything with a `parent_design_id`); the rest need a manual fix per row via `/admin`. |
 
-Run them in any order — none depend on each other. All are safe to re-run (every
-statement is `if not exists` / `drop ... if exists` + `create`).
+Run in numeric order where a "Depends on" note in a file's own header says so (006 before
+007 and 008; otherwise independent). All are safe to re-run (every statement is
+`if not exists` / `drop ... if exists` + `create`).

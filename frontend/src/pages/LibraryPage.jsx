@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AppNav from '../components/AppNav.jsx'
+import AiGeneratedBadge from '../components/AiGeneratedBadge.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
 import '../pages/Home.css'
@@ -152,10 +153,6 @@ export default function LibraryPage() {
     }
   }
 
-  if (loading) {
-    return <LoadingScreen message="Loading your library..." />
-  }
-
   return (
     <div className="home">
       <AppNav active="library" />
@@ -163,76 +160,83 @@ export default function LibraryPage() {
       <section className="home__content">
         <h1 className="home__title">My Library</h1>
 
-        {error && <p className="explore__error">{error}</p>}
-
-        <div className="home__filters">
-          <div className="home__filter-row">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                className={`home__chip ${activeTab === tab.key ? 'home__chip--active' : ''}`}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {visibleCrafts.length > 0 ? (
-          <div className="home__recent-list">
-            {visibleCrafts.map((craft) => (
-              <article key={craft.id} className="home__recent-row" onClick={() => handleOpen(craft)}>
-                <div className="home__recent-thumbnail-wrapper">
-                  {getCraftThumbnail(craft) ? (
-                    <img src={getCraftThumbnail(craft)} alt={craft.title || 'Untitled'} className="home__recent-thumbnail" loading="lazy" />
-                  ) : (
-                    <div className="home__recent-placeholder" />
-                  )}
-                </div>
-                <div className="home__recent-body">
-                  <h3 className="home__recent-title">{craft.title || 'Untitled'}</h3>
-                  <p className="home__recent-subtitle">
-                    {craft.craft_type || 'Craft'} · {new Date(craft.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <StatusBadge craft={craft} latestJobByCraft={latestJobByCraft} />
-                <button
-                  type="button"
-                  className="library__edit"
-                  aria-label="Edit details"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    navigate(`/craft/${craft.id}/metadata`)
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="library__delete"
-                  aria-label="Delete"
-                  disabled={deletingId === craft.id}
-                  onClick={(e) => handleDeleteClick(e, craft)}
-                >
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
-                </button>
-              </article>
-            ))}
-          </div>
+        {loading ? (
+          <LoadingScreen message="Loading your library..." inline />
         ) : (
-          <div className="home__empty-state">
-            <p className="home__empty-title">No models here yet.</p>
-            <p className="home__empty-sub">Create your first digital twin!</p>
-          </div>
+          <>
+            {error && <p className="explore__error">{error}</p>}
+
+            <div className="home__filters">
+              <div className="home__filter-row">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={`home__chip ${activeTab === tab.key ? 'home__chip--active' : ''}`}
+                    onClick={() => setActiveTab(tab.key)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {visibleCrafts.length > 0 ? (
+              <div className="home__recent-list">
+                {visibleCrafts.map((craft) => (
+                  <article key={craft.id} className="home__recent-row" onClick={() => handleOpen(craft)}>
+                    <div className="home__recent-thumbnail-wrapper">
+                      {getCraftThumbnail(craft) ? (
+                        <img src={getCraftThumbnail(craft)} alt={craft.title || 'Untitled'} className="home__recent-thumbnail" loading="lazy" />
+                      ) : (
+                        <div className="home__recent-placeholder" />
+                      )}
+                      {craft.image_source === 'ai_generated' && <AiGeneratedBadge />}
+                    </div>
+                    <div className="home__recent-body">
+                      <h3 className="home__recent-title">{craft.title || 'Untitled'}</h3>
+                      <p className="home__recent-subtitle">
+                        {craft.craft_type || 'Craft'} · {new Date(craft.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <StatusBadge craft={craft} latestJobByCraft={latestJobByCraft} />
+                    <button
+                      type="button"
+                      className="library__edit"
+                      aria-label="Edit details"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/craft/${craft.id}/metadata`)
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="library__delete"
+                      aria-label="Delete"
+                      disabled={deletingId === craft.id}
+                      onClick={(e) => handleDeleteClick(e, craft)}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="home__empty-state">
+                <p className="home__empty-title">No models here yet.</p>
+                <p className="home__empty-sub">Create your first digital twin!</p>
+              </div>
+            )}
+          </>
         )}
       </section>
 
