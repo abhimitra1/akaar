@@ -46,6 +46,19 @@
   width: auto;
 }
 
+/* Home.css's featured-image-wrapper is a fixed 100px tall — sized for that page's narrow
+   140px-wide carousel cards. This grid's cards range from ~150px (mobile, 2 columns) to
+   ~650px (wide desktop, 5 columns), so a fixed height either looks disproportionately
+   short (wide cards) or fine only by accident (narrow ones) — the visible symptom being
+   thumbnails that look inconsistently sized against each other across the grid. A square
+   aspect-ratio scales with each card's own width instead, so every thumbnail — regardless
+   of column count or the source photo's own aspect ratio — renders the same shape.
+   object-fit: cover (already on .home__featured-image) still crops each to fill it. */
+.explore__card .home__featured-image-wrapper {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
 .explore__card:hover {
   transform: translateY(-2px);
 }
