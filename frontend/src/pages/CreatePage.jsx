@@ -28,6 +28,13 @@ export default function CreatePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const fileInputRef = useRef(null)
+  // Separate hidden input, `capture="environment"` — on its own, accept="image/*" is
+  // supposed to let mobile browsers offer a camera option in their native chooser, but
+  // that's inconsistent across Android OEM skins/browsers (reported: no camera option
+  // showed up at all on some Android devices). A dedicated capture-attribute input
+  // guarantees "Take Photo" always opens the camera directly, instead of hoping the
+  // device's chooser surfaces it.
+  const cameraInputRef = useRef(null)
 
   // null = neither method chosen yet — user must pick one before either form appears.
   const [mode, setMode] = useState(null) // null | 'upload' | 'cocreate'
@@ -312,6 +319,14 @@ export default function CreatePage() {
                     <span className="create__section-label">Photo</span>
 
                     <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      hidden
+                      onChange={handleFile}
+                    />
+                    <input
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
@@ -336,19 +351,36 @@ export default function CreatePage() {
                         </div>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        className="create__upload"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <svg className="create__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        <span className="create__upload-text">Add a photo</span>
-                        <span className="create__upload-sub">Choose one photo of your craft</span>
-                      </button>
+                      <div className="create__method-grid">
+                        <button
+                          type="button"
+                          className="create__method-card"
+                          onClick={() => cameraInputRef.current?.click()}
+                        >
+                          <span className="create__method-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                              <circle cx="12" cy="13" r="4" />
+                            </svg>
+                          </span>
+                          <span className="create__method-title">Take Photo</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="create__method-card"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <span className="create__method-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                          </span>
+                          <span className="create__method-title">Choose from Gallery</span>
+                        </button>
+                      </div>
                     )}
                   </section>
 

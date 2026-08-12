@@ -265,40 +265,6 @@
   color: var(--text-muted);
 }
 
-/* Empty upload area: dashed border, icon + "Add photos". */
-.create__upload {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 28px 16px;
-  border: 1.5px dashed var(--outline-cream);
-  border-radius: var(--radius-lg);
-  background: var(--surface-container-low);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.create__upload-icon {
-  width: 36px;
-  height: 36px;
-  margin-bottom: 4px;
-  color: var(--terracotta-900);
-}
-
-.create__upload-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.create__upload-sub {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
 /* Selected-photo thumbnails: horizontal scroll row. */
 .create__thumbs {
   display: flex;

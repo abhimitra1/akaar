@@ -37,6 +37,10 @@ async function craftPhotoToFile(craft) {
 // regardless of whether anyone's still watching it; see CreatePage's leave-guard).
 export default function CoCreatePanel({ onAccepted, onGeneratingChange }) {
   const fileInputRef = useRef(null)
+  // See CreatePage.jsx's identical cameraInputRef comment — accept="image/*" alone doesn't
+  // reliably surface a camera option in every Android browser/OEM chooser; a dedicated
+  // capture-attribute input guarantees one.
+  const cameraInputRef = useRef(null)
 
   const [step, setStep] = useState('input') // input | generating | review | confirm
   const [sourceTab, setSourceTab] = useState('upload') // 'upload' | 'library' — only matters pre-pick
@@ -219,6 +223,14 @@ export default function CoCreatePanel({ onAccepted, onGeneratingChange }) {
       {step === 'input' && (
         <>
           <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={handleSourceFile}
+          />
+          <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -267,19 +279,36 @@ export default function CoCreatePanel({ onAccepted, onGeneratingChange }) {
               </div>
 
               {sourceTab === 'upload' ? (
-                <button
-                  type="button"
-                  className="create__upload"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <svg className="create__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span className="create__upload-text">Add a photo of the item</span>
-                  <span className="create__upload-sub">AI will use it as a starting point</span>
-                </button>
+                <div className="create__method-grid">
+                  <button
+                    type="button"
+                    className="create__method-card"
+                    onClick={() => cameraInputRef.current?.click()}
+                  >
+                    <span className="create__method-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </span>
+                    <span className="create__method-title">Take Photo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="create__method-card"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <span className="create__method-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                    </span>
+                    <span className="create__method-title">Choose from Gallery</span>
+                  </button>
+                </div>
               ) : (
                 <>
                   <div className="create__library-search">
