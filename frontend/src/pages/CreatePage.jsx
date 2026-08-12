@@ -282,36 +282,38 @@ export default function CreatePage() {
 
         <div className="create__content">
           {mode === null ? (
-            <div className="create__method-grid">
-              {canUpload && (
-                <button type="button" className="create__method-card" onClick={() => setMode('upload')}>
-                  <span className="create__method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                  </span>
-                  <span className="create__method-title">Upload Photo</span>
-                  <span className="create__method-desc">Choose one photo of your craft to turn into a 3D model</span>
-                </button>
-              )}
+            <div className="create__intro">
+              <div className="create__method-grid create__method-grid--intro">
+                {canUpload && (
+                  <button type="button" className="create__method-card" onClick={() => setMode('upload')}>
+                    <span className="create__method-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </span>
+                    <span className="create__method-title">Upload Photo</span>
+                    <span className="create__method-desc">Choose one photo of your craft to turn into a 3D model</span>
+                  </button>
+                )}
 
-              {canCoCreate && (
-                <button type="button" className="create__method-card" onClick={() => setMode('cocreate')}>
-                  <span className="create__method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
-                      <path d="M19 3l.6 1.7L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.3L19 3z" />
-                    </svg>
-                  </span>
-                  <span className="create__method-title">Co-Create with AI</span>
-                  <span className="create__method-desc">Redesign a photo or an existing design with AI first</span>
-                </button>
-              )}
+                {canCoCreate && (
+                  <button type="button" className="create__method-card" onClick={() => setMode('cocreate')}>
+                    <span className="create__method-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+                        <path d="M19 3l.6 1.7L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.3L19 3z" />
+                      </svg>
+                    </span>
+                    <span className="create__method-title">Co-Create with AI</span>
+                    <span className="create__method-desc">Redesign a photo or an existing design with AI first</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="create__method-active">
+            <div className="create__studio">
               {/* Only worth offering when the account can actually use both methods —
                   for a single-role user this would just flip straight back (see the
                   auto-select effect above), a dead-end click. */}
@@ -329,85 +331,138 @@ export default function CreatePage() {
               )}
 
               {mode === 'cocreate' ? (
-                <CoCreatePanel
-                  onAccepted={handleCoCreateAccepted}
-                  onGeneratingChange={setCoCreateGenerating}
-                  initialDesign={cocreateInitialDesign}
-                />
+                <div className="create__studio-panel create__studio-panel--cocreate">
+                  <CoCreatePanel
+                    onAccepted={handleCoCreateAccepted}
+                    onGeneratingChange={setCoCreateGenerating}
+                    initialDesign={cocreateInitialDesign}
+                  />
+                </div>
               ) : (
                 <>
-                  <section className="create__section">
-                    <span className="create__section-label">Photo</span>
+                  <div className="create__studio-controls">
+                    <section className="create__section">
+                      <span className="create__section-label">Photo</span>
 
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      hidden
-                      onChange={handleFile}
-                    />
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={handleFile}
-                    />
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        hidden
+                        onChange={handleFile}
+                      />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={handleFile}
+                      />
 
-                    {photo ? (
-                      <div className="create__thumbs">
-                        <div className="create__thumb create__thumb--large">
-                          <img src={photo.previewUrl} alt="Selected craft photo" />
+                      {photo ? (
+                        <>
+                          {/* Desktop studio canvas (below) is the primary preview at that
+                              breakpoint and carries its own remove control — this inline
+                              thumb stays mobile/tablet-only (hidden past 1024px, see
+                              Create.css) so the photo isn't shown large in two places at
+                              once. */}
+                          <div className="create__thumbs create__thumbs--compact-only">
+                            <div className="create__thumb create__thumb--large">
+                              <img src={photo.previewUrl} alt="Selected craft photo" />
+                              <button
+                                type="button"
+                                className="create__thumb-remove"
+                                aria-label="Remove photo"
+                                onClick={removePhoto}
+                              >
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          {/* Mirror image of the above, for 1024px+ where the thumb is
+                              hidden and the studio canvas is the real preview instead —
+                              this just confirms the pick without duplicating it visually. */}
+                          <div className="create__studio-photo-note">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                            <span>Photo selected — see preview</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="create__method-grid">
                           <button
                             type="button"
-                            className="create__thumb-remove"
-                            aria-label="Remove photo"
-                            onClick={removePhoto}
+                            className="create__method-card"
+                            onClick={() => cameraInputRef.current?.click()}
                           >
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
+                            <span className="create__method-icon" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                              </svg>
+                            </span>
+                            <span className="create__method-title">Take Photo</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="create__method-card"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <span className="create__method-icon" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
+                              </svg>
+                            </span>
+                            <span className="create__method-title">Choose from Gallery</span>
                           </button>
                         </div>
+                      )}
+                    </section>
+
+                    <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>
+                      {submitting ? 'Creating…' : 'Generate 3D Model'}
+                    </button>
+                  </div>
+
+                  {/* Desktop-only (see Create.css, 1024px+) — a live preview canvas beside
+                      the controls rail, so a photo appears large and the workspace reads as
+                      a real studio instead of a narrow mobile form stretched across a big
+                      screen. display:none below that breakpoint removes it from the a11y
+                      tree too, so screen readers never see the photo announced twice. */}
+                  <div className="create__studio-canvas">
+                    {photo ? (
+                      <div className="create__studio-canvas-photo">
+                        <img src={photo.previewUrl} alt="Selected craft photo" />
+                        <button
+                          type="button"
+                          className="create__studio-canvas-remove"
+                          onClick={removePhoto}
+                        >
+                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                          Remove
+                        </button>
                       </div>
                     ) : (
-                      <div className="create__method-grid">
-                        <button
-                          type="button"
-                          className="create__method-card"
-                          onClick={() => cameraInputRef.current?.click()}
-                        >
-                          <span className="create__method-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                              <circle cx="12" cy="13" r="4" />
-                            </svg>
-                          </span>
-                          <span className="create__method-title">Take Photo</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="create__method-card"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <span className="create__method-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="3" width="18" height="18" rx="2" />
-                              <circle cx="8.5" cy="8.5" r="1.5" />
-                              <path d="M21 15l-5-5L5 21" />
-                            </svg>
-                          </span>
-                          <span className="create__method-title">Choose from Gallery</span>
-                        </button>
+                      <div className="create__studio-canvas-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="M21 15l-5-5L5 21" />
+                        </svg>
+                        <p>Your photo will appear here</p>
+                        <span>Upload a clear, well-lit photo of your craft to begin its digital twin</span>
                       </div>
                     )}
-                  </section>
-
-                  <button type="button" className="create__submit" disabled={!canSubmit} onClick={handleSubmit}>
-                    {submitting ? 'Creating…' : 'Generate 3D Model'}
-                  </button>
+                  </div>
                 </>
               )}
             </div>

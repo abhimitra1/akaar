@@ -153,11 +153,43 @@
   line-height: 1.4;
 }
 
-/* Holds the chosen method's form plus the "Change method" link back to the card grid. */
-.create__method-active {
+/* Holds the chosen method's form plus the "Change method" link back to the card grid.
+   Plain single-column flow on mobile/tablet; becomes a two-pane studio (controls rail +
+   live preview canvas) at the 1024px breakpoint below. */
+.create__studio {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.create__studio-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create__studio-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop-only live preview (see the 1024px studio layout below) — hidden here so it
+   never occupies mobile/tablet space; the inline .create__thumbs--compact-only preview
+   inside the controls rail covers those breakpoints instead. */
+.create__studio-canvas {
+  display: none;
+}
+
+/* Inverse of .create__thumbs--compact-only: mobile/tablet shows the actual thumb, so this
+   text confirmation stays hidden there and only appears at the 1024px studio breakpoint. */
+.create__studio-photo-note {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px 2px;
+  color: var(--terracotta-900);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .create__method-change {
@@ -647,4 +679,244 @@
   .create__content {
     background: #fff;
   }
+}
+
+/* Studio layout — wide desktop only. Below this, CreatePage stays the same centered
+   "mobile form on a card" treatment as the 768px rules above (a 420px-vs-1fr split pane
+   has no room to breathe on a tablet-width window). Here it becomes a real workspace: a
+   full-height page instead of a floating modal-like card, a two-pane split for Upload
+   (controls rail + live photo canvas) so the craft is visible large while it's being set
+   up, and more generous proportions throughout — the difference between "a form" and
+   "a studio" is mostly about scale and letting the work itself be seen. */
+@media (min-width: 1024px) {
+  .create {
+    justify-content: flex-start;
+    padding: 0;
+    background: var(--surface);
+  }
+
+  .create__card {
+    max-width: none;
+    min-height: 100vh;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .create__header {
+    padding: 22px 40px;
+  }
+
+  .create__title {
+    font-size: 22px;
+  }
+
+  .create__error,
+  .create__notice {
+    width: 100%;
+    max-width: 1160px;
+    margin: 16px auto 0;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .create__content {
+    width: 100%;
+    max-width: 1160px;
+    margin: 0 auto;
+    background: transparent;
+    padding: 40px 40px 64px;
+  }
+
+  /* The "pick a method" intro screen — vertically centered in the remaining viewport
+     (below the sticky header) rather than pinned to the top with dead space under it, and
+     bigger cards with more air so it reads as a considered first step rather than two
+     cramped squares. */
+  .create__intro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 190px);
+  }
+
+  .create__method-grid--intro {
+    max-width: 760px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .create__method-grid--intro .create__method-card {
+    padding: 48px 32px;
+    gap: 14px;
+  }
+
+  .create__method-grid--intro .create__method-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .create__method-grid--intro .create__method-icon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .create__method-grid--intro .create__method-title {
+    font-size: 19px;
+  }
+
+  .create__method-grid--intro .create__method-desc {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Two-pane studio: a fixed-ish controls rail beside a flexible live-preview canvas.
+     "Change method" and the Co-Create panel (which manages its own multi-step preview
+     internally — see CoCreatePanel.jsx — so it isn't split into the same two panes) both
+     span the full width instead. */
+  .create__studio {
+    display: grid;
+    grid-template-columns: minmax(360px, 420px) 1fr;
+    align-items: start;
+    gap: 40px;
+  }
+
+  .create__method-change {
+    grid-column: 1 / -1;
+  }
+
+  /* Centered, not flush-left — CoCreatePanel manages its own preview internally (see the
+     comment above), so it isn't paired with a second canvas pane the way Upload is;
+     centering the panel in the remaining width reads as generous framing around a focused
+     task rather than a layout with a chunk visibly missing on the right. */
+  .create__studio-panel--cocreate {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .create__studio-controls {
+    grid-column: 1;
+  }
+
+  .create__studio-canvas {
+    grid-column: 2;
+    display: flex;
+    position: sticky;
+    top: 24px;
+  }
+
+  /* The studio canvas is now the primary photo preview — its own inline copy inside the
+     controls rail would just duplicate it. */
+  .create__thumbs--compact-only {
+    display: none;
+  }
+
+  .create__studio-photo-note {
+    display: flex;
+  }
+
+  .create__section {
+    padding: 24px;
+  }
+
+  /* Co-Create's own internal previews (CoCreatePanel/Create.css classes it renders into)
+     get more presence at this width too, even though the panel itself stays single-column. */
+  .create__thumb--large {
+    height: 440px;
+  }
+
+  .create__cocreate-variations {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .create__cocreate-variation img {
+    height: 300px;
+  }
+
+  .create__library-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    max-height: 440px;
+  }
+}
+
+.create__studio-canvas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 460px;
+  padding: 40px;
+  border: 1.5px dashed var(--outline-cream);
+  border-radius: var(--radius-xl);
+  background: #fff;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.create__studio-canvas-empty svg {
+  width: 56px;
+  height: 56px;
+  color: var(--outline-cream);
+  stroke-width: 1.2;
+}
+
+.create__studio-canvas-empty p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.create__studio-canvas-empty span {
+  font-size: 13px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.create__studio-canvas-photo {
+  position: relative;
+  width: 100%;
+  min-height: 460px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--surface-container-low);
+  box-shadow: 0 8px 32px rgba(60, 30, 10, 0.12);
+}
+
+.create__studio-canvas-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  max-height: 640px;
+  object-fit: contain;
+}
+
+.create__studio-canvas-remove {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(35, 25, 20, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.create__studio-canvas-remove:hover {
+  background: rgba(35, 25, 20, 0.88);
 }

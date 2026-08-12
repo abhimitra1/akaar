@@ -174,9 +174,11 @@
   display: none;
 }
 
+/* flex-grow fills the row edge-to-edge when there are few enough cards to fit — no dead
+   trailing space — while flex-shrink:0 stops them shrinking below the 140px basis once
+   there are more cards than fit, so the row overflows and scrolls instead of squeezing. */
 .home__featured-card {
-  flex: 0 0 auto;
-  width: 140px;
+  flex: 1 0 140px;
   background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
@@ -190,9 +192,14 @@
   transform: translateY(-2px);
 }
 
+/* Was a fixed 100px, sized for the old fixed-140px-wide card. Cards now range from
+   ~140px (mobile) to several hundred px (wide desktop with few featured items), so a
+   fixed height either looks disproportionately short (wide cards) or was only ever
+   right by accident (narrow ones) — aspect-ratio scales with each card's own width. */
 .home__featured-image-wrapper {
   position: relative;
-  height: 100px;
+  height: auto;
+  aspect-ratio: 7 / 5;
   background: linear-gradient(135deg, var(--terracotta-800), var(--terracotta-900));
 }
 
@@ -540,6 +547,34 @@
     color: var(--text-faint);
   }
 
+  .home__sidebar-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 11px 16px;
+    border-radius: 10px;
+    background: var(--terracotta-900);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(151, 68, 0, 0.28);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+
+  .home__sidebar-cta:hover {
+    background: var(--terracotta-800);
+    box-shadow: 0 4px 14px rgba(151, 68, 0, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .home__sidebar-cta:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(151, 68, 0, 0.28);
+  }
+
   .home__sidebar-nav {
     display: flex;
     flex-direction: column;
@@ -549,6 +584,7 @@
     height: 1px;
     background: var(--outline-cream);
     margin: 8px 6px;
+    margin-top: auto;
   }
 
   .home__sidebar-nav--secondary .home__sidebar-item {
@@ -558,7 +594,6 @@
   }
 
   .home__sidebar-footer {
-    margin-top: auto;
     padding: 14px 12px 0;
     font-size: 11px;
     line-height: 1.5;
