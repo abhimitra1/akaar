@@ -3,8 +3,26 @@ import { supabase } from '../supabaseClient.js'
 
 const AuthContext = createContext(null)
 
+// Supabase calls below (getSession, the profile fetch, signInWithPassword) have no
+// built-in timeout — a stalled network request or the known gotrue-js session-lock
+// contention bug can leave one pending indefinitely. Without a ceiling, that hang
+// propagates into `loading`/`profileLoading` never resolving, which leaves every
+// ProtectedRoute stuck on LoadingScreen's spinner forever with no way for the user to
+// recover. Racing against a timeout guarantees these always settle one way or another.
+const NETWORK_TIMEOUT_MS = 8000
+
+function withTimeout(promise, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), NETWORK_TIMEOUT_MS)),
+  ])
+}
+
 async function fetchProfile(userId) {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  const { data, error } = await withTimeout(
+    supabase.from('profiles').select('*').eq('id', userId).single(),
+    { data: null, error: 'profile fetch timed out' },
+  )
   if (error) return null
   return data
 }
@@ -24,7 +42,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    withTimeout(supabase.auth.getSession(), { data: { session: null } }).then(async ({ data }) => {
       if (cancelled) return
       setSession(data.session)
       if (data.session) {
@@ -59,7 +77,10 @@ export function AuthProvider({ children }) {
   const isAuthenticated = Boolean(session)
 
   const login = useCallback(async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await withTimeout(supabase.auth.signInWithPassword({ email, password }), {
+      data: null,
+      error: { message: 'Sign-in timed out. Please check your connection and try again.' },
+    })
     if (error) throw new Error(error.message)
     return data
   }, [])

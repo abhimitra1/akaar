@@ -3,6 +3,7 @@ import AdminRoute from './components/AdminRoute.jsx'
 import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { supabaseConfigured } from './supabaseClient.js'
 import AboutPage from './pages/AboutPage.jsx'
 import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
@@ -22,6 +23,23 @@ import TermsPage from './pages/TermsPage.jsx'
 import WelcomePage from './pages/WelcomePage.jsx'
 
 function App() {
+  // Catches the exact failure shape from commit 08d7121 (VITE_GPU_PROXY_URL then, Supabase
+  // vars now): env vars set in the local .env but never synced to Vercel's own project
+  // settings. Without this check the app would otherwise crash blank at import time — see
+  // supabaseClient.js.
+  if (!supabaseConfigured) {
+    return (
+      <div style={{ padding: '3rem 1.5rem', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
+        <h1>Configuration error</h1>
+        <p>
+          This deployment is missing required Supabase environment variables
+          (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). Set them in the hosting
+          provider&rsquo;s project settings and redeploy.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <AuthProvider>
       <ProfileGate>
