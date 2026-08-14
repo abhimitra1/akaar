@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { runReconstruction } from '../reconstruction.js'
-import { compressImage } from '../imageCompression.js'
+import { compressImage, normalizeHeic } from '../imageCompression.js'
 import CoCreatePanel from '../components/CoCreatePanel.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import ImageCropModal from '../components/ImageCropModal.jsx'
@@ -161,13 +161,15 @@ export default function CreatePage() {
     else if (canCoCreate && !canUpload) setMode('cocreate')
   }, [mode, user, canUpload, canCoCreate])
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = (e.target.files || [])[0]
     e.target.value = '' // allow re-selecting the same file
     if (!file) return
     // Crop first (ImageCropModal below) — handleCropped finishes the same compress+preview
-    // steps this used to do directly, once the user confirms a crop.
-    setPendingCropFile(file)
+    // steps this used to do directly, once the user confirms a crop. HEIC (iPhone's default
+    // camera format) has to be normalized before that: the crop modal's live preview is a
+    // plain <img>, which can't display HEIC in most browsers.
+    setPendingCropFile(await normalizeHeic(file))
   }
 
   const handleCropCancel = () => setPendingCropFile(null)

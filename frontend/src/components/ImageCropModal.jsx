@@ -32,9 +32,12 @@ export default function ImageCropModal({ file, onCancel, onCropped }) {
   const frameRef = useRef(null)
   const dragRef = useRef(null) // { pointerId, startX, startY, startOffset }
 
-  // New file picked -> reset crop state and load it for display. The object URL is only
-  // for the on-screen preview; the actual crop render below re-reads `file` directly so
-  // it can re-apply EXIF orientation the same way imageCompression.js does.
+  // New file picked -> reset crop state and load it for display. `file` has already been
+  // through normalizeHeic() (see CreatePage's handleFile) by the time it gets here, so it's
+  // always a format every browser can put straight in an <img> — this modal doesn't need to
+  // know anything about HEIC itself. The object URL is only for the on-screen preview; the
+  // actual crop render below re-reads `file` directly so it can re-apply EXIF orientation
+  // the same way imageCompression.js does.
   useEffect(() => {
     if (!file) {
       setImageUrl(null)

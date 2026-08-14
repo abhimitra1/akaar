@@ -10,10 +10,35 @@
 const MAX_DIMENSION = 1600
 const JPEG_QUALITY = 0.82
 
+// iPhone's default camera format, and one neither <img> nor createImageBitmap can decode
+// on most browsers: no vendor other than Safari (and Chrome on macOS/Android) ships a
+// licensed HEVC decoder, so Chrome-on-Windows/Linux and Firefox everywhere fail silently —
+// no error, no onLoad, just a blank preview. `heic-to` is a real WASM decoder that works
+// regardless of platform; it's dynamically imported (~3MB) so non-HEIC uploads, the common
+// case, never pay for it.
+const HEIC_NAME_RE = /\.hei[cf]$/i
+
+function looksHeic(file) {
+  return HEIC_NAME_RE.test(file.name || '') || file.type === 'image/heic' || file.type === 'image/heif'
+}
+
+export async function normalizeHeic(file) {
+  if (!looksHeic(file)) return file
+  try {
+    const { heicTo } = await import('heic-to')
+    const blob = await heicTo({ blob: file, type: 'image/jpeg', quality: JPEG_QUALITY })
+    const name = file.name.replace(/\.\w+$/, '') + '.jpg'
+    return new File([blob], name, { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
+
 // Best-effort: any failure (unsupported API, canvas blocked, corrupt image) returns the
 // original file untouched rather than blocking the create flow over a compression error —
 // same fail-open philosophy as photoRecovery.js's own best-effort caching.
 export async function compressImage(file, { maxDimension = MAX_DIMENSION, quality = JPEG_QUALITY } = {}) {
+  file = await normalizeHeic(file)
   if (!file?.type?.startsWith('image/') || file.type === 'image/svg+xml') return file
 
   try {
