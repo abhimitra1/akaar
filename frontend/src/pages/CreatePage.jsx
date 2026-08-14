@@ -5,6 +5,7 @@ import { runReconstruction } from '../reconstruction.js'
 import { compressImage } from '../imageCompression.js'
 import CoCreatePanel from '../components/CoCreatePanel.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import ImageCropModal from '../components/ImageCropModal.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { saveRecoveryPhoto, loadRecoveryPhoto, clearRecoveryPhoto } from '../photoRecovery.js'
 import './Create.css'
@@ -39,6 +40,9 @@ export default function CreatePage() {
   // null = neither method chosen yet — user must pick one before either form appears.
   const [mode, setMode] = useState(null) // null | 'upload' | 'cocreate'
   const [photo, setPhoto] = useState(null) // { file, previewUrl }
+  // Raw file just picked (camera or gallery), waiting on the crop modal — never touches
+  // `photo` until the user confirms a crop, so cancelling leaves any existing photo intact.
+  const [pendingCropFile, setPendingCropFile] = useState(null)
   // Set only when `photo` came from CoCreatePanel picking an existing library design as its
   // starting point ({ id, title } of that design, from CoCreatePanel's onAccepted 3rd arg).
   // That design is never modified — this is purely a parent-lineage pointer, written once
@@ -157,11 +161,20 @@ export default function CreatePage() {
     else if (canCoCreate && !canUpload) setMode('cocreate')
   }, [mode, user, canUpload, canCoCreate])
 
-  const handleFile = async (e) => {
+  const handleFile = (e) => {
     const file = (e.target.files || [])[0]
     e.target.value = '' // allow re-selecting the same file
     if (!file) return
-    const compressed = await compressImage(file)
+    // Crop first (ImageCropModal below) — handleCropped finishes the same compress+preview
+    // steps this used to do directly, once the user confirms a crop.
+    setPendingCropFile(file)
+  }
+
+  const handleCropCancel = () => setPendingCropFile(null)
+
+  const handleCropped = async (croppedFile) => {
+    setPendingCropFile(null)
+    const compressed = await compressImage(croppedFile)
     setPhoto({ file: compressed, previewUrl: URL.createObjectURL(compressed) })
     setParentDesign(null)
     setIsAiGenerated(false)
@@ -469,6 +482,8 @@ export default function CreatePage() {
           )}
         </div>
       </div>
+
+      <ImageCropModal file={pendingCropFile} onCancel={handleCropCancel} onCropped={handleCropped} />
 
       <ConfirmDialog
         open={pendingLeaveAction !== null}

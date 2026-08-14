@@ -1,6 +1,7 @@
 import { supabase, STORAGE_BUCKET } from './supabaseClient.js'
 import { submitJob, getJobStatus, downloadResult } from './instantMesh.js'
 import { clearRecoveryPhoto } from './photoRecovery.js'
+import { bakeVertexColorsToTexture } from './textureBake.js'
 
 // Drives a craft's reconstruction job against the real InstantMesh API (see
 // instantMesh.js), mirroring it into our own `jobs` row so ProcessingPage's polling
@@ -76,7 +77,25 @@ export async function runReconstruction(jobId, craftId, ownerId, imageFile) {
     // touches" per ProcessingPage's stage bands) rather than sitting at 85%.
     await setJob({ status: 'processing', progress: 95 })
 
-    const glbBlob = await downloadResult(meshJobId, 'glb')
+    let glbBlob = await downloadResult(meshJobId, 'glb')
+
+    // InstantMesh's GLBs carry color only as a per-vertex COLOR_0 attribute — no UV
+    // coordinates, no material, no texture image at all (confirmed against real API
+    // output, both its 'glb' and 'obj' formats). That renders fine in WebGL (this app's
+    // on-page 3D view, Android AR), but iOS AR Quick Look converts to USDZ client-side via
+    // three.js's USDZExporter, which never reads vertex colors — only material.map/color —
+    // so the exported model came out completely untextured on iOS. Baking the vertex
+    // colors into a real texture (see textureBake.js) here, once at generation time, fixes
+    // every consumer at once. Best-effort: a baking failure shouldn't block craft creation
+    // the way a real upload/DB failure should, so it falls back to the unbaked GLB (still
+    // correct everywhere except iOS AR, same as before this fix) rather than throwing.
+    try {
+      const bakedBuffer = await bakeVertexColorsToTexture(await glbBlob.arrayBuffer())
+      if (bakedBuffer) glbBlob = new Blob([bakedBuffer], { type: 'model/gltf-binary' })
+    } catch (err) {
+      console.error('Texture bake failed, uploading unbaked GLB instead:', err.message || err)
+    }
+
     const modelPath = `${ownerId}/${craftId}/model.glb`
     const { error: modelUploadError } = await supabase.storage
       .from(STORAGE_BUCKET)

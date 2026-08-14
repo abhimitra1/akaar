@@ -2312,3 +2312,93 @@ project — everything before was build-checks + direct API calls).
   pot) now renders at normal size with a working "View in AR" button, and craft 96 (Tea Pot) is
   unaffected. If true-to-life AR scale is wanted later, option (b) above (bake scale into the
   GLB at save time) is the path — not started.
+
+### 2026-08-14 — Step: Fix iOS AR showing no texture (bake vertex colors into a real texture)
+- **Command:** user reported the model renders with no texture in iOS AR, and asked (1) is
+  there a fix and (2) what filetype InstantMesh gives us and why.
+- **Root cause, confirmed by pulling real production GLBs (crafts 115, 96) and decoding their
+  raw glTF JSON directly:** InstantMesh's reconstructed meshes carry color *only* as a
+  per-vertex `COLOR_0` attribute — `materials`/`textures`/`images` are absent from the file
+  entirely, primitive attributes are just `POSITION` + `COLOR_0`, no `TEXCOORD_0`, no `NORMAL`.
+  WebGL (this app's on-page 3D view, Android WebXR/Scene Viewer AR) renders this correctly
+  because three.js's glTF loader auto-enables `vertexColors` on a fallback material for exactly
+  this case. iOS Quick Look never sees that live scene — without an `ios-src`, model-viewer
+  converts the GLB to USDZ client-side via three.js's `USDZExporter` on every AR tap (per the
+  2026-08-08 entry), and that exporter's `buildMaterial()` only ever reads `material.map` or
+  falls back to a single flat `material.color` — confirmed by reading its source, it never
+  checks `vertexColors` at all. So the exported material comes out flat white, losing 100% of
+  the mesh's only color data.
+- **Verified this is not a lossy GLB-conversion side effect — it's InstantMesh's actual output.**
+  With the user's authorization, signed in as a real user (`apon555@gmail.com`, credentials
+  provided directly in chat — flagged back to the user to rotate the password afterward since it
+  was now in the transcript) and submitted a live test job straight to `instantmesh-proxy`
+  (bypassing the app — no craft/job row created), reusing craft 115's own already-public photo.
+  Same seed/steps as production, so the returned GLB came back byte-identical to craft 115's
+  stored one, confirming a fair test. Downloaded **both** `glb` and `obj` results for that job:
+  the `obj` (`v x y z r g b`, zero `vt` lines, no `mtllib`) has the exact same vertex-color-only
+  structure as the GLB — ruling out "just request a different format" as a fix.
+- **Fix: bake the vertex colors into a real texture, once, at generation time** — new
+  `frontend/src/textureBake.js` (`bakeVertexColorsToTexture(glbArrayBuffer)`, uses `three`'s
+  `GLTFLoader`/`GLTFExporter` directly — `three` added as an explicit `frontend/package.json`
+  dependency, pinned to `^0.183.0` to match `@google/model-viewer`'s own peer dependency, so
+  there's no version-mismatch risk). Algorithm: flattens the mesh (one vertex per triangle
+  corner, nothing shared across triangles) so each triangle can get its own small, isolated cell
+  in a texture atlas (grid sized `ceil(sqrt(triangleCount))` cells of `8×8` texels, `0.15`-cell
+  inset gutter — safely more than the half-texel bilinear filtering can reach — so adjacent
+  triangles' cells never bleed into each other); rasterizes each cell directly from that
+  triangle's 3 vertex colors via barycentric interpolation (reproducing the original vertex-color
+  gradient as an ordinary texture); computes a flat face normal per triangle (source mesh has no
+  `NORMAL` attribute at all — glTF's documented fallback for that case, and flat shading is the
+  natural fit once the mesh is triangle-flattened anyway); converts colors from three.js's linear
+  working color space to sRGB before writing pixels (baseColorTexture is sRGB-encoded); builds a
+  `MeshStandardMaterial({map: bakedTexture, metalness: 0, roughness: 1})`; re-exports via
+  `GLTFExporter` as a binary GLB. `reconstruction.js` now calls this right after
+  `downloadResult(meshJobId, 'glb')` and before the Storage upload — best-effort (a bake failure
+  falls back to uploading the unbaked GLB rather than failing craft creation, same "don't let a
+  nice-to-have block the real thing" pattern as other best-effort spots in this codebase).
+- **Verified end-to-end in a real browser** (Playwright + `npm run dev`, not just `npm run
+  build`) against the real GLB pulled from craft 115/the live test job:
+  - Baked output GLB structurally correct: real `materials[0].pbrMetallicRoughness.
+    baseColorTexture`, `images[0]` (embedded PNG), `TEXCOORD_0` + `NORMAL` on the primitive.
+  - Rendered side-by-side via real `<model-viewer>` instances (original vertex-colored vs.
+    baked-textured) — visually near-identical (screenshot compared directly), confirming the
+    sRGB conversion and barycentric rasterization are correct, not just structurally present.
+  - **The actual iOS code path itself**, not just an approximation of it: called
+    `<model-viewer>`'s own (undocumented but public, non-symbol-keyed) `prepareUSDZ()` method
+    directly on both the original and baked models — the literal function `$openIOSARQuickLook`
+    calls on every real "View in AR" tap. Unzipped both resulting `.usdz` files:
+    - Original: `color3f inputs:diffuseColor = (1, 1, 1)` — flat white, no texture file in the
+      archive at all. Exactly reproduces the reported bug, at the exact file Quick Look reads.
+    - Baked: `inputs:diffuseColor.connect` wired to a `UsdUVTexture` shader reading
+      `textures/Texture_19_false.png` (a real file inside the `.usdz` archive),
+      `sourceColorSpace = "sRGB"` correctly set.
+  - `npm run build` passes clean (bundle grew ~2.5KB gzip — `three`'s tree-shaken GLTFLoader/
+    GLTFExporter, negligible).
+  - **Not verified:** an actual physical iOS device — no such device available this session.
+    Confidence is high given the fix was verified against model-viewer's literal internal
+    conversion path/output file, not an approximation of it, but this is still simulated, not a
+    real Quick Look launch.
+- **Test hygiene:** all test scaffolding removed before finishing (`__baketest__.html`,
+  `frontend/public/__baketest__/`) — nothing test-only shipped. The live InstantMesh test job
+  bypassed Supabase entirely (direct `instantmesh-proxy` calls), so no stray craft/job row exists
+  in the database or Library. Auth token discarded from scratch files after use.
+- **Backfill of existing crafts — done, partially.** User confirmed reusing the same
+  credentials. Queried every craft with a `model_key` (14 total, across 4 different owners) —
+  RLS on `storage.objects` requires the object path's first segment to equal `auth.uid()`, so
+  this session's token could only legitimately overwrite the 9 crafts owned by the
+  authenticated account (`39bf2614-...`: ids 16, 21, 22, 23, 71, 84, 88, 89, 95). All 9
+  downloaded → baked (in-browser, same pipeline as production, 201ms-562ms each) → re-uploaded
+  to their original `model_key` path (`x-upsert: true`, no DB change needed) → spot-verified one
+  (craft 16) by re-downloading the public URL and confirming the live object now has a real
+  `baseColorTexture`/`images`/`TEXCOORD_0`.
+- **Not done — the other 5 crafts, including both from the original bug report (115 "Terracota
+  tea pot", 96 "Tea Pot"), plus 24, 97, 109** — owned by 3 different other accounts
+  (`d7c40663-...`, `9edd03e2-...`, `8f43c54a-...`). This session's token cannot write to their
+  storage paths (by design — RLS correctly refused this, not a bug), and no service-role key was
+  used or sought to bypass it. These will get the fix automatically the moment each is
+  regenerated/re-saved by its actual owner, or need that owner's own credentials for a manual
+  backfill.
+- **In progress:** — (awaiting next command)
+- **Next:** if fixing 115/96/24/97/109 specifically is wanted, need either those accounts'
+  credentials for the same backfill script, or their owners to regenerate. Real iOS device
+  verification still outstanding whenever one's available.
