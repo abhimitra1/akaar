@@ -16,14 +16,27 @@ const JPEG_QUALITY = 0.82
 // no error, no onLoad, just a blank preview. `heic-to` is a real WASM decoder that works
 // regardless of platform; it's dynamically imported (~3MB) so non-HEIC uploads, the common
 // case, never pay for it.
-const HEIC_NAME_RE = /\.hei[cf]$/i
+//
+// Detection reads the file's own bytes (the ISO-BMFF 'ftyp' box) rather than trusting
+// file.name/file.type: a gallery pick keeps its real IMG_XXXX.HEIC name and image/heic
+// type, but iOS's camera-capture picker (<input capture="environment">) can hand back a
+// HEIC blob mislabeled as "image.jpg" / image/jpeg — a name/MIME check misses that file
+// entirely and it goes on to break the same way an unconverted HEIC always did.
+const HEIC_FTYP_BRANDS = new Set(['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'hevm', 'hevs', 'mif1', 'msf1'])
 
-function looksHeic(file) {
-  return HEIC_NAME_RE.test(file.name || '') || file.type === 'image/heic' || file.type === 'image/heif'
+async function isHeicFile(file) {
+  try {
+    const bytes = new Uint8Array(await file.slice(4, 12).arrayBuffer())
+    if (bytes.length < 8) return false
+    const marker = String.fromCharCode(...bytes)
+    return marker.startsWith('ftyp') && HEIC_FTYP_BRANDS.has(marker.slice(4, 8))
+  } catch {
+    return false
+  }
 }
 
 export async function normalizeHeic(file) {
-  if (!looksHeic(file)) return file
+  if (!(await isHeicFile(file))) return file
   try {
     const { heicTo } = await import('heic-to')
     const blob = await heicTo({ blob: file, type: 'image/jpeg', quality: JPEG_QUALITY })

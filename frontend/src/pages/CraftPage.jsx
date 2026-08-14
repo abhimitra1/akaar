@@ -40,6 +40,14 @@ export default function CraftPage() {
   const [viewMode, setViewMode] = useState('3d')
 
   const modelViewerRef = useRef(null)
+  // iOS backgrounds the Safari tab while the native Quick Look AR view is open, which
+  // commonly loses the page's WebGL context. model-viewer doesn't regenerate its
+  // environment-lighting (IBL) after a context restore — the model comes back fully
+  // loaded/framed but completely unlit (solid black), since a PBR material with no
+  // lighting contribution renders black regardless of its texture. model-viewer only
+  // reports this (an 'error' event, detail.type === 'webglcontextlost') and leaves
+  // recovery to the app — see the listener below, which forces a real reload.
+  const [modelReloadKey, setModelReloadKey] = useState(0)
 
   // Generates a PATHS-branded shareable image (craft photo, title, maker, real stats, a QR
   // code back to this page — see shareCard.js) and hands it to the native share sheet when
@@ -283,6 +291,18 @@ export default function CraftPage() {
     }
   }, [craftId])
 
+  useEffect(() => {
+    const mv = modelViewerRef.current
+    if (!mv) return
+    const onError = (event) => {
+      if (event.detail?.type === 'webglcontextlost') {
+        setModelReloadKey((k) => k + 1)
+      }
+    }
+    mv.addEventListener('error', onError)
+    return () => mv.removeEventListener('error', onError)
+  }, [craft?.model_url])
+
   if (loading) {
     return <LoadingScreen message="Loading craft details..." />
   }
@@ -302,10 +322,10 @@ export default function CraftPage() {
 
   const isOwner = user && craft.owner_id === user.id
   // Mirrors CreatePage's canCoCreate (and guard_craft_image_source() in schema.sql, the
-  // real enforcement) — visitors and super admins can co-create, artisans have their own
-  // upload flow instead. Guests (no user yet) still see the button since most anonymous
-  // viewers are visitors by default; handleCoCreate sends them to log in first.
-  const canCoCreate = !user || user.is_super_admin || user.role === 'visitor'
+  // real enforcement) — visitors, artisans, and super admins can all co-create. Guests (no
+  // user yet) still see the button since most anonymous viewers are visitors by default;
+  // handleCoCreate sends them to log in first.
+  const canCoCreate = !user || user.is_super_admin || user.role === 'visitor' || user.role === 'artisan'
 
   const getExploreThumbnail = (c) => (c.photos && c.photos.length > 0 ? c.photos[0] : null)
 
@@ -400,7 +420,12 @@ export default function CraftPage() {
             <model-viewer
               ref={modelViewerRef}
               className="craft__viewer"
-              src={craft.model_url}
+              // A URL fragment doesn't change what's actually fetched (Supabase Storage
+              // ignores it, and the browser can still serve the same cached response) but
+              // does change the string model-viewer compares against its last-loaded src —
+              // needed so bumping modelReloadKey (see the webglcontextlost listener above)
+              // actually forces a full reload instead of being silently ignored as a no-op.
+              src={modelReloadKey ? `${craft.model_url}#reload=${modelReloadKey}` : craft.model_url}
               alt={craft.title}
               camera-controls
               auto-rotate

@@ -2402,3 +2402,52 @@ project — everything before was build-checks + direct API calls).
 - **Next:** if fixing 115/96/24/97/109 specifically is wanted, need either those accounts'
   credentials for the same backfill script, or their owners to regenerate. Real iOS device
   verification still outstanding whenever one's available.
+
+### 2026-08-14 — Step: Fix model going black after returning from iOS AR
+- **Command:** user reported that on iOS, AR itself now loads correctly (texture-bake fix
+  confirmed working), but coming back from the native AR view to the page leaves the on-page 3D
+  model rendering as a solid black silhouette — shape/geometry clearly intact, just completely
+  unlit.
+- **Root cause, confirmed by reading `@google/model-viewer`'s `Renderer` class directly, not
+  guessed:** iOS backgrounds the Safari tab while the native Quick Look AR view is in the
+  foreground, which commonly triggers a real WebGL `webglcontextlost` event on the page's canvas
+  — a known, general iOS Safari behavior (aggressive GPU memory reclaim for backgrounded tabs),
+  not specific to this app. model-viewer's `Renderer` wires
+  `canvas3D.addEventListener('webglcontextlost', ...)` straight through to dispatching a
+  `CustomEvent('error', {detail: {type: 'webglcontextlost'}})` on the `<model-viewer>` element —
+  and that's *all* it does. It does not regenerate its environment/IBL lighting (a PMREM-
+  processed cube map, `$updateEnvironment`, generated once during initial load) after the
+  context comes back. A PBR material with zero lighting contribution renders solid black
+  regardless of its base color texture — matching exactly what was reported, and explaining why
+  it's unrelated to the texture-bake fix (would happen on any model, baked or not).
+- **Fix:** `CraftPage.jsx` — new `modelReloadKey` state; a `useEffect` listens for `'error'` on
+  the model-viewer ref, and on `detail.type === 'webglcontextlost'` increments it. `src` is now
+  `` craft.model_url `` normally, or `` `${craft.model_url}#reload=${modelReloadKey}` `` once
+  triggered — a URL fragment doesn't change what's actually fetched (Storage ignores it, same
+  cached response can still serve) but does change the exact string model-viewer compares
+  against its last-loaded src, which is required: confirmed via source that `$updateSource` has
+  an early bail-out when `this.src === scene.url` regardless of the `loaded` flag, so simply
+  re-assigning the identical URL would have been silently swallowed as a no-op. The fragment
+  forces a real full reload, which re-runs environment generation from scratch.
+- **Verified in a real browser (Playwright), not just reasoning from source:** reaching
+  model-viewer's actual shared WebGL canvas to force a *genuine* `webglcontextlost` hit
+  headless-Chromium/ANGLE quirks unrelated to the fix itself (couldn't get a live gl context
+  handle via `canvas.getContext()` post-creation in that environment). Instead dispatched the
+  exact `CustomEvent('error', {detail: {type: 'webglcontextlost'}})` model-viewer's own code is
+  confirmed (via source) to dispatch, directly on a live `<model-viewer>` instance loaded with
+  one of the newly-baked GLBs (craft 16). Confirmed: the handler fired, `modelReloadKey`
+  incremented, `src` changed to the fragment-suffixed URL, this was NOT swallowed by the bail-out
+  guard (a fresh `$updateSource` call ran, visible in console logging), and a real `'load'` event
+  fired confirming the reload completed. Screenshotted before and after — identical, properly
+  lit, correctly textured render both times, confirming the recovery path genuinely restores a
+  working model rather than just changing `src` cosmetically.
+- **Not verified:** an actual physical iOS device going through the real background/foreground
+  AR transition — no such device available this session, same limitation as the texture-bake
+  step. Confidence is high (the trigger condition, the event dispatched, and the recovery
+  mechanism are all confirmed against real source/real event flow, not assumed), but this remains
+  simulated, not a live Quick Look round-trip.
+- **In progress:** — (awaiting next command)
+- **Next:** user to verify on a real iOS device: open a craft with a model, tap "View in AR",
+  return to Safari, confirm the model is still properly lit/colored (not black). Change is
+  currently uncommitted in the working tree (user has been committing prior steps themselves via
+  their own IDE workflow — left this one for them to review first rather than committing it).

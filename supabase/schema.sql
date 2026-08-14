@@ -421,10 +421,11 @@ set image_source = 'ai_generated'
 where parent_design_id is not null
   and image_source = 'original';
 
--- Enforces the role split at insert time — visitors get AI co-creation, artisans get
--- original uploads, never both (super admins bypass this). Belt-and-braces alongside
--- CreatePage.jsx only showing the applicable method per role: this app has no backend,
--- so RLS/triggers are the actual authorization boundary, the frontend gate is just UX.
+-- Enforces the role split at insert time — original-photo uploads are artisan-only (they're
+-- documenting a real object), AI co-creation is open to both visitors and artisans (super
+-- admins bypass this too). Belt-and-braces alongside CreatePage.jsx only showing the
+-- applicable methods per role: this app has no backend, so RLS/triggers are the actual
+-- authorization boundary, the frontend gate is just UX.
 create or replace function public.guard_craft_image_source()
 returns trigger
 language plpgsql
@@ -443,8 +444,8 @@ begin
     raise exception 'Only artisans can upload an original photo.';
   end if;
 
-  if new.image_source = 'ai_generated' and owner_role is distinct from 'visitor' then
-    raise exception 'Only visitors can use AI co-creation.';
+  if new.image_source = 'ai_generated' and owner_role not in ('visitor', 'artisan') then
+    raise exception 'Only visitors or artisans can use AI co-creation.';
   end if;
 
   return new;

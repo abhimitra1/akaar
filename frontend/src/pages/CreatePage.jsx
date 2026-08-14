@@ -146,12 +146,12 @@ export default function CreatePage() {
   const remaining = usedToday === null ? null : Math.max(0, DAILY_LIMIT - usedToday)
   const canSubmit = photo !== null && !submitting && (unlimited || (remaining !== null && remaining > 0))
 
-  // Artisans document real objects (original upload); visitors redesign with AI
-  // (co-creation) — never both. Mirrors guard_craft_image_source() in schema.sql, which
-  // is the actual enforcement (this is only UX: a hidden card isn't a security boundary).
-  // Super admins get both, mainly so they can exercise/test either path.
+  // Original-photo upload (documenting a real object) is artisan-only; AI co-creation is
+  // open to both visitors and artisans. Mirrors guard_craft_image_source() in schema.sql,
+  // which is the actual enforcement (this is only UX: a hidden card isn't a security
+  // boundary). Super admins get both, mainly so they can exercise/test either path.
   const canUpload = user?.is_super_admin || user?.role === 'artisan'
-  const canCoCreate = user?.is_super_admin || user?.role === 'visitor'
+  const canCoCreate = user?.is_super_admin || user?.role === 'visitor' || user?.role === 'artisan'
 
   // Skips the method-picker screen entirely when a role only has one legitimate choice —
   // showing a "pick a method" grid with a single card in it is just an extra click.

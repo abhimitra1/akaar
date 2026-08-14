@@ -174,11 +174,13 @@
   display: none;
 }
 
-/* flex-grow fills the row edge-to-edge when there are few enough cards to fit — no dead
-   trailing space — while flex-shrink:0 stops them shrinking below the 140px basis once
-   there are more cards than fit, so the row overflows and scrolls instead of squeezing. */
+/* Fixed 140px regardless of how many cards are in the row — a category filter can change
+   that count from one click to the next, and flex-grow previously stretched cards to fill
+   the leftover width whenever there were few enough to fit, making them visibly resize on
+   every filter change. flex-shrink:0 still stops them shrinking below 140px once there are
+   more cards than fit, so the row overflows and scrolls instead of squeezing. */
 .home__featured-card {
-  flex: 1 0 140px;
+  flex: 0 0 140px;
   background: #ffffff;
   border-radius: 12px;
   overflow: hidden;

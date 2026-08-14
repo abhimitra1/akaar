@@ -16,6 +16,10 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
 // Shown right after a photo is picked (camera or gallery) — pan/zoom the photo behind a
 // fixed square frame, same pattern as most mobile avatar croppers. Chosen over freeform
 // resize handles because it's simplest to get right with touch + mouse via a single set
@@ -30,7 +34,19 @@ export default function ImageCropModal({ file, onCancel, onCropped }) {
   const [processing, setProcessing] = useState(false)
 
   const frameRef = useRef(null)
-  const dragRef = useRef(null) // { pointerId, startX, startY, startOffset }
+  // Live positions of every pointer currently down on the image, keyed by pointerId — a
+  // single entry is a drag-to-pan, two is a pinch. A 3rd+ simultaneous touch is tracked here
+  // but otherwise ignored (gestureRef below only ever references the first two ids).
+  const pointersRef = useRef(new Map())
+  // The active gesture, captured at its start so moves only ever compute deltas/ratios
+  // against a fixed baseline:
+  //   pan:   { type: 'pan', pointerId, startX, startY, startOffset }
+  //   pinch: { type: 'pinch', ids: [id1, id2], startDist, startZoom, rect, anchor }
+  // `anchor` is the image-local point (pre-scale) that was under the pinch midpoint when the
+  // gesture started — recomputing the offset to keep it under the current midpoint every
+  // move is what makes the pinch feel anchored under the fingers instead of zooming from a
+  // fixed corner, and doubles as two-finger pan for free since the midpoint itself can move.
+  const gestureRef = useRef(null)
 
   // New file picked -> reset crop state and load it for display. `file` has already been
   // through normalizeHeic() (see CreatePage's handleFile) by the time it gets here, so it's
@@ -101,22 +117,82 @@ export default function ImageCropModal({ file, onCancel, onCropped }) {
   const handlePointerDown = (e) => {
     if (!naturalSize) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    dragRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, startOffset: offset }
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (pointersRef.current.size === 1) {
+      gestureRef.current = { type: 'pan', pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, startOffset: offset }
+    } else if (pointersRef.current.size === 2) {
+      const ids = [...pointersRef.current.keys()]
+      const [p1, p2] = ids.map((id) => pointersRef.current.get(id))
+      const rect = frameRef.current.getBoundingClientRect()
+      const startScale = coverScale(naturalSize, frameSize, zoom)
+      const midFrame = { x: (p1.x + p2.x) / 2 - rect.left, y: (p1.y + p2.y) / 2 - rect.top }
+      gestureRef.current = {
+        type: 'pinch',
+        ids,
+        startDist: distance(p1, p2),
+        startZoom: zoom,
+        rect,
+        anchor: startScale
+          ? { x: (midFrame.x - offset.x) / startScale, y: (midFrame.y - offset.y) / startScale }
+          : { x: 0, y: 0 },
+      }
+    }
+    // 3rd+ pointer: already recorded above, but the gesture stays whatever it was — extra
+    // touches don't change a pinch into something else.
   }
 
   const handlePointerMove = (e) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== e.pointerId) return
+    if (!pointersRef.current.has(e.pointerId)) return
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    const gesture = gestureRef.current
+    if (!gesture) return
+
+    if (gesture.type === 'pan') {
+      if (gesture.pointerId !== e.pointerId) return
+      setOffset(
+        clampOffset({
+          x: gesture.startOffset.x + (e.clientX - gesture.startX),
+          y: gesture.startOffset.y + (e.clientY - gesture.startY),
+        })
+      )
+      return
+    }
+
+    const p1 = pointersRef.current.get(gesture.ids[0])
+    const p2 = pointersRef.current.get(gesture.ids[1])
+    if (!p1 || !p2) return
+
+    const nextZoom = clamp(gesture.startZoom * (distance(p1, p2) / gesture.startDist), MIN_ZOOM, MAX_ZOOM)
+    const nextScale = coverScale(naturalSize, frameSize, nextZoom)
+    const midFrame = { x: (p1.x + p2.x) / 2 - gesture.rect.left, y: (p1.y + p2.y) / 2 - gesture.rect.top }
+
+    setZoom(nextZoom)
     setOffset(
-      clampOffset({
-        x: drag.startOffset.x + (e.clientX - drag.startX),
-        y: drag.startOffset.y + (e.clientY - drag.startY),
-      })
+      clampOffset(
+        { x: midFrame.x - gesture.anchor.x * nextScale, y: midFrame.y - gesture.anchor.y * nextScale },
+        nextZoom
+      )
     )
   }
 
   const handlePointerUp = (e) => {
-    if (dragRef.current?.pointerId === e.pointerId) dragRef.current = null
+    pointersRef.current.delete(e.pointerId)
+    const gesture = gestureRef.current
+    if (!gesture) return
+
+    if (gesture.type === 'pan' && gesture.pointerId === e.pointerId) {
+      gestureRef.current = null
+    } else if (gesture.type === 'pinch' && gesture.ids.includes(e.pointerId)) {
+      // One finger of the pinch lifted — if the other is still down, resume as a plain
+      // single-finger pan from its current position instead of just dropping the gesture.
+      const remainingId = gesture.ids.find((id) => id !== e.pointerId)
+      const remaining = pointersRef.current.get(remainingId)
+      gestureRef.current = remaining
+        ? { type: 'pan', pointerId: remainingId, startX: remaining.x, startY: remaining.y, startOffset: offset }
+        : null
+    }
   }
 
   useEffect(() => {
@@ -175,7 +251,7 @@ export default function ImageCropModal({ file, onCancel, onCropped }) {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="image-crop__title">Crop Photo</h2>
-        <p className="image-crop__hint">Drag to reposition, use the slider to zoom</p>
+        <p className="image-crop__hint">Drag to reposition, pinch or use the slider to zoom</p>
 
         <div className="image-crop__frame" ref={frameRef}>
           {imageUrl && (
