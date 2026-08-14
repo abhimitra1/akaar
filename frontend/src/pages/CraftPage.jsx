@@ -40,12 +40,6 @@ export default function CraftPage() {
   const [viewMode, setViewMode] = useState('3d')
 
   const modelViewerRef = useRef(null)
-  // "x y z" scale-multiplier string once known, or null before that / when no height_cm is
-  // set. InstantMesh's single-image reconstruction has no way to know a model's real
-  // physical size, so its GLB's baked-in scale is arbitrary — when the craft has a real
-  // height, this corrects it so the on-page preview AND AR placement (which reads the same
-  // scaled scene when generating its USDZ, see <extra-model> below) show true-to-life size.
-  const [computedScale, setComputedScale] = useState(null)
 
   // Generates a PATHS-branded shareable image (craft photo, title, maker, real stats, a QR
   // code back to this page — see shareCard.js) and hands it to the native share sheet when
@@ -289,34 +283,6 @@ export default function CraftPage() {
     }
   }, [craftId])
 
-  // Two-phase: the model first loads at its native (arbitrary) scale so getDimensions()
-  // can read its actual authored height, then — only if craft.height_cm is set — we swap to
-  // an <extra-model> (the only way this model-viewer version exposes a scale multiplier for
-  // the primary model; a plain `scale` attribute doesn't exist on <model-viewer> itself,
-  // verified against the installed @google/model-viewer source, not assumed) carrying the
-  // computed correction factor, which triggers one visible reload at the corrected size.
-  useEffect(() => {
-    setComputedScale(null)
-    const mv = modelViewerRef.current
-    if (!mv || craft?.height_cm == null || !craft.model_url) return
-
-    const measure = () => {
-      const dims = mv.getDimensions?.()
-      if (!dims?.y) return
-      const factor = (craft.height_cm / 100) / dims.y
-      if (Number.isFinite(factor) && factor > 0) {
-        setComputedScale(`${factor} ${factor} ${factor}`)
-      }
-    }
-
-    if (mv.loaded) {
-      measure()
-      return
-    }
-    mv.addEventListener('load', measure, { once: true })
-    return () => mv.removeEventListener('load', measure)
-  }, [craft?.height_cm, craft?.model_url])
-
   if (loading) {
     return <LoadingScreen message="Loading craft details..." />
   }
@@ -434,13 +400,21 @@ export default function CraftPage() {
             <model-viewer
               ref={modelViewerRef}
               className="craft__viewer"
-              src={computedScale ? undefined : craft.model_url}
+              src={craft.model_url}
               alt={craft.title}
               camera-controls
               auto-rotate
               ar
               ar-modes="webxr scene-viewer quick-look"
-              ar-scale={craft.height_cm != null ? 'fixed' : 'auto'}
+              // `src` must stay set at all times — this model-viewer version's AR-capability
+              // check (canActivateAR) is hard-gated on `this.src != null`, confirmed by reading
+              // its source directly. An earlier attempt at "true-to-life" scaling swapped `src`
+              // for an `<extra-model>` when craft.height_cm was set, which silently disabled AR
+              // for every craft with a height on file (and also broke camera framing, rendering
+              // the model tiny) — see AGENTS.md 2026-08-08 entry and the 2026-08-14 fix. Reverted
+              // to always rendering the model at its native reconstructed scale; height_cm is
+              // still saved and shown in the metadata table below, just no longer used to warp
+              // the 3D/AR render.
               // Best-effort mitigation for a known category of issue with this library
               // version's iOS AR path: without a pre-made .usdz (ios-src), it converts the
               // GLB to USDZ client-side via three.js's USDZExporter on every "View in AR" tap,
@@ -452,7 +426,6 @@ export default function CraftPage() {
               ar-usdz-max-texture-size="2048"
               style={{ width: '100%', height: '400px' }}
             >
-              {computedScale && <extra-model src={craft.model_url} scale={computedScale} />}
               {/* model-viewer auto-hides this slotted button on devices/browsers that can't
                   do AR (no usdz for iOS Quick Look, no WebXR/Scene Viewer support, desktop) —
                   no manual capability check needed. */}

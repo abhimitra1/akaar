@@ -2272,3 +2272,43 @@ project — everything before was build-checks + direct API calls).
   the tile fill is intact and only the corners changed. `file` re-confirmed the rebuilt
   `favicon.ico` as 32-bit RGBA (was RGB before the fix). Rebuilt `dist/` afterward to confirm the
   corrected files, not the buggy ones, are what a real build ships.
+
+### 2026-08-14 — Step: Fix tiny 3D model + missing AR button (revert height_cm rescale)
+- **Command:** user reported two bugs with screenshots: a craft with `height_cm` set (Terracotta
+  tea pot) rendered as a barely-visible speck with no "View in AR" button, while a craft without
+  it (Tea Pot) rendered normally with AR working.
+- **Root cause, confirmed by reading the installed `@google/model-viewer` (4.3.1) source
+  directly** (not assumed): the 2026-08-08 real-world-height feature (§15 same date) swaps
+  `<model-viewer src>` to `undefined` and adds a scaled `<extra-model>` child whenever
+  `craft.height_cm` is set — exactly the mechanism that entry itself flagged as "NOT verified on
+  a real device/browser." Two real bugs, both traced to that `src` swap:
+  1. **Tiny model:** `updateModelTransforms()` (applied when the `<extra-model>`'s `scale` is
+     set) only marks the bounding box dirty and queues a render — it never calls
+     `updateFraming()`. Camera framing is computed once, on the fresh unscaled load, then the
+     mesh is scaled down afterward without the camera re-fitting to it.
+  2. **AR button missing:** `$selectARMode()` (the internal function that decides whether to show
+     "View in AR" and which mode to use) is unconditionally gated on `this.src != null` — with
+     `src` removed for the `<extra-model>` path, AR capability detection never runs at all,
+     regardless of actual device/browser support. This is a hard library gate, not a timing bug;
+     no per-call fix works around it.
+- **Decision (user chose explicitly via a direct tradeoff question, not decided unilaterally):**
+  given this model-viewer version has no public API to rescale the primary `src`-backed model
+  without unsetting `src`, true-to-life AR scale and a working AR button are mutually exclusive
+  with the `<extra-model>` approach. Offered two options — (a) always keep AR working, drop the
+  runtime rescale, or (b) bake the scale into the GLB file itself server-side (bigger, unverified
+  without live testing). User picked (a).
+- **Done:** `CraftPage.jsx` — removed `computedScale` state, the two-phase
+  `getDimensions()`-then-`<extra-model>` effect, and the `<extra-model>` element itself.
+  `<model-viewer>` now always renders with `src={craft.model_url}` (never unset) and
+  `ar-scale` is no longer set (library default `"auto"` applies uniformly). `height_cm` is
+  unaffected elsewhere — still saved by `MetadataPage.jsx`, still displayed as "Height: Xcm" in
+  the metadata table.
+- **Verified:** `npm run build` passes clean. **Not verified:** actual AR launch/framing on a
+  real device — no browser/device available this session (same limitation as the original
+  2026-08-08 entry); the fix removes the specific mechanism proven (via source reading) to cause
+  both reported symptoms, but live confirmation is still outstanding.
+- **In progress:** — (awaiting next command)
+- **Next:** User to verify in a real browser: the previously-tiny craft (id 115, Terracotta tea
+  pot) now renders at normal size with a working "View in AR" button, and craft 96 (Tea Pot) is
+  unaffected. If true-to-life AR scale is wanted later, option (b) above (bake scale into the
+  GLB at save time) is the path — not started.
