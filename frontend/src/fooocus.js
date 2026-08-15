@@ -41,11 +41,18 @@ function fileToBase64(file) {
   })
 }
 
-// Submits an existing item photo + a redesign prompt to Fooocus's "Image Prompt" mode
-// (loose style/subject guidance from the input image, not a strict edge/mask constraint).
+// Submits an existing item photo + a redesign prompt to Fooocus. Uses two stacked
+// ControlNets on the same source image, Fooocus's own recipe for "same object, different
+// style/color" (see Fooocus-API's flags.py default_parameters): PyraCanny at full weight
+// locks the output to the source's edges/silhouette, while ImagePrompt at its usual lower
+// weight carries style guidance. ImagePrompt alone (the previous behavior here) has no
+// structural constraint, so a short recolor prompt like "change the color to maroon" could
+// drift the model onto an unrelated maroon subject entirely (observed: a terracotta pot
+// prompted this way came back as bowls of maroon spice) instead of a recolored version of
+// the same object.
 // require_base64 avoids depending on Fooocus-API's own file server staying reachable from
 // wherever the browser is — we just get image bytes back directly.
-export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.6, cnWeight = 0.6, imageNumber = 2 } = {}) {
+export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.5, cnWeight = 0.6, imageNumber = 2 } = {}) {
   const baseUrl = requireBaseUrl()
   const cn_img = await fileToBase64(imageFile)
   const res = await aiFetch(`${baseUrl}/fooocus/v2/generation/image-prompt`, {
@@ -56,7 +63,10 @@ export async function submitImagePrompt(imageFile, prompt, { cnStop = 0.6, cnWei
       async_process: true,
       require_base64: true,
       image_number: imageNumber,
-      image_prompts: [{ cn_img, cn_stop: cnStop, cn_weight: cnWeight, cn_type: 'ImagePrompt' }],
+      image_prompts: [
+        { cn_img, cn_stop: 0.5, cn_weight: 1.0, cn_type: 'PyraCanny' },
+        { cn_img, cn_stop: cnStop, cn_weight: cnWeight, cn_type: 'ImagePrompt' },
+      ],
     }),
   })
   const data = await res.json().catch(() => ({}))
