@@ -48,6 +48,12 @@
   cursor: pointer;
 }
 
+.processing__header-mark {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
 .processing__title {
   position: relative;
   z-index: 1;

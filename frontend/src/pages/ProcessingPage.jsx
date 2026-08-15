@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { clearRecoveryPhoto } from '../photoRecovery.js'
 import PolicyLink from '../components/PolicyLink.jsx'
+import PathsMark from '../components/PathsMark.jsx'
 import './Processing.css'
 
 // Progress bands written by reconstruction.js's simulated stage schedule — see the
@@ -115,6 +116,7 @@ export default function ProcessingPage() {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
+          <PathsMark variant="onDark" size={22} className="processing__header-mark" />
           <h1 className="processing__title">Creating your digital twin</h1>
         </header>
 

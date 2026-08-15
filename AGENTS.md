@@ -2485,3 +2485,34 @@ project — everything before was build-checks + direct API calls).
 - **Next:** user to run `instantmesh-proxy` locally (or against the real GPU box) and click
   "Ping" on the Jobs tab to confirm the online/offline/degraded states render as expected; commit
   if asked.
+
+### 2026-08-15 — Step: Add PATHS brand mark to the Create-flow headers
+- **Command:** user shared a screenshot of `/create` (Create Digital Twin) and noted there's no
+  branding on the creation wizard screens.
+- **Root cause:** deliberate, not an oversight — `AppNav.jsx`'s own comment says flow screens
+  (Create, Processing, Metadata, Craft view) intentionally skip the shared sidebar/top-bar chrome
+  (which is where `PathsMark` normally lives) in favor of a plain back+title header. Confirmed via
+  grep: `PathsMark` was only ever used in `WelcomePage.jsx`, `BrandingPage.jsx`, and `AppNav.jsx` —
+  every screen in the actual 4-step Create Twin wizard (Create → Processing → Metadata) had zero
+  brand presence.
+- **Fix:** no new design invented (rule 13) — reused the existing `PathsMark` component exactly as
+  `AppNav.jsx` already does, just its `onDark` variant (already built for colored backgrounds) at
+  icon-only scale (22px, no wordmark — the screen already has its own title). Added between the
+  back button and the `<h1>` title in all three wizard headers, which all already share the same
+  terracotta-gradient header pattern ("matches Create/auth screens" per Processing.css's own
+  comment):
+  - `CreatePage.jsx` / `MetadataPage.jsx` (both use `create__header`/`create__title` from
+    `Create.css`, confirmed via `MetadataPage.jsx`'s own import) — added `.create__header-mark`.
+  - `ProcessingPage.jsx` (its own `processing__header`/`processing__title` in `Processing.css`) —
+    added `.processing__header-mark`.
+  - Scoped to just this wizard (not SignIn/SignUp, which have the identical gap but weren't what
+    was flagged) per rule 2 (stay on scope).
+- **Verified:** `npm run build` passes clean. **Not verified live** — no browser tool available
+  this session (same limitation as several earlier steps), so the header's flex layout with the
+  new icon inserted was checked by reading `Create.css`/`Processing.css` (`display:flex;
+  align-items:center; gap:12px`) rather than actually rendered.
+- **In progress:** — (awaiting next command)
+- **Next:** user to open `/create`, `/processing/:jobId`, and `/craft/:id/metadata` and confirm
+  the mark renders inline with the title without crowding it at every width — mobile-first CSS
+  (base rule is the narrowest case; `min-width: 768px`/`1024px` queries only make `create__title`
+  bigger, never smaller, so the tightest fit is the unmodified base 20px case); commit if asked.

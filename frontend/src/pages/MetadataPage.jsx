@@ -4,6 +4,7 @@ import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
+import PathsMark from '../components/PathsMark.jsx'
 import './Create.css'
 import './CraftPage.css'
 
@@ -133,6 +134,7 @@ export default function MetadataPage() {
               </svg>
             </button>
           )}
+          <PathsMark variant="onDark" size={22} className="create__header-mark" />
           <h1 className="create__title">{isEdit ? 'Edit Details' : 'Add Details'}</h1>
         </header>
 

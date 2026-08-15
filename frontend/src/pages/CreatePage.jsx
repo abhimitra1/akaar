@@ -6,6 +6,7 @@ import { compressImage, normalizeHeic } from '../imageCompression.js'
 import CoCreatePanel from '../components/CoCreatePanel.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import ImageCropModal from '../components/ImageCropModal.jsx'
+import PathsMark from '../components/PathsMark.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { saveRecoveryPhoto, loadRecoveryPhoto, clearRecoveryPhoto } from '../photoRecovery.js'
 import './Create.css'
@@ -275,6 +276,7 @@ export default function CreatePage() {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
+          <PathsMark variant="onDark" size={22} className="create__header-mark" />
           <h1 className="create__title">Create Digital Twin</h1>
           {!unlimited && remaining !== null && (
             <span className="create__credits">

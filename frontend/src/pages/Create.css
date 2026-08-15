@@ -51,6 +51,12 @@
   cursor: pointer;
 }
 
+.create__header-mark {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
 .create__title {
   position: relative;
   z-index: 1;
