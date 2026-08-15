@@ -219,6 +219,38 @@ function extractJobId(bodyText, statusCode) {
   }
 }
 
+// ── Health ───────────────────────────────────────────────────────────────────
+// GET /health: lets the admin console ping this proxy and see, at a glance, whether each
+// GPU-box-internal service is actually reachable — none of InstantMesh, Fooocus-API, or
+// moderation-service are exposed to the internet themselves (only this proxy is, via the
+// Cloudflare Tunnel), so there's no way to check them directly from the browser. Sits
+// behind the same auth middleware as every other route here (no reason to give anonymous
+// internet traffic a free read on internal service topology). Any HTTP response at all
+// (even a 404) counts as "reachable" — this is a liveness check, not a correctness check.
+const HEALTH_CHECK_TIMEOUT_MS = 4000
+
+async function pingService(url) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS) })
+    return res.status < 500
+  } catch {
+    return false
+  }
+}
+
+app.get('/health', async (req, res) => {
+  const [instantMesh, fooocus, moderation] = await Promise.all([
+    pingService(`${INSTANTMESH_TARGET}/api/health`),
+    pingService(FOOOCUS_TARGET),
+    pingService(`${MODERATION_SERVICE_URL}/health`),
+  ])
+  res.json({
+    online: instantMesh && fooocus && moderation,
+    services: { instantMesh, fooocus, moderation },
+    checkedAt: new Date().toISOString(),
+  })
+})
+
 // ── InstantMesh ──────────────────────────────────────────────────────────────
 // POST /api/generate: parsed (not streamed — moderation needs the actual image bytes
 // before deciding whether to forward anything), moderated, queued, then manually

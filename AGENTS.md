@@ -2451,3 +2451,37 @@ project — everything before was build-checks + direct API calls).
   return to Safari, confirm the model is still properly lit/colored (not black). Change is
   currently uncommitted in the working tree (user has been committing prior steps themselves via
   their own IDE workflow — left this one for them to review first rather than committing it).
+
+### 2026-08-15 — Step: Admin "AI services" ping/status section on the Jobs tab
+- **Command:** user asked: on the admin page where AI requests show (the Jobs tab — `jobs` rows
+  are `image_gen`/`3d_gen` requests), add a section to ping the AI and show online/offline status.
+- **Problem:** none of InstantMesh, Fooocus-API, or moderation-service are exposed to the
+  internet themselves — only `instantmesh-proxy` is (via the Cloudflare Tunnel), and it had no
+  health/ping route at all. The browser had no way to check "is the AI stack up" short of
+  inferring it from stuck `jobs` rows.
+- **Fix:**
+  - `instantmesh-proxy/server.js` — new `GET /health` (behind the same Supabase-auth middleware
+    as every other route here, no new unauthenticated surface). Pings InstantMesh
+    (`/api/health`, confirmed existing from the 2026-08-06 CORS-fix step), Fooocus-API (base
+    URL), and moderation-service (`/health`, already existed) in parallel with a 4s timeout each;
+    any non-5xx response counts as reachable (liveness, not correctness). Returns
+    `{ online, services: { instantMesh, fooocus, moderation }, checkedAt }`.
+  - `frontend/src/instantMesh.js` — new `checkHealth()`, same `requireBaseUrl()`/`authHeaders()`/
+    `aiFetch()` pattern as every other call in this file, so a fully unreachable proxy surfaces
+    the existing friendly `err.offline` message instead of a raw fetch failure.
+  - `frontend/src/components/AdminAiStatus.jsx` (+ `.css`) — new component: overall status dot/
+    badge (Online/Degraded/Offline/Not checked yet), a manual "Ping" button, per-service rows,
+    last-checked time. Pings once on mount. No design mockup was supplied for this (rule 13.13),
+    so kept deliberately minimal/functional — dot + label list, reusing `admin-table__btn`/
+    `admin-table__error` from the existing admin styling rather than inventing new patterns.
+  - `frontend/src/pages/AdminPage.jsx` — renders `<AdminAiStatus />` only when the `jobs` tab is
+    active, above the existing `AdminTable`.
+- **Verified:** `node -c instantmesh-proxy/server.js` passes; `npm run build` (frontend) passes
+  clean, no new warnings. Not verified live (no running `instantmesh-proxy`/GPU box this
+  session) — the exact JSON shape `checkHealth()` expects matches what `/health` now returns, and
+  the auth/error paths reuse code already exercised by every other AI call site, but an actual
+  ping round-trip against a live proxy hasn't been clicked through in a browser.
+- **In progress:** — (awaiting next command)
+- **Next:** user to run `instantmesh-proxy` locally (or against the real GPU box) and click
+  "Ping" on the Jobs tab to confirm the online/offline/degraded states render as expected; commit
+  if asked.

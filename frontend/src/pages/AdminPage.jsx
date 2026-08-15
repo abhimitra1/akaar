@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ADMIN_TABLES } from '../data/adminTables'
 import AdminTable from '../components/AdminTable.jsx'
 import AdminMedia from '../components/AdminMedia.jsx'
+import AdminAiStatus from '../components/AdminAiStatus.jsx'
 import './AdminPage.css'
 
 const TABS = [...ADMIN_TABLES.map((t) => ({ key: t.key, label: t.label })), { key: 'media', label: 'Media' }]
@@ -41,6 +42,7 @@ export default function AdminPage() {
       </div>
 
       <div className="admin__content">
+        {active === 'jobs' && <AdminAiStatus />}
         {active === 'media' ? <AdminMedia /> : activeConfig && <AdminTable key={activeConfig.key} config={activeConfig} />}
       </div>
     </div>

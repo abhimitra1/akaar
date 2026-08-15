@@ -68,3 +68,15 @@ export async function downloadResult(jobId, fmt) {
   if (!res.ok) throw new Error(`Failed to download ${fmt} result`)
   return res.blob()
 }
+
+// Admin-only: pings the proxy's /health route (see instantmesh-proxy/server.js) to check
+// whether it — and, in turn, InstantMesh/Fooocus/moderation-service behind it — are
+// reachable. aiFetch turns a totally unreachable proxy (tunnel/box down) into a thrown
+// `err.offline` error, same as every other AI call site; the caller treats that the same
+// as "everything offline" rather than a distinct error state.
+export async function checkHealth() {
+  const baseUrl = requireBaseUrl()
+  const res = await aiFetch(`${baseUrl}/health`, { headers: await authHeaders() })
+  if (!res.ok) throw new Error('Failed to check AI service health')
+  return res.json()
+}
