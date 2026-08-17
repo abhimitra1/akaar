@@ -1,0 +1,194 @@
+/* Shared across ManagerPage/ManagerReviewPage (manager side) and
+   MyCommissionsPage/CommissionDetailPage (customer side) — one small stylesheet rather
+   than four near-duplicates, same reuse approach as Home.css across Home/Library/Account.
+   Composes with home__*, craft__*, library__*, create__* (imported alongside this in each
+   page) rather than redefining page-shell/list/button/field styles already provided by
+   those. */
+
+.commission__content {
+  max-width: 900px;
+}
+
+.commission__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.commission__section-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.commission__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.commission__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.commission__link-danger {
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.commission__link-danger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── feasibility checklist ────────────────────────────────────────────── */
+
+.commission__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.commission__checklist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--outline-cream);
+}
+
+.commission__checklist-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.commission__checklist-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.commission__checklist-label {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.commission__checklist-hint {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.commission__checklist-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commission__checklist-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-container-low);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.commission__checklist-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+/* ── status pills (feasible / not feasible / n/a, one per criterion) ─────── */
+
+.commission__pill-group {
+  display: flex;
+  gap: 6px;
+}
+
+.commission__pill {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.commission__pill--select {
+  border: 1px solid var(--outline-cream);
+  background: #fff;
+  color: var(--text-muted);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.commission__pill--ok.commission__pill--active,
+.commission__pill:not(.commission__pill--select).commission__pill--ok {
+  border-color: var(--terracotta-900);
+  background: var(--terracotta-900);
+  color: #fff;
+}
+
+.commission__pill--not_feasible.commission__pill--active,
+.commission__pill:not(.commission__pill--select).commission__pill--not_feasible {
+  border-color: var(--error);
+  background: var(--error);
+  color: var(--on-error);
+}
+
+.commission__pill--na.commission__pill--active,
+.commission__pill:not(.commission__pill--select).commission__pill--na {
+  border-color: var(--outline-cream);
+  background: var(--bg-cream);
+  color: var(--text-muted);
+}
+
+/* ── review history ────────────────────────────────────────────────────── */
+
+.commission__history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.commission__history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--outline-cream);
+}
+
+.commission__history-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.commission__history-date {
+  color: var(--text-faint);
+  font-size: 12px;
+}

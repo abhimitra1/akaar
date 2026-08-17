@@ -29,7 +29,7 @@ export const ADMIN_TABLES = [
       const { error } = await supabase.functions.invoke('admin-create-user', { body: payload })
       if (error) throw new Error(error.message || 'Failed to create user')
     },
-    listColumns: ['email', 'full_name', 'role', 'artisan_requested_at', 'is_super_admin', 'created_at'],
+    listColumns: ['email', 'full_name', 'role', 'artisan_requested_at', 'is_super_admin', 'is_manager', 'created_at'],
     fields: [
       { key: 'id', label: 'ID', type: 'readonly' },
       { key: 'email', label: 'Email', type: 'text' },
@@ -57,6 +57,10 @@ export const ADMIN_TABLES = [
       { key: 'email_verified', label: 'Email verified', type: 'boolean', hideOnCreate: true },
       { key: 'unlimited_creations', label: 'Unlimited creations', type: 'boolean', hideOnCreate: true },
       { key: 'is_super_admin', label: 'Super admin', type: 'boolean', hideOnCreate: true },
+      // Grants access to /manager (see supabase/migrations/009_manager_commissions.sql) —
+      // there's no self-service request flow for this role, unlike artisan_requested_at
+      // above; a super admin flips it here directly.
+      { key: 'is_manager', label: 'Manager', type: 'boolean', hideOnCreate: true },
       { key: 'terms_accepted_at', label: 'Terms accepted at', type: 'readonly' },
       { key: 'created_at', label: 'Created at', type: 'readonly' },
     ],
@@ -165,6 +169,89 @@ export const ADMIN_TABLES = [
         type: 'text',
         lookup: { table: 'public_profiles', labelColumn: 'full_name' },
       },
+      { key: 'created_at', label: 'Created at', type: 'readonly' },
+    ],
+  },
+  {
+    key: 'commissions',
+    label: 'Commissions',
+    table: 'commissions',
+    primaryKey: 'id',
+    orderBy: { column: 'created_at', ascending: false },
+    // No allowInsert — a commission is only ever created via CraftPage's "Submit for
+    // Production" (guard_commission_insert() requires the inserting owner to actually own
+    // the craft with a finished 3D model). Super admins can still edit/delete existing
+    // rows below; they just can't fabricate a new one that would pass the same trigger a
+    // real customer submission does.
+    listColumns: ['craft_id', 'customer_id', 'status', 'payment_status', 'created_at'],
+    fields: [
+      { key: 'id', label: 'ID', type: 'readonly' },
+      {
+        key: 'craft_id',
+        label: 'Craft',
+        type: 'number',
+        lookup: { table: 'crafts', labelColumn: 'title' },
+      },
+      {
+        key: 'customer_id',
+        label: 'Customer',
+        type: 'text',
+        lookup: { table: 'public_profiles', labelColumn: 'full_name' },
+      },
+      {
+        key: 'artisan_id',
+        label: 'Artisan',
+        type: 'text',
+        lookup: { table: 'public_profiles', labelColumn: 'full_name' },
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          'pending_manager_review',
+          'changes_requested',
+          'pending_customer_approval',
+          'ratified',
+          'in_production',
+          'completed',
+          'rejected',
+          'cancelled',
+        ],
+      },
+      { key: 'price', label: 'Price', type: 'number' },
+      { key: 'currency', label: 'Currency', type: 'text' },
+      { key: 'payment_status', label: 'Payment status', type: 'text' },
+      { key: 'created_at', label: 'Created at', type: 'readonly' },
+      { key: 'updated_at', label: 'Updated at', type: 'readonly' },
+      { key: 'ratified_at', label: 'Ratified at', type: 'readonly' },
+    ],
+  },
+  {
+    key: 'commission_reviews',
+    label: 'Commission Reviews',
+    table: 'commission_reviews',
+    primaryKey: 'id',
+    orderBy: { column: 'created_at', ascending: false },
+    // Append-only audit trail — written by ManagerReviewPage.jsx, never through here.
+    listColumns: ['commission_id', 'reviewer_id', 'decision', 'created_at'],
+    fields: [
+      { key: 'id', label: 'ID', type: 'readonly' },
+      {
+        key: 'commission_id',
+        label: 'Commission',
+        type: 'number',
+        lookup: { table: 'commissions', labelColumn: 'id' },
+      },
+      {
+        key: 'reviewer_id',
+        label: 'Reviewer',
+        type: 'text',
+        lookup: { table: 'public_profiles', labelColumn: 'full_name' },
+      },
+      { key: 'decision', label: 'Decision', type: 'select', options: ['changes_requested', 'approved', 'rejected'] },
+      { key: 'remarks', label: 'Remarks', type: 'textarea' },
+      { key: 'constraint_flags', label: 'Constraint flags (JSON)', type: 'json' },
       { key: 'created_at', label: 'Created at', type: 'readonly' },
     ],
   },

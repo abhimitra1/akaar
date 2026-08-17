@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -17,7 +17,15 @@ const CRAFT_TYPES = ['Pottery', 'Terracotta', 'Wood', 'Metal']
 export default function MetadataPage() {
   const { craftId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
+
+  // Carried from CreatePage/ProcessingPage (see CreatePage.jsx's reworkCommissionId
+  // comment) — set only when this craft exists because a manager or customer reworked a
+  // commission's design via Co-Create, rather than a plain new/edited craft. Store/Save
+  // below is what actually performs the re-link, once this craft's metadata is complete.
+  const reworkCommissionId = location.state?.reworkCommissionId || null
+  const reworkReturnTo = location.state?.reworkReturnTo || null
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -105,6 +113,20 @@ export default function MetadataPage() {
 
       const { error: updateError } = await supabase.from('crafts').update(body).eq('id', craftId)
       if (updateError) throw new Error(updateError.message)
+
+      if (reworkCommissionId) {
+        // Re-point the commission at this freshly reworked craft and send it back for
+        // (another) manager look — guard_commission_transition() (schema.sql) is what
+        // actually allows this exact update, from either changes_requested (a customer's
+        // own rework) or pending_manager_review (a manager's own "Rework it here").
+        const { error: commissionError } = await supabase
+          .from('commissions')
+          .update({ craft_id: craftId, status: 'pending_manager_review' })
+          .eq('id', reworkCommissionId)
+        if (commissionError) throw new Error(commissionError.message)
+        navigate(reworkReturnTo === 'manager' ? `/manager/${reworkCommissionId}` : `/commissions/${reworkCommissionId}`)
+        return
+      }
 
       navigate(`/craft/${craftId}`)
     } catch (err) {

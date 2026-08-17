@@ -30,6 +30,14 @@ export default function CraftPage() {
   const [liked, setLiked] = useState(false)
   const [likeSubmitting, setLikeSubmitting] = useState(false)
 
+  // Most recent commission (production request) on this craft, owner-only — drives
+  // whether the action row below offers "Submit for Production" or "View Production
+  // Status". null while still loading/not applicable (guest, non-owner, no model yet).
+  const [commission, setCommission] = useState(null)
+  const [commissionLoading, setCommissionLoading] = useState(true)
+  const [submittingCommission, setSubmittingCommission] = useState(false)
+  const [commissionError, setCommissionError] = useState('')
+
   // "Explore More" strip at the end of the card — other public crafts, most recent first.
   const [exploreCrafts, setExploreCrafts] = useState([])
   const [exploreOwnerNames, setExploreOwnerNames] = useState({})
@@ -135,6 +143,30 @@ export default function CraftPage() {
     }
   }
 
+  // Opens a manufacturing-feasibility review on this craft (guard_commission_insert()
+  // requires model_key to already be set — see supabase/migrations/
+  // 009_manager_commissions.sql), separate from Publish above: this is "have it actually
+  // made", not "show it in the public gallery" — a craft can be published without ever
+  // being commissioned, or commissioned without being public.
+  const handleSubmitForProduction = async () => {
+    if (submittingCommission) return
+    setSubmittingCommission(true)
+    setCommissionError('')
+    try {
+      const { data, error: insertError } = await supabase
+        .from('commissions')
+        .insert({ craft_id: craft.id, customer_id: user.id })
+        .select()
+        .single()
+      if (insertError) throw new Error(insertError.message)
+      navigate(`/commissions/${data.id}`)
+    } catch (err) {
+      setCommissionError(err.message || 'Something went wrong')
+    } finally {
+      setSubmittingCommission(false)
+    }
+  }
+
   // Guests get bounced to /welcome, same as ProtectedRoute does for a protected route —
   // liking requires an account (records `user_id`), but viewing/counting doesn't.
   const handleToggleLike = async () => {
@@ -199,6 +231,34 @@ export default function CraftPage() {
       cancelled = true
     }
   }, [craftId, user])
+
+  // Owner-only, and only once the craft's own detail load below has resolved (needs
+  // craft.owner_id to know whether `user` even is the owner) — commissions_select's RLS
+  // would just return nothing for a non-owner anyway, but skipping the query entirely
+  // avoids a pointless request on every guest/visitor viewing a public craft.
+  useEffect(() => {
+    if (!user || !craft || craft.owner_id !== user.id) {
+      setCommissionLoading(false)
+      return
+    }
+    let cancelled = false
+    supabase
+      .from('commissions')
+      .select('*')
+      .eq('craft_id', craftId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) {
+          setCommission(data || null)
+          setCommissionLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user, craft, craftId])
 
   useEffect(() => {
     let cancelled = false
@@ -567,6 +627,29 @@ export default function CraftPage() {
               >
                 {publishing ? 'Publishing…' : 'Publish'}
               </button>
+            )}
+            {isOwner && hasModel && !commissionLoading && (
+              <>
+                {commissionError && <p className="craft__publish-error">{commissionError}</p>}
+                {commission && !['rejected', 'cancelled'].includes(commission.status) ? (
+                  <button
+                    type="button"
+                    className="craft__btn craft__btn--ghost"
+                    onClick={() => navigate(`/commissions/${commission.id}`)}
+                  >
+                    View Production Status
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="craft__btn craft__btn--ghost"
+                    onClick={handleSubmitForProduction}
+                    disabled={submittingCommission}
+                  >
+                    {submittingCommission ? 'Submitting…' : 'Submit for Production'}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

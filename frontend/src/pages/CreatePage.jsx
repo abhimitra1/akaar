@@ -70,6 +70,15 @@ export default function CreatePage() {
   // so it can seed its source photo without a redundant library search.
   const [cocreateInitialDesign, setCocreateInitialDesign] = useState(null)
 
+  // Set only when landing here from ManagerReviewPage's "Rework it here" or
+  // CommissionDetailPage's "Rework in Co-Create" — the commission this new craft should
+  // be re-linked to once it's fully generated (reworkReturnTo says which of /manager or
+  // /commissions to return to). Threaded through /processing and MetadataPage's Store/
+  // Save step, which is what actually performs the re-link (see MetadataPage.jsx) — this
+  // page only carries the tag, it never touches the commissions table itself.
+  const [reworkCommissionId, setReworkCommissionId] = useState(null)
+  const [reworkReturnTo, setReworkReturnTo] = useState(null)
+
   useEffect(() => {
     let cancelled = false
     supabase
@@ -111,6 +120,10 @@ export default function CreatePage() {
     if (!source) return
     setCocreateInitialDesign(source)
     setMode('cocreate')
+    if (location.state?.reworkCommissionId) {
+      setReworkCommissionId(location.state.reworkCommissionId)
+      setReworkReturnTo(location.state.reworkReturnTo || null)
+    }
     navigate(location.pathname, { replace: true, state: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -243,8 +256,10 @@ export default function CreatePage() {
       await saveRecoveryPhoto(craftId, photo.file, parentDesign, isAiGenerated)
       runReconstruction(job.id, craftId, user.id, photo.file)
 
-      // c. Go to the processing screen
-      navigate(`/processing/${job.id}`)
+      // c. Go to the processing screen — carries the rework tag forward (see
+      // reworkCommissionId's declaration above) so ProcessingPage can pass it on to
+      // MetadataPage in turn once generation finishes.
+      navigate(`/processing/${job.id}`, reworkCommissionId ? { state: { reworkCommissionId, reworkReturnTo } } : undefined)
     } catch (err) {
       // e. On failure: show error and stay on this page
       setError(err.message || 'Something went wrong')

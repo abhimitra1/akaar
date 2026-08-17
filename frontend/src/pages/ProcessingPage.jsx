@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient.js'
 import { clearRecoveryPhoto } from '../photoRecovery.js'
 import PolicyLink from '../components/PolicyLink.jsx'
@@ -25,6 +25,14 @@ function stageLabel(progress) {
 export default function ProcessingPage() {
   const { jobId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  // Carried from CreatePage (see its own reworkCommissionId comment) through to
+  // MetadataPage below — this page never reads/writes it, just relays it onward once
+  // reconstruction finishes. Fixed for this page's whole lifetime (set once on mount,
+  // never changes while polling the same job), so it's fine to read directly off
+  // location.state rather than needing its own state/effect dependency.
+  const reworkCommissionId = location.state?.reworkCommissionId || null
+  const reworkReturnTo = location.state?.reworkReturnTo || null
 
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState('queued')
@@ -54,7 +62,14 @@ export default function ProcessingPage() {
           // Reconstruction succeeded — the recovery copy (see photoRecovery.js) exists
           // only to survive a *failed* generation, no longer needed once there's a model.
           clearRecoveryPhoto(data.craft_id)
-          navTimer = setTimeout(() => navigate(`/craft/${data.craft_id}/metadata`), 1000)
+          navTimer = setTimeout(
+            () =>
+              navigate(
+                `/craft/${data.craft_id}/metadata`,
+                reworkCommissionId ? { state: { reworkCommissionId, reworkReturnTo } } : undefined
+              ),
+            1000
+          )
         } else if (data.status === 'failed') {
           if (intervalId) clearInterval(intervalId)
           setErrorMessage(data.error_message || 'The reconstruction failed.')

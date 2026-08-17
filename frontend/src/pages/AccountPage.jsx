@@ -267,6 +267,10 @@ export default function AccountPage() {
         </div>
 
         <div className="account__card account__links">
+          <Link to="/commissions" className="account__link-row">
+            <span>My Commissions</span>
+            {chevron}
+          </Link>
           <Link to="/about" className="account__link-row">
             <span>About PATHS</span>
             {chevron}
@@ -283,6 +287,12 @@ export default function AccountPage() {
             <span>Terms &amp; Conditions</span>
             {chevron}
           </Link>
+          {(user?.is_manager || user?.is_super_admin) && (
+            <Link to="/manager" className="account__link-row">
+              <span>Manager Review Queue</span>
+              {chevron}
+            </Link>
+          )}
           {user?.is_super_admin && (
             <Link to="/admin" className="account__link-row">
               <span>Admin</span>

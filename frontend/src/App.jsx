@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import AdminRoute from './components/AdminRoute.jsx'
+import ManagerRoute from './components/ManagerRoute.jsx'
 import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
@@ -9,12 +10,16 @@ import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import BrandingPage from './pages/BrandingPage.jsx'
+import CommissionDetailPage from './pages/CommissionDetailPage.jsx'
 import CraftPage from './pages/CraftPage.jsx'
 import CreatePage from './pages/CreatePage.jsx'
 import ExplorePage from './pages/ExplorePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
+import ManagerPage from './pages/ManagerPage.jsx'
+import ManagerReviewPage from './pages/ManagerReviewPage.jsx'
 import MetadataPage from './pages/MetadataPage.jsx'
+import MyCommissionsPage from './pages/MyCommissionsPage.jsx'
 import PolicyPage from './pages/PolicyPage.jsx'
 import ProcessingPage from './pages/ProcessingPage.jsx'
 import SignInPage from './pages/SignInPage.jsx'
@@ -84,6 +89,38 @@ function App() {
               <AdminRoute>
                 <AdminPage />
               </AdminRoute>
+            }
+          />
+          <Route
+            path="/manager"
+            element={
+              <ManagerRoute>
+                <ManagerPage />
+              </ManagerRoute>
+            }
+          />
+          <Route
+            path="/manager/:commissionId"
+            element={
+              <ManagerRoute>
+                <ManagerReviewPage />
+              </ManagerRoute>
+            }
+          />
+          <Route
+            path="/commissions"
+            element={
+              <ProtectedRoute>
+                <MyCommissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/commissions/:commissionId"
+            element={
+              <ProtectedRoute>
+                <CommissionDetailPage />
+              </ProtectedRoute>
             }
           />
           {/* Guest-accessible per AGENTS.md §3 Phase 1 (browse/search doesn't require sign-in). */}
