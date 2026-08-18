@@ -1,43 +1,49 @@
-/* Shared across ManagerPage/ManagerReviewPage (manager side) and
-   MyCommissionsPage/CommissionDetailPage (customer side) — one small stylesheet rather
-   than four near-duplicates, same reuse approach as Home.css across Home/Library/Account.
-   Composes with home__*, craft__*, library__*, create__* (imported alongside this in each
-   page) rather than redefining page-shell/list/button/field styles already provided by
-   those. */
+/* Shared across ManagerPage/ManagerReviewPage/DesignerQueuePage (studio side) and
+   MyOrdersPage/OrderDetailPage (customer side) — one small stylesheet rather than
+   near-duplicates, same reuse approach as Home.css across Home/Library/Account. Composes
+   with home__*, craft__*, library__*, create__* (imported alongside this in each page)
+   rather than redefining page-shell/list/button/field styles already provided by those. */
 
-.commission__content {
+.order__content {
   max-width: 900px;
 }
 
-.commission__row {
+.order__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.commission__section-title {
+.order__section-title {
   margin: 0;
   color: var(--text-primary);
   font-size: 16px;
   font-weight: 700;
 }
 
-.commission__note {
+.order__craft-title {
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.order__note {
   margin: 0;
   color: var(--text-muted);
   font-size: 15px;
   line-height: 1.5;
 }
 
-.commission__actions {
+.order__actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 4px;
 }
 
-.commission__link-danger {
+.order__link-danger {
   padding: 8px 0;
   border: none;
   background: transparent;
@@ -49,20 +55,50 @@
   cursor: pointer;
 }
 
-.commission__link-danger:disabled {
+.order__link-danger:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
+.order__back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.order__back-link:hover {
+  color: var(--terracotta-900);
+}
+
+.order__field-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
 /* ── feasibility checklist ────────────────────────────────────────────── */
 
-.commission__checklist {
+.order__checklist {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.commission__checklist-row {
+.order__checklist-row {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -70,36 +106,36 @@
   border-bottom: 1px solid var(--outline-cream);
 }
 
-.commission__checklist-row:last-child {
+.order__checklist-row:last-child {
   border-bottom: none;
   padding-bottom: 0;
 }
 
-.commission__checklist-head {
+.order__checklist-head {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.commission__checklist-label {
+.order__checklist-label {
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
 }
 
-.commission__checklist-hint {
+.order__checklist-hint {
   color: var(--text-faint);
   font-size: 12px;
   line-height: 1.4;
 }
 
-.commission__checklist-body {
+.order__checklist-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.commission__checklist-note {
+.order__checklist-note {
   margin: 0;
   padding: 10px 12px;
   border-radius: var(--radius-md);
@@ -109,7 +145,7 @@
   line-height: 1.5;
 }
 
-.commission__checklist-input {
+.order__checklist-input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--outline-cream);
@@ -122,12 +158,12 @@
 
 /* ── status pills (feasible / not feasible / n/a, one per criterion) ─────── */
 
-.commission__pill-group {
+.order__pill-group {
   display: flex;
   gap: 6px;
 }
 
-.commission__pill {
+.order__pill {
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
@@ -138,7 +174,7 @@
   white-space: nowrap;
 }
 
-.commission__pill--select {
+.order__pill--select {
   border: 1px solid var(--outline-cream);
   background: #fff;
   color: var(--text-muted);
@@ -146,22 +182,22 @@
   cursor: pointer;
 }
 
-.commission__pill--ok.commission__pill--active,
-.commission__pill:not(.commission__pill--select).commission__pill--ok {
+.order__pill--ok.order__pill--active,
+.order__pill:not(.order__pill--select).order__pill--ok {
   border-color: var(--terracotta-900);
   background: var(--terracotta-900);
   color: #fff;
 }
 
-.commission__pill--not_feasible.commission__pill--active,
-.commission__pill:not(.commission__pill--select).commission__pill--not_feasible {
+.order__pill--not_feasible.order__pill--active,
+.order__pill:not(.order__pill--select).order__pill--not_feasible {
   border-color: var(--error);
   background: var(--error);
   color: var(--on-error);
 }
 
-.commission__pill--na.commission__pill--active,
-.commission__pill:not(.commission__pill--select).commission__pill--na {
+.order__pill--na.order__pill--active,
+.order__pill:not(.order__pill--select).order__pill--na {
   border-color: var(--outline-cream);
   background: var(--bg-cream);
   color: var(--text-muted);
@@ -169,13 +205,13 @@
 
 /* ── review history ────────────────────────────────────────────────────── */
 
-.commission__history {
+.order__history {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.commission__history-item {
+.order__history-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -183,12 +219,12 @@
   border-bottom: 1px solid var(--outline-cream);
 }
 
-.commission__history-item:last-child {
+.order__history-item:last-child {
   border-bottom: none;
   padding-bottom: 0;
 }
 
-.commission__history-date {
+.order__history-date {
   color: var(--text-faint);
   font-size: 12px;
 }

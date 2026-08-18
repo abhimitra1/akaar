@@ -20,11 +20,12 @@ export default function MetadataPage() {
   const location = useLocation()
   const { user } = useAuth()
 
-  // Carried from CreatePage/ProcessingPage (see CreatePage.jsx's reworkCommissionId
-  // comment) — set only when this craft exists because a manager or customer reworked a
-  // commission's design via Co-Create, rather than a plain new/edited craft. Store/Save
-  // below is what actually performs the re-link, once this craft's metadata is complete.
-  const reworkCommissionId = location.state?.reworkCommissionId || null
+  // Carried from CreatePage/ProcessingPage (see CreatePage.jsx's reworkOrderId comment) —
+  // set only when this craft exists because a studio manager, designer, or customer
+  // reworked an order's design via Co-Create, rather than a plain new/edited craft.
+  // Store/Save below is what actually performs the re-link, once this craft's metadata is
+  // complete.
+  const reworkOrderId = location.state?.reworkOrderId || null
   const reworkReturnTo = location.state?.reworkReturnTo || null
 
   const [loading, setLoading] = useState(true)
@@ -114,17 +115,24 @@ export default function MetadataPage() {
       const { error: updateError } = await supabase.from('crafts').update(body).eq('id', craftId)
       if (updateError) throw new Error(updateError.message)
 
-      if (reworkCommissionId) {
-        // Re-point the commission at this freshly reworked craft and send it back for
-        // (another) manager look — guard_commission_transition() (schema.sql) is what
-        // actually allows this exact update, from either changes_requested (a customer's
-        // own rework) or pending_manager_review (a manager's own "Rework it here").
-        const { error: commissionError } = await supabase
-          .from('commissions')
+      if (reworkOrderId) {
+        // Re-point the order at this freshly reworked craft and send it back for
+        // (another) studio manager look — guard_order_transition() (schema.sql) is what
+        // actually allows this exact update, from changes_requested (a customer's or
+        // designer's own rework) or pending_manager_review (a manager's own "Rework it
+        // here").
+        const { error: orderUpdateError } = await supabase
+          .from('orders')
           .update({ craft_id: craftId, status: 'pending_manager_review' })
-          .eq('id', reworkCommissionId)
-        if (commissionError) throw new Error(commissionError.message)
-        navigate(reworkReturnTo === 'manager' ? `/manager/${reworkCommissionId}` : `/commissions/${reworkCommissionId}`)
+          .eq('id', reworkOrderId)
+        if (orderUpdateError) throw new Error(orderUpdateError.message)
+        navigate(
+          reworkReturnTo === 'manager'
+            ? `/studio/orders/${reworkOrderId}`
+            : reworkReturnTo === 'designer-queue'
+              ? '/studio/designer-queue'
+              : `/orders/${reworkOrderId}`
+        )
         return
       }
 

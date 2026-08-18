@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AppNav from '../components/AppNav.jsx'
 import PasswordField from '../components/PasswordField.jsx'
+import { hasStudioAccess, roleLabel } from '../roles.js'
 import '../pages/Home.css'
 import '../pages/Create.css'
 import './Account.css'
@@ -152,13 +153,14 @@ export default function AccountPage() {
               </div>
               <div className="account__row">
                 <span className="account__label">Role</span>
-                <span className="account__value account__value--badge">{user.role || 'visitor'}</span>
+                <span className="account__value account__value--badge">{roleLabel(user)}</span>
               </div>
 
               {/* Role itself is admin-assigned only (see guard_profile_privileges() in
-                  schema.sql) — this just timestamps a request for a super admin to act on
-                  in /admin, it doesn't grant anything on its own. */}
-              {(user.role || 'visitor') === 'visitor' && !user.is_super_admin && (
+                  schema.sql) — this just timestamps a request for a studio_manager/
+                  studio_admin/super_admin to act on via /studio/team, it doesn't grant
+                  anything on its own. */}
+              {(user.role || 'customer') === 'customer' && !user.is_super_admin && (
                 user.artisan_requested_at ? (
                   <p className="account__note">
                     Artisan application submitted {new Date(user.artisan_requested_at).toLocaleDateString()} —
@@ -267,8 +269,8 @@ export default function AccountPage() {
         </div>
 
         <div className="account__card account__links">
-          <Link to="/commissions" className="account__link-row">
-            <span>My Commissions</span>
+          <Link to="/orders" className="account__link-row">
+            <span>My Orders</span>
             {chevron}
           </Link>
           <Link to="/about" className="account__link-row">
@@ -287,15 +289,9 @@ export default function AccountPage() {
             <span>Terms &amp; Conditions</span>
             {chevron}
           </Link>
-          {(user?.is_manager || user?.is_super_admin) && (
-            <Link to="/manager" className="account__link-row">
-              <span>Manager Review Queue</span>
-              {chevron}
-            </Link>
-          )}
-          {user?.is_super_admin && (
-            <Link to="/admin" className="account__link-row">
-              <span>Admin</span>
+          {hasStudioAccess(user) && (
+            <Link to="/studio" className="account__link-row">
+              <span>Studio</span>
               {chevron}
             </Link>
           )}

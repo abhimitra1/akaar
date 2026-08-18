@@ -4,32 +4,36 @@ import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
-import CommissionStatusBadge from '../components/CommissionStatusBadge.jsx'
+import OrderStatusBadge from '../components/OrderStatusBadge.jsx'
 import FeasibilityChecklist from '../components/FeasibilityChecklist.jsx'
 import { emptyConstraintFlags } from '../data/feasibilityChecklist.js'
 import '../pages/Create.css'
 import '../pages/CraftPage.css'
 import '../pages/Library.css'
-import './Commission.css'
+import './Order.css'
 
-// One commission's manufacturing-feasibility review — the actual decision screen behind
-// ManagerPage's queue. Shows exactly what the customer sees (same 3D twin + metadata) so
-// a manager never has to take the design's feasibility on faith from a thumbnail.
+// One order's manufacturing-feasibility review — the decision screen behind ManagerPage's
+// queue. Shows exactly what the customer sees (same 3D twin + metadata) so a studio
+// manager never has to take feasibility on faith from a thumbnail. Rendered inside
+// StudioLayout's <Outlet/> at /studio/orders/:orderId — no header of its own, just a
+// lightweight back-to-queue link, since the sidebar is the panel's only chrome.
 export default function ManagerReviewPage() {
-  const { commissionId } = useParams()
+  const { orderId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const [commission, setCommission] = useState(null)
+  const [order, setOrder] = useState(null)
   const [craft, setCraft] = useState(null)
   const [modelUrl, setModelUrl] = useState(null)
   const [customerName, setCustomerName] = useState('')
+  const [designers, setDesigners] = useState([])
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
 
   const [checklist, setChecklist] = useState(emptyConstraintFlags())
   const [remarks, setRemarks] = useState('')
+  const [assignDesignerId, setAssignDesignerId] = useState('')
   const [submitting, setSubmitting] = useState(null) // null | 'changes_requested' | 'approved' | 'rejected'
   const [actionError, setActionError] = useState('')
 
@@ -37,17 +41,17 @@ export default function ManagerReviewPage() {
     let cancelled = false
     const load = async () => {
       const { data: row, error: dbError } = await supabase
-        .from('commissions')
+        .from('orders')
         .select('*')
-        .eq('id', commissionId)
+        .eq('id', orderId)
         .single()
       if (cancelled) return
       if (dbError) {
-        setLoadError('Commission not found')
+        setLoadError('Order not found')
         setLoading(false)
         return
       }
-      setCommission(row)
+      setOrder(row)
 
       const { data: craftRow } = await supabase.from('crafts').select('*').eq('id', row.craft_id).single()
       if (!cancelled && craftRow) {
@@ -65,10 +69,15 @@ export default function ManagerReviewPage() {
         .single()
       if (!cancelled) setCustomerName(profile?.full_name || '')
 
+      // profiles_select_team RLS (010_role_hierarchy.sql) is what makes this visible to a
+      // studio_manager/studio_admin — designer is in both roles' manageable set.
+      const { data: designerRows } = await supabase.from('profiles').select('id, full_name, email').eq('role', 'designer')
+      if (!cancelled) setDesigners(designerRows || [])
+
       const { data: reviews } = await supabase
-        .from('commission_reviews')
+        .from('order_reviews')
         .select('*')
-        .eq('commission_id', commissionId)
+        .eq('order_id', orderId)
         .order('created_at', { ascending: false })
       if (!cancelled) setHistory(reviews || [])
 
@@ -78,7 +87,7 @@ export default function ManagerReviewPage() {
     return () => {
       cancelled = true
     }
-  }, [commissionId])
+  }, [orderId])
 
   const handleChecklistChange = (key, entry) => {
     setChecklist((c) => ({ ...c, [key]: entry }))
@@ -92,11 +101,11 @@ export default function ManagerReviewPage() {
     setActionError('')
     setSubmitting(decision)
     try {
-      // Review row first — commission_reviews_insert's RLS requires the commission to
-      // still be pending_manager_review at insert time, so this has to land before the
-      // status update below moves it out of that state.
-      const { error: reviewError } = await supabase.from('commission_reviews').insert({
-        commission_id: commission.id,
+      // Review row first — order_reviews_insert's RLS requires the order to still be
+      // pending_manager_review at insert time, so this has to land before the status
+      // update below moves it out of that state.
+      const { error: reviewError } = await supabase.from('order_reviews').insert({
+        order_id: order.id,
         reviewer_id: user.id,
         decision,
         remarks: remarks.trim() || null,
@@ -106,10 +115,16 @@ export default function ManagerReviewPage() {
 
       const nextStatus =
         decision === 'approved' ? 'pending_customer_approval' : decision === 'rejected' ? 'rejected' : 'changes_requested'
-      const { error: updateError } = await supabase.from('commissions').update({ status: nextStatus }).eq('id', commission.id)
+      const updatePayload = { status: nextStatus }
+      // Only "changes requested" can route to a designer — approved/rejected are terminal
+      // handoffs to the customer, an assignment wouldn't mean anything there.
+      if (decision === 'changes_requested' && assignDesignerId) {
+        updatePayload.assigned_designer_id = assignDesignerId
+      }
+      const { error: updateError } = await supabase.from('orders').update(updatePayload).eq('id', order.id)
       if (updateError) throw new Error(updateError.message)
 
-      navigate('/manager')
+      navigate('/studio/orders')
     } catch (err) {
       setActionError(err.message || 'Something went wrong')
       setSubmitting(null)
@@ -117,32 +132,30 @@ export default function ManagerReviewPage() {
   }
 
   // Hands this craft to /create as a co-creation source, same as CraftPage's own
-  // "Co-Create with AI" button — but tagged with reworkCommissionId/reworkReturnTo so
-  // MetadataPage's Store/Save step re-points this commission at the fresh result and
-  // sends the manager back here instead of to a plain new craft page. See CreatePage.jsx,
+  // "Co-Create with AI" button — but tagged with reworkOrderId/reworkReturnTo so
+  // MetadataPage's Store/Save step re-points this order at the fresh result and sends the
+  // studio manager back here instead of to a plain new craft page. See CreatePage.jsx,
   // ProcessingPage.jsx and MetadataPage.jsx for how that tag is carried through.
   const handleReworkHere = () => {
     navigate('/create', {
-      state: { cocreateSource: craft, reworkCommissionId: commission.id, reworkReturnTo: 'manager' },
+      state: { cocreateSource: craft, reworkOrderId: order.id, reworkReturnTo: 'manager' },
     })
   }
 
-  if (loading) return <LoadingScreen message="Loading review..." />
+  if (loading) return <LoadingScreen message="Loading review..." inline />
 
-  if (loadError || !commission || !craft) {
+  if (loadError || !order || !craft) {
     return (
-      <div className="craft">
-        <div className="craft__card">
-          <p className="craft__error">{loadError || 'Commission not found'}</p>
-          <button type="button" className="craft__btn craft__btn--primary" onClick={() => navigate('/manager')}>
-            Back to queue
-          </button>
-        </div>
+      <div className="craft__card">
+        <p className="craft__error">{loadError || 'Order not found'}</p>
+        <button type="button" className="craft__btn craft__btn--primary" onClick={() => navigate('/studio/orders')}>
+          Back to queue
+        </button>
       </div>
     )
   }
 
-  const isDecidable = commission.status === 'pending_manager_review'
+  const isDecidable = order.status === 'pending_manager_review'
 
   const metaRows = [
     ['Craft type', craft.craft_type],
@@ -154,15 +167,13 @@ export default function ManagerReviewPage() {
   ].filter(([, v]) => v != null && v !== '')
 
   return (
-    <div className="craft">
-      <header className="craft__header">
-        <button type="button" className="craft__back" aria-label="Back" onClick={() => navigate('/manager')}>
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <h1 className="craft__title">{craft.title || 'Untitled'}</h1>
-      </header>
+    <div>
+      <button type="button" className="order__back-link" onClick={() => navigate('/studio/orders')}>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Back to Orders
+      </button>
 
       <div className="craft__content">
         <div className="craft__media">
@@ -183,9 +194,12 @@ export default function ManagerReviewPage() {
         </div>
 
         <div className="craft__card">
-          <div className="commission__row">
-            <p className="craft__creator">Requested by {customerName || 'Unknown customer'}</p>
-            <CommissionStatusBadge status={commission.status} />
+          <div className="order__row">
+            <div>
+              <h1 className="order__craft-title">{craft.title || 'Untitled'}</h1>
+              <p className="craft__creator">Requested by {customerName || 'Unknown customer'}</p>
+            </div>
+            <OrderStatusBadge status={order.status} />
           </div>
 
           <dl className="craft__meta">
@@ -200,7 +214,7 @@ export default function ManagerReviewPage() {
 
         {isDecidable ? (
           <div className="craft__card">
-            <h2 className="commission__section-title">Manufacturing feasibility</h2>
+            <h2 className="order__section-title">Manufacturing feasibility</h2>
             <FeasibilityChecklist value={checklist} onChange={handleChecklistChange} />
 
             <label className="field">
@@ -213,13 +227,27 @@ export default function ManagerReviewPage() {
               />
             </label>
 
+            {designers.length > 0 && (
+              <label className="field">
+                <span className="field__label">Route rework to (optional)</span>
+                <select className="order__field-select" value={assignDesignerId} onChange={(e) => setAssignDesignerId(e.target.value)}>
+                  <option value="">Send back to the customer</option>
+                  {designers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.full_name || d.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             {actionError && (
               <div className="create__error" role="alert">
                 {actionError}
               </div>
             )}
 
-            <div className="commission__actions">
+            <div className="order__actions">
               <button
                 type="button"
                 className="craft__btn craft__btn--primary"
@@ -234,42 +262,50 @@ export default function ManagerReviewPage() {
                 disabled={submitting !== null}
                 onClick={() => handleDecide('changes_requested')}
               >
-                {submitting === 'changes_requested' ? 'Sending…' : 'Request changes'}
+                {submitting === 'changes_requested'
+                  ? 'Sending…'
+                  : assignDesignerId
+                    ? 'Request changes — assign to designer'
+                    : 'Request changes — send to customer'}
               </button>
               <button type="button" className="craft__btn craft__btn--ai" disabled={submitting !== null} onClick={handleReworkHere}>
                 Rework it here
               </button>
               <button
                 type="button"
-                className="commission__link-danger"
+                className="order__link-danger"
                 disabled={submitting !== null}
                 onClick={() => handleDecide('rejected')}
               >
-                {submitting === 'rejected' ? 'Declining…' : 'Decline this commission'}
+                {submitting === 'rejected' ? 'Declining…' : 'Decline this order'}
               </button>
             </div>
           </div>
         ) : (
           <div className="craft__card">
-            <p className="commission__note">
-              This commission already moved past review — no further action here. Its full history is below.
+            <p className="order__note">
+              This order already moved past review — no further action here. Its full history is below.
             </p>
           </div>
         )}
 
         {history.length > 0 && (
           <div className="craft__card">
-            <h2 className="commission__section-title">Review history</h2>
-            <div className="commission__history">
+            <h2 className="order__section-title">Review history</h2>
+            <div className="order__history">
               {history.map((review) => (
-                <div key={review.id} className="commission__history-item">
-                  <div className="commission__row">
-                    <span className={`commission__pill commission__pill--${review.decision === 'approved' ? 'ok' : review.decision === 'rejected' ? 'not_feasible' : 'na'}`}>
+                <div key={review.id} className="order__history-item">
+                  <div className="order__row">
+                    <span
+                      className={`order__pill order__pill--${
+                        review.decision === 'approved' ? 'ok' : review.decision === 'rejected' ? 'not_feasible' : 'na'
+                      }`}
+                    >
                       {review.decision === 'approved' ? 'Approved' : review.decision === 'rejected' ? 'Declined' : 'Changes requested'}
                     </span>
-                    <span className="commission__history-date">{new Date(review.created_at).toLocaleString()}</span>
+                    <span className="order__history-date">{new Date(review.created_at).toLocaleString()}</span>
                   </div>
-                  {review.remarks && <p className="commission__checklist-note">{review.remarks}</p>}
+                  {review.remarks && <p className="order__checklist-note">{review.remarks}</p>}
                   <FeasibilityChecklist value={review.constraint_flags} readOnly />
                 </div>
               ))}

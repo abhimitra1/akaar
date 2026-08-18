@@ -70,13 +70,14 @@ export default function CreatePage() {
   // so it can seed its source photo without a redundant library search.
   const [cocreateInitialDesign, setCocreateInitialDesign] = useState(null)
 
-  // Set only when landing here from ManagerReviewPage's "Rework it here" or
-  // CommissionDetailPage's "Rework in Co-Create" — the commission this new craft should
-  // be re-linked to once it's fully generated (reworkReturnTo says which of /manager or
-  // /commissions to return to). Threaded through /processing and MetadataPage's Store/
-  // Save step, which is what actually performs the re-link (see MetadataPage.jsx) — this
-  // page only carries the tag, it never touches the commissions table itself.
-  const [reworkCommissionId, setReworkCommissionId] = useState(null)
+  // Set only when landing here from ManagerReviewPage's "Rework it here",
+  // OrderDetailPage's "Rework in Co-Create", or DesignerQueuePage's "Rework" — the order
+  // this new craft should be re-linked to once it's fully generated (reworkReturnTo says
+  // which of 'manager' / 'orders' / 'designer-queue' to return to). Threaded through
+  // /processing and MetadataPage's Store/Save step, which is what actually performs the
+  // re-link (see MetadataPage.jsx) — this page only carries the tag, it never touches the
+  // orders table itself.
+  const [reworkOrderId, setReworkOrderId] = useState(null)
   const [reworkReturnTo, setReworkReturnTo] = useState(null)
 
   useEffect(() => {
@@ -120,8 +121,8 @@ export default function CreatePage() {
     if (!source) return
     setCocreateInitialDesign(source)
     setMode('cocreate')
-    if (location.state?.reworkCommissionId) {
-      setReworkCommissionId(location.state.reworkCommissionId)
+    if (location.state?.reworkOrderId) {
+      setReworkOrderId(location.state.reworkOrderId)
       setReworkReturnTo(location.state.reworkReturnTo || null)
     }
     navigate(location.pathname, { replace: true, state: null })
@@ -161,11 +162,12 @@ export default function CreatePage() {
   const canSubmit = photo !== null && !submitting && (unlimited || (remaining !== null && remaining > 0))
 
   // Original-photo upload (documenting a real object) is artisan-only; AI co-creation is
-  // open to both visitors and artisans. Mirrors guard_craft_image_source() in schema.sql,
-  // which is the actual enforcement (this is only UX: a hidden card isn't a security
-  // boundary). Super admins get both, mainly so they can exercise/test either path.
+  // open to every role in the studio hierarchy. Mirrors guard_craft_image_source() in
+  // schema.sql, which is the actual enforcement (this is only UX: a hidden card isn't a
+  // security boundary). Super admins get both, mainly so they can exercise/test either
+  // path.
   const canUpload = user?.is_super_admin || user?.role === 'artisan'
-  const canCoCreate = user?.is_super_admin || user?.role === 'visitor' || user?.role === 'artisan'
+  const canCoCreate = Boolean(user)
 
   // Skips the method-picker screen entirely when a role only has one legitimate choice —
   // showing a "pick a method" grid with a single card in it is just an extra click.
@@ -257,9 +259,9 @@ export default function CreatePage() {
       runReconstruction(job.id, craftId, user.id, photo.file)
 
       // c. Go to the processing screen — carries the rework tag forward (see
-      // reworkCommissionId's declaration above) so ProcessingPage can pass it on to
+      // reworkOrderId's declaration above) so ProcessingPage can pass it on to
       // MetadataPage in turn once generation finishes.
-      navigate(`/processing/${job.id}`, reworkCommissionId ? { state: { reworkCommissionId, reworkReturnTo } } : undefined)
+      navigate(`/processing/${job.id}`, reworkOrderId ? { state: { reworkOrderId, reworkReturnTo } } : undefined)
     } catch (err) {
       // e. On failure: show error and stay on this page
       setError(err.message || 'Something went wrong')

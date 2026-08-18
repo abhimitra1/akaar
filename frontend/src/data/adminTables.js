@@ -24,12 +24,12 @@ export const ADMIN_TABLES = [
     // (never trust the client-side route guard alone for something this privileged),
     // creates the auth.users row, and lets the existing handle_new_user() trigger create
     // the profiles row exactly as it would for a normal signup (role always starts
-    // 'visitor' — promote via this table's own Edit afterward, same as any other profile).
+    // 'customer' — promote via this table's own Edit afterward, same as any other profile).
     customCreate: async (payload) => {
       const { error } = await supabase.functions.invoke('admin-create-user', { body: payload })
       if (error) throw new Error(error.message || 'Failed to create user')
     },
-    listColumns: ['email', 'full_name', 'role', 'artisan_requested_at', 'is_super_admin', 'is_manager', 'created_at'],
+    listColumns: ['email', 'full_name', 'role', 'artisan_requested_at', 'is_super_admin', 'created_at'],
     fields: [
       { key: 'id', label: 'ID', type: 'readonly' },
       { key: 'email', label: 'Email', type: 'text' },
@@ -39,12 +39,20 @@ export const ADMIN_TABLES = [
         key: 'role',
         label: 'Role',
         type: 'select',
-        // Admin-assigned only (see guard_profile_privileges() in schema.sql) — this is
-        // the actual way a visitor becomes an artisan; AccountPage's "Apply to become an
-        // Artisan" button only sets artisan_requested_at below, never role itself. Not
-        // settable at creation (hideOnCreate) — a brand new user always starts 'visitor'
+        // The studio role hierarchy (see supabase/migrations/010_role_hierarchy.sql and
+        // frontend/src/roles.js) — a super admin can set any of these directly here;
+        // studio_admin/studio_manager normally do this instead via /studio/team, which is
+        // scoped to only the roles their own can_assign_role() authority covers. Not
+        // settable at creation (hideOnCreate) — a brand new user always starts 'customer'
         // via handle_new_user(), same as a normal signup; promote afterward via Edit.
-        options: ['visitor', 'artisan'],
+        options: ['customer', 'artisan', 'designer', 'studio_manager', 'studio_admin'],
+        optionLabels: {
+          customer: 'Customer',
+          artisan: 'Artisan',
+          designer: 'Designer',
+          studio_manager: 'Studio Manager',
+          studio_admin: 'Studio Admin',
+        },
         hideOnCreate: true,
       },
       {
@@ -57,10 +65,6 @@ export const ADMIN_TABLES = [
       { key: 'email_verified', label: 'Email verified', type: 'boolean', hideOnCreate: true },
       { key: 'unlimited_creations', label: 'Unlimited creations', type: 'boolean', hideOnCreate: true },
       { key: 'is_super_admin', label: 'Super admin', type: 'boolean', hideOnCreate: true },
-      // Grants access to /manager (see supabase/migrations/009_manager_commissions.sql) —
-      // there's no self-service request flow for this role, unlike artisan_requested_at
-      // above; a super admin flips it here directly.
-      { key: 'is_manager', label: 'Manager', type: 'boolean', hideOnCreate: true },
       { key: 'terms_accepted_at', label: 'Terms accepted at', type: 'readonly' },
       { key: 'created_at', label: 'Created at', type: 'readonly' },
     ],
@@ -173,17 +177,17 @@ export const ADMIN_TABLES = [
     ],
   },
   {
-    key: 'commissions',
-    label: 'Commissions',
-    table: 'commissions',
+    key: 'orders',
+    label: 'Orders',
+    table: 'orders',
     primaryKey: 'id',
     orderBy: { column: 'created_at', ascending: false },
-    // No allowInsert — a commission is only ever created via CraftPage's "Submit for
-    // Production" (guard_commission_insert() requires the inserting owner to actually own
-    // the craft with a finished 3D model). Super admins can still edit/delete existing
-    // rows below; they just can't fabricate a new one that would pass the same trigger a
-    // real customer submission does.
-    listColumns: ['craft_id', 'customer_id', 'status', 'payment_status', 'created_at'],
+    // No allowInsert — an order is only ever created via CraftPage's "Submit for
+    // Production" (guard_order_insert() requires the inserting owner to actually own the
+    // craft with a finished 3D model). Super admins can still edit/delete existing rows
+    // below; they just can't fabricate a new one that would pass the same trigger a real
+    // customer submission does.
+    listColumns: ['craft_id', 'customer_id', 'status', 'assigned_designer_id', 'payment_status', 'created_at'],
     fields: [
       { key: 'id', label: 'ID', type: 'readonly' },
       {
@@ -201,6 +205,12 @@ export const ADMIN_TABLES = [
       {
         key: 'artisan_id',
         label: 'Artisan',
+        type: 'text',
+        lookup: { table: 'public_profiles', labelColumn: 'full_name' },
+      },
+      {
+        key: 'assigned_designer_id',
+        label: 'Assigned designer',
         type: 'text',
         lookup: { table: 'public_profiles', labelColumn: 'full_name' },
       },
@@ -228,20 +238,20 @@ export const ADMIN_TABLES = [
     ],
   },
   {
-    key: 'commission_reviews',
-    label: 'Commission Reviews',
-    table: 'commission_reviews',
+    key: 'order_reviews',
+    label: 'Order Reviews',
+    table: 'order_reviews',
     primaryKey: 'id',
     orderBy: { column: 'created_at', ascending: false },
     // Append-only audit trail — written by ManagerReviewPage.jsx, never through here.
-    listColumns: ['commission_id', 'reviewer_id', 'decision', 'created_at'],
+    listColumns: ['order_id', 'reviewer_id', 'decision', 'created_at'],
     fields: [
       { key: 'id', label: 'ID', type: 'readonly' },
       {
-        key: 'commission_id',
-        label: 'Commission',
+        key: 'order_id',
+        label: 'Order',
         type: 'number',
-        lookup: { table: 'commissions', labelColumn: 'id' },
+        lookup: { table: 'orders', labelColumn: 'id' },
       },
       {
         key: 'reviewer_id',

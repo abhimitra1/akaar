@@ -4,24 +4,24 @@ import '@google/model-viewer'
 import { supabase, STORAGE_BUCKET } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
-import CommissionStatusBadge from '../components/CommissionStatusBadge.jsx'
+import OrderStatusBadge from '../components/OrderStatusBadge.jsx'
 import FeasibilityChecklist from '../components/FeasibilityChecklist.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import '../pages/Create.css'
 import '../pages/CraftPage.css'
 import '../pages/Library.css'
-import './Commission.css'
+import './Order.css'
 
-// One commission's status, from the customer's side — mirrors ManagerReviewPage's layout
-// (same 3D twin + metadata) but swaps the manager's decision panel for whatever action
-// the customer can currently take: rework a design a manager sent back, ratify one a
-// manager approved, or just watch a still-queued one.
-export default function CommissionDetailPage() {
-  const { commissionId } = useParams()
+// One order's status, from the customer's side — mirrors ManagerReviewPage's layout (same
+// 3D twin + metadata) but swaps the studio manager's decision panel for whatever action
+// the customer can currently take: rework a design sent back to them, ratify one that
+// passed review, or just watch a still-queued one.
+export default function OrderDetailPage() {
+  const { orderId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const [commission, setCommission] = useState(null)
+  const [order, setOrder] = useState(null)
   const [craft, setCraft] = useState(null)
   const [modelUrl, setModelUrl] = useState(null)
   const [history, setHistory] = useState([])
@@ -37,17 +37,17 @@ export default function CommissionDetailPage() {
     let cancelled = false
     const load = async () => {
       const { data: row, error: dbError } = await supabase
-        .from('commissions')
+        .from('orders')
         .select('*')
-        .eq('id', commissionId)
+        .eq('id', orderId)
         .single()
       if (cancelled) return
       if (dbError) {
-        setLoadError('Commission not found')
+        setLoadError('Order not found')
         setLoading(false)
         return
       }
-      setCommission(row)
+      setOrder(row)
 
       const { data: craftRow } = await supabase.from('crafts').select('*').eq('id', row.craft_id).single()
       if (!cancelled && craftRow) {
@@ -59,9 +59,9 @@ export default function CommissionDetailPage() {
       }
 
       const { data: reviews } = await supabase
-        .from('commission_reviews')
+        .from('order_reviews')
         .select('*')
-        .eq('commission_id', commissionId)
+        .eq('order_id', orderId)
         .order('created_at', { ascending: false })
       if (!cancelled) setHistory(reviews || [])
 
@@ -71,13 +71,13 @@ export default function CommissionDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [commissionId, user])
+  }, [orderId, user])
 
   const latestReview = history[0] || null
 
   const handleReworkInCoCreate = () => {
     navigate('/create', {
-      state: { cocreateSource: craft, reworkCommissionId: commission.id, reworkReturnTo: 'commissions' },
+      state: { cocreateSource: craft, reworkOrderId: order.id, reworkReturnTo: 'orders' },
     })
   }
 
@@ -85,9 +85,9 @@ export default function CommissionDetailPage() {
     setSubmitting(true)
     setActionError('')
     try {
-      const { error } = await supabase.from('commissions').update({ status: 'ratified' }).eq('id', commission.id)
+      const { error } = await supabase.from('orders').update({ status: 'ratified' }).eq('id', order.id)
       if (error) throw new Error(error.message)
-      setCommission((c) => ({ ...c, status: 'ratified' }))
+      setOrder((o) => ({ ...o, status: 'ratified' }))
     } catch (err) {
       setActionError(err.message || 'Something went wrong')
     } finally {
@@ -100,9 +100,9 @@ export default function CommissionDetailPage() {
     setSubmitting(true)
     setActionError('')
     try {
-      const { error } = await supabase.from('commissions').update({ status: 'cancelled' }).eq('id', commission.id)
+      const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id)
       if (error) throw new Error(error.message)
-      setCommission((c) => ({ ...c, status: 'cancelled' }))
+      setOrder((o) => ({ ...o, status: 'cancelled' }))
     } catch (err) {
       setActionError(err.message || 'Something went wrong')
     } finally {
@@ -110,15 +110,15 @@ export default function CommissionDetailPage() {
     }
   }
 
-  if (loading) return <LoadingScreen message="Loading commission..." />
+  if (loading) return <LoadingScreen message="Loading order..." />
 
-  if (loadError || !commission || !craft) {
+  if (loadError || !order || !craft) {
     return (
       <div className="craft">
         <div className="craft__card">
-          <p className="craft__error">{loadError || 'Commission not found'}</p>
-          <button type="button" className="craft__btn craft__btn--primary" onClick={() => navigate('/commissions')}>
-            Back to My Commissions
+          <p className="craft__error">{loadError || 'Order not found'}</p>
+          <button type="button" className="craft__btn craft__btn--primary" onClick={() => navigate('/orders')}>
+            Back to My Orders
           </button>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function CommissionDetailPage() {
   return (
     <div className="craft">
       <header className="craft__header">
-        <button type="button" className="craft__back" aria-label="Back" onClick={() => navigate('/commissions')}>
+        <button type="button" className="craft__back" aria-label="Back" onClick={() => navigate('/orders')}>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -164,9 +164,9 @@ export default function CommissionDetailPage() {
         </div>
 
         <div className="craft__card">
-          <div className="commission__row">
+          <div className="order__row">
             <p className="craft__creator">Production request</p>
-            <CommissionStatusBadge status={commission.status} />
+            <OrderStatusBadge status={order.status} />
           </div>
 
           <dl className="craft__meta">
@@ -185,12 +185,12 @@ export default function CommissionDetailPage() {
           </div>
         )}
 
-        {commission.status === 'changes_requested' && (
+        {order.status === 'changes_requested' && (
           <div className="craft__card">
-            <h2 className="commission__section-title">What a manager found</h2>
-            {latestReview?.remarks && <p className="commission__checklist-note">{latestReview.remarks}</p>}
+            <h2 className="order__section-title">What a studio manager found</h2>
+            {latestReview?.remarks && <p className="order__checklist-note">{latestReview.remarks}</p>}
             {latestReview?.constraint_flags && <FeasibilityChecklist value={latestReview.constraint_flags} readOnly />}
-            <div className="commission__actions">
+            <div className="order__actions">
               <button type="button" className="craft__btn craft__btn--ai" disabled={submitting} onClick={handleReworkInCoCreate}>
                 Rework in Co-Create
               </button>
@@ -198,47 +198,45 @@ export default function CommissionDetailPage() {
           </div>
         )}
 
-        {commission.status === 'pending_manager_review' && (
+        {order.status === 'pending_manager_review' && (
           <div className="craft__card">
-            <p className="commission__note">Waiting on a manufacturing-feasibility review from a manager.</p>
-            <div className="commission__actions">
-              <button type="button" className="commission__link-danger" disabled={submitting} onClick={() => setConfirmingCancel(true)}>
+            <p className="order__note">Waiting on a manufacturing-feasibility review from a studio manager.</p>
+            <div className="order__actions">
+              <button type="button" className="order__link-danger" disabled={submitting} onClick={() => setConfirmingCancel(true)}>
                 Withdraw request
               </button>
             </div>
           </div>
         )}
 
-        {commission.status === 'pending_customer_approval' && (
+        {order.status === 'pending_customer_approval' && (
           <div className="craft__card">
-            <p className="commission__note">
-              A manager confirmed this design is feasible to produce. Confirm to move forward.
+            <p className="order__note">
+              A studio manager confirmed this design is feasible to produce. Confirm to move forward.
             </p>
-            <div className="commission__actions">
+            <div className="order__actions">
               <button type="button" className="craft__btn craft__btn--primary" disabled={submitting} onClick={handleRatify}>
                 {submitting ? 'Confirming…' : 'Confirm & Ratify'}
               </button>
-              <button type="button" className="commission__link-danger" disabled={submitting} onClick={() => setConfirmingCancel(true)}>
+              <button type="button" className="order__link-danger" disabled={submitting} onClick={() => setConfirmingCancel(true)}>
                 Cancel request
               </button>
             </div>
           </div>
         )}
 
-        {commission.status === 'ratified' && (
+        {order.status === 'ratified' && (
           <div className="craft__card">
-            <p className="commission__note">
+            <p className="order__note">
               Ratified — this design is committed for production. Artisan assignment and fulfillment tracking are coming soon.
             </p>
           </div>
         )}
 
-        {(commission.status === 'rejected' || commission.status === 'cancelled') && (
+        {(order.status === 'rejected' || order.status === 'cancelled') && (
           <div className="craft__card">
-            <p className="commission__note">
-              {commission.status === 'rejected'
-                ? 'This request was declined.'
-                : 'This request was cancelled.'}
+            <p className="order__note">
+              {order.status === 'rejected' ? 'This request was declined.' : 'This request was cancelled.'}
               {latestReview?.remarks && ` ${latestReview.remarks}`}
             </p>
           </div>
@@ -246,21 +244,21 @@ export default function CommissionDetailPage() {
 
         {history.length > 0 && (
           <div className="craft__card">
-            <h2 className="commission__section-title">Review history</h2>
-            <div className="commission__history">
+            <h2 className="order__section-title">Review history</h2>
+            <div className="order__history">
               {history.map((review) => (
-                <div key={review.id} className="commission__history-item">
-                  <div className="commission__row">
+                <div key={review.id} className="order__history-item">
+                  <div className="order__row">
                     <span
-                      className={`commission__pill commission__pill--${
+                      className={`order__pill order__pill--${
                         review.decision === 'approved' ? 'ok' : review.decision === 'rejected' ? 'not_feasible' : 'na'
                       }`}
                     >
                       {review.decision === 'approved' ? 'Approved' : review.decision === 'rejected' ? 'Declined' : 'Changes requested'}
                     </span>
-                    <span className="commission__history-date">{new Date(review.created_at).toLocaleString()}</span>
+                    <span className="order__history-date">{new Date(review.created_at).toLocaleString()}</span>
                   </div>
-                  {review.remarks && <p className="commission__checklist-note">{review.remarks}</p>}
+                  {review.remarks && <p className="order__checklist-note">{review.remarks}</p>}
                   <FeasibilityChecklist value={review.constraint_flags} readOnly />
                 </div>
               ))}

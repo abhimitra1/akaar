@@ -25,11 +25,11 @@
   color: var(--on-error);
 }
 
-/* "Needs your attention" — a commission status the viewer must act on (manager remarks
+/* "Needs your attention" — an order status the viewer must act on (studio manager remarks
    waiting on a rework, or a decision waiting on the customer's ratification). Reuses the
    Wheel Rings mark's gold (index.css --mark-gold), the app's only other warm accent
    besides the terracotta/error pair already used above, so it reads as a third distinct
-   signal rather than a shade of "failed" or "processing". See CommissionStatusBadge.jsx. */
+   signal rather than a shade of "failed" or "processing". See OrderStatusBadge.jsx. */
 .library__badge--attention {
   background: var(--mark-gold);
   color: var(--text-primary);

@@ -1,8 +1,12 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminRoute from './components/AdminRoute.jsx'
+import DesignerRoute from './components/DesignerRoute.jsx'
 import ManagerRoute from './components/ManagerRoute.jsx'
 import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import StudioLayout from './components/StudioLayout.jsx'
+import StudioRoute from './components/StudioRoute.jsx'
+import TeamRoute from './components/TeamRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { supabaseConfigured } from './supabaseClient.js'
 import AboutPage from './pages/AboutPage.jsx'
@@ -10,20 +14,23 @@ import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import BrandingPage from './pages/BrandingPage.jsx'
-import CommissionDetailPage from './pages/CommissionDetailPage.jsx'
 import CraftPage from './pages/CraftPage.jsx'
 import CreatePage from './pages/CreatePage.jsx'
+import DesignerQueuePage from './pages/DesignerQueuePage.jsx'
 import ExplorePage from './pages/ExplorePage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
 import ManagerPage from './pages/ManagerPage.jsx'
 import ManagerReviewPage from './pages/ManagerReviewPage.jsx'
 import MetadataPage from './pages/MetadataPage.jsx'
-import MyCommissionsPage from './pages/MyCommissionsPage.jsx'
+import MyOrdersPage from './pages/MyOrdersPage.jsx'
+import OrderDetailPage from './pages/OrderDetailPage.jsx'
 import PolicyPage from './pages/PolicyPage.jsx'
 import ProcessingPage from './pages/ProcessingPage.jsx'
 import SignInPage from './pages/SignInPage.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
+import StudioOverviewPage from './pages/StudioOverviewPage.jsx'
+import TeamPage from './pages/TeamPage.jsx'
 import TermsPage from './pages/TermsPage.jsx'
 import WelcomePage from './pages/WelcomePage.jsx'
 
@@ -83,46 +90,82 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Studio panel — persistent-sidebar shell (StudioLayout) for every staff-facing
+              surface: order review, team roster, designer assignments, raw-table admin.
+              StudioRoute gates entry to the whole subtree (any role with at least one
+              section to see); each section is additionally gated by its own existing
+              guard for defense in depth — RLS underneath both is the real boundary. */}
           <Route
-            path="/admin"
+            path="/studio"
             element={
-              <AdminRoute>
-                <AdminPage />
-              </AdminRoute>
+              <StudioRoute>
+                <StudioLayout />
+              </StudioRoute>
             }
-          />
+          >
+            <Route index element={<StudioOverviewPage />} />
+            <Route
+              path="orders"
+              element={
+                <ManagerRoute>
+                  <ManagerPage />
+                </ManagerRoute>
+              }
+            />
+            <Route
+              path="orders/:orderId"
+              element={
+                <ManagerRoute>
+                  <ManagerReviewPage />
+                </ManagerRoute>
+              }
+            />
+            <Route
+              path="team"
+              element={
+                <TeamRoute>
+                  <TeamPage />
+                </TeamRoute>
+              }
+            />
+            <Route
+              path="designer-queue"
+              element={
+                <DesignerRoute>
+                  <DesignerQueuePage />
+                </DesignerRoute>
+              }
+            />
+            <Route
+              path="database"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            />
+          </Route>
+          {/* Retired standalone route, kept as a redirect for anyone with it bookmarked. */}
+          <Route path="/admin" element={<Navigate to="/studio/database" replace />} />
+
           <Route
-            path="/manager"
-            element={
-              <ManagerRoute>
-                <ManagerPage />
-              </ManagerRoute>
-            }
-          />
-          <Route
-            path="/manager/:commissionId"
-            element={
-              <ManagerRoute>
-                <ManagerReviewPage />
-              </ManagerRoute>
-            }
-          />
-          <Route
-            path="/commissions"
+            path="/orders"
             element={
               <ProtectedRoute>
-                <MyCommissionsPage />
+                <MyOrdersPage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/commissions/:commissionId"
+            path="/orders/:orderId"
             element={
               <ProtectedRoute>
-                <CommissionDetailPage />
+                <OrderDetailPage />
               </ProtectedRoute>
             }
           />
+
           {/* Guest-accessible per AGENTS.md §3 Phase 1 (browse/search doesn't require sign-in). */}
           <Route path="/explore" element={<ExplorePage />} />
           <Route

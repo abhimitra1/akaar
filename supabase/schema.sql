@@ -769,3 +769,512 @@ drop trigger if exists commissions_notify on public.commissions;
 create trigger commissions_notify
   after update on public.commissions
   for each row execute procedure public.notify_commission_status_change();
+
+-- ── studio role hierarchy (see migrations/010_role_hierarchy.sql for full rationale)
+-- customer/artisan/designer/studio_manager/studio_admin, replacing the single is_manager
+-- flag above. is_super_admin stays separate (raw database access, not a studio-workflow
+-- tier). ─────────────────────────────────────────────────────────────────
+
+-- Explicit transaction + table lock: on a live project a signup can land mid-migration
+-- and insert a fresh 'visitor' row after the backfill below has already run, tripping the
+-- tightened constraint at the very end. ACCESS EXCLUSIVE blocks any concurrent
+-- read/write to profiles for the duration — see 010_role_hierarchy.sql's header comment.
+begin;
+
+lock table public.profiles in access exclusive mode;
+
+-- profiles_guard_privileges (defined earlier in this file) is still the OLD version at
+-- this point — it reverts any change to `role` unless the caller is already a super
+-- admin, and auth.uid() is NULL when running plain SQL outside an authenticated session,
+-- so every backfill UPDATE below would otherwise be silently no-opped before it ever
+-- reaches the tightened constraint. Disabled for exactly the backfill window.
+alter table public.profiles disable trigger profiles_guard_privileges;
+
+-- Drop the constraint outright rather than widening to a specific fixed set first — a
+-- live table can hold a role value older than 'visitor'/'artisan' too. Backfilling with
+-- the constraint off, then sweeping up anything still unrecognized in one final catch-all
+-- below, is robust to that regardless of what the leftover value actually is.
+alter table public.profiles drop constraint if exists profiles_role_check;
+
+update public.profiles set role = 'customer' where role = 'visitor';
+update public.profiles set role = 'studio_manager' where is_manager = true;
+update public.profiles set role = 'customer'
+  where role not in ('customer', 'artisan', 'designer', 'studio_manager', 'studio_admin');
+
+-- handle_new_user() (defined earlier in this file) still hard-codes the retired literal
+-- 'visitor' for every new signup — redefined here so new signups get 'customer' instead,
+-- required before the tightened constraint below stops allowing 'visitor' at all.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, role, institution, department)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'full_name', ''),
+    'customer',
+    new.raw_user_meta_data ->> 'institution',
+    new.raw_user_meta_data ->> 'department'
+  );
+  return new;
+end;
+$$;
+
+-- guard_craft_image_source() (defined earlier in this file) still hard-codes 'visitor' in
+-- its AI-co-creation check — redefined so every role in the new hierarchy may co-create;
+-- only the original-photo-upload path stays artisan-exclusive.
+create or replace function public.guard_craft_image_source()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  owner_role text;
+begin
+  if public.is_super_admin(auth.uid()) then
+    return new;
+  end if;
+
+  select role into owner_role from public.profiles where id = new.owner_id;
+
+  if new.image_source = 'original' and owner_role is distinct from 'artisan' then
+    raise exception 'Only artisans can upload an original photo.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.is_manager(uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select p.role in ('studio_manager', 'studio_admin') from public.profiles p where p.id = uid),
+    false
+  ) or public.is_super_admin(uid);
+$$;
+
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check
+  check (role in ('customer', 'artisan', 'designer', 'studio_manager', 'studio_admin'));
+alter table public.profiles alter column role set default 'customer';
+
+alter table public.profiles drop column if exists is_manager;
+
+-- Safe to re-enable now — every row already holds its final backfilled role value.
+alter table public.profiles enable trigger profiles_guard_privileges;
+
+create or replace function public.can_assign_role(actor_role text, prev_role text, next_role text)
+returns boolean
+language sql
+immutable
+as $$
+  select case actor_role
+    when 'studio_admin' then
+      prev_role in ('customer', 'studio_manager', 'artisan', 'designer')
+      and next_role in ('customer', 'studio_manager', 'artisan', 'designer')
+    when 'studio_manager' then
+      prev_role in ('customer', 'artisan', 'designer')
+      and next_role in ('customer', 'artisan', 'designer')
+    else false
+  end;
+$$;
+
+grant execute on function public.can_assign_role(text, text, text) to authenticated;
+
+create or replace function public.guard_profile_privileges()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  acting_role text;
+begin
+  if public.is_super_admin(auth.uid()) then
+    return new;
+  end if;
+
+  new.is_super_admin := old.is_super_admin;
+  new.unlimited_creations := old.unlimited_creations;
+
+  if new.role is distinct from old.role then
+    select role into acting_role from public.profiles where id = auth.uid();
+    if not public.can_assign_role(acting_role, old.role, new.role) then
+      new.role := old.role;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.acting_manages_role(target_role text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select public.can_assign_role(p.role, target_role, target_role) from public.profiles p where p.id = auth.uid()),
+    false
+  );
+$$;
+
+grant execute on function public.acting_manages_role(text) to authenticated;
+
+drop policy if exists profiles_select_team on public.profiles;
+create policy profiles_select_team on public.profiles
+  for select using (public.acting_manages_role(role));
+
+drop policy if exists profiles_update_team on public.profiles;
+create policy profiles_update_team on public.profiles
+  for update using (public.acting_manages_role(role)) with check (public.acting_manages_role(role));
+
+commit;
+
+-- ── rename commissions -> orders, commission_reviews -> order_reviews (see
+-- migrations/011_rename_commissions_to_orders.sql) ──────────────────────────
+
+alter table public.commissions rename to orders;
+alter table public.commission_reviews rename to order_reviews;
+alter table public.order_reviews rename column commission_id to order_id;
+alter table public.notifications rename column commission_id to order_id;
+
+alter index if exists commissions_craft_id_idx rename to orders_craft_id_idx;
+alter index if exists commissions_customer_id_idx rename to orders_customer_id_idx;
+alter index if exists commissions_status_idx rename to orders_status_idx;
+alter index if exists commission_reviews_commission_id_idx rename to order_reviews_order_id_idx;
+
+alter sequence if exists public.commissions_id_seq rename to orders_id_seq;
+alter sequence if exists public.commission_reviews_id_seq rename to order_reviews_id_seq;
+
+alter trigger commissions_set_updated_at on public.orders rename to orders_set_updated_at;
+
+create or replace function public.is_studio_manager_or_above(uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select p.role in ('studio_manager', 'studio_admin') from public.profiles p where p.id = uid),
+    false
+  ) or public.is_super_admin(uid);
+$$;
+
+grant execute on function public.is_studio_manager_or_above(uuid) to authenticated;
+
+-- Not dropped here yet — old policies further below still depend on is_manager(uuid);
+-- dropped at the very end of this section once they've all been replaced.
+
+create or replace function public.guard_order_insert()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  craft_owner uuid;
+  craft_model_key text;
+begin
+  select owner_id, model_key into craft_owner, craft_model_key
+  from public.crafts where id = new.craft_id;
+
+  if craft_owner is null then
+    raise exception 'Craft not found.';
+  end if;
+  if craft_owner is distinct from auth.uid() and not public.is_super_admin(auth.uid()) then
+    raise exception 'You can only submit your own designs for production.';
+  end if;
+  if craft_model_key is null then
+    raise exception 'This design needs a finished 3D model before it can be submitted for production.';
+  end if;
+
+  new.customer_id := craft_owner;
+  new.status := 'pending_manager_review';
+  new.artisan_id := null;
+  new.ratified_at := null;
+  return new;
+end;
+$$;
+
+drop trigger if exists commissions_guard_insert on public.orders;
+drop function if exists public.guard_commission_insert();
+drop trigger if exists orders_guard_insert on public.orders;
+create trigger orders_guard_insert
+  before insert on public.orders
+  for each row execute procedure public.guard_order_insert();
+
+create or replace function public.guard_order_transition()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  acting_manager boolean := public.is_studio_manager_or_above(auth.uid());
+  acting_customer boolean := old.customer_id = auth.uid();
+  allowed boolean := false;
+begin
+  if public.is_super_admin(auth.uid()) then
+    return new;
+  end if;
+
+  new.customer_id := old.customer_id;
+  new.price := old.price;
+  new.currency := old.currency;
+  new.payment_status := old.payment_status;
+  new.created_at := old.created_at;
+
+  if acting_manager and old.status = 'pending_manager_review'
+     and new.status in ('changes_requested', 'pending_customer_approval', 'rejected') then
+    allowed := true;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := old.ratified_at;
+
+  elsif acting_manager and old.status = 'pending_manager_review' and new.status = 'pending_manager_review' then
+    allowed := true;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := old.ratified_at;
+
+  elsif acting_customer and old.status = 'changes_requested' and new.status = 'pending_manager_review' then
+    allowed := true;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := old.ratified_at;
+
+  elsif acting_customer and old.status = 'pending_customer_approval' and new.status in ('ratified', 'cancelled') then
+    allowed := true;
+    new.craft_id := old.craft_id;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := case when new.status = 'ratified' then now() else old.ratified_at end;
+
+  elsif acting_customer and old.status = 'pending_manager_review' and new.status = 'cancelled' then
+    allowed := true;
+    new.craft_id := old.craft_id;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := old.ratified_at;
+  end if;
+
+  if not allowed then
+    raise exception 'That status change is not allowed from %.', old.status;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists commissions_guard_transition on public.orders;
+drop function if exists public.guard_commission_transition();
+drop trigger if exists orders_guard_transition on public.orders;
+create trigger orders_guard_transition
+  before update on public.orders
+  for each row execute procedure public.guard_order_transition();
+
+create or replace function public.notify_order_status_change()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if new.status = old.status then
+    return new;
+  end if;
+  if new.status = 'changes_requested' then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.customer_id, new.id, 'A studio manager requested changes to your design — see their remarks and rework it.');
+  elsif new.status = 'pending_customer_approval' then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.customer_id, new.id, 'Your design passed feasibility review — confirm to move forward.');
+  elsif new.status = 'rejected' then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.customer_id, new.id, 'Your production request was declined.');
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists commissions_notify on public.orders;
+drop function if exists public.notify_commission_status_change();
+drop trigger if exists orders_notify on public.orders;
+create trigger orders_notify
+  after update on public.orders
+  for each row execute procedure public.notify_order_status_change();
+
+drop policy if exists commissions_select on public.orders;
+drop policy if exists commissions_insert on public.orders;
+drop policy if exists commissions_update on public.orders;
+drop policy if exists commissions_admin_all on public.orders;
+
+drop policy if exists orders_select on public.orders;
+create policy orders_select on public.orders
+  for select using (
+    customer_id = auth.uid() or public.is_studio_manager_or_above(auth.uid())
+  );
+
+drop policy if exists orders_insert on public.orders;
+create policy orders_insert on public.orders
+  for insert with check (
+    customer_id = auth.uid() or public.is_super_admin(auth.uid())
+  );
+
+drop policy if exists orders_update on public.orders;
+create policy orders_update on public.orders
+  for update
+  using (customer_id = auth.uid() or public.is_studio_manager_or_above(auth.uid()))
+  with check (customer_id = auth.uid() or public.is_studio_manager_or_above(auth.uid()));
+
+drop policy if exists orders_admin_all on public.orders;
+create policy orders_admin_all on public.orders
+  for all using (public.is_super_admin(auth.uid())) with check (public.is_super_admin(auth.uid()));
+
+drop policy if exists commission_reviews_select on public.order_reviews;
+drop policy if exists commission_reviews_insert on public.order_reviews;
+drop policy if exists commission_reviews_admin_all on public.order_reviews;
+
+drop policy if exists order_reviews_select on public.order_reviews;
+create policy order_reviews_select on public.order_reviews
+  for select using (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_id
+        and (o.customer_id = auth.uid() or public.is_studio_manager_or_above(auth.uid()))
+    )
+  );
+
+drop policy if exists order_reviews_insert on public.order_reviews;
+create policy order_reviews_insert on public.order_reviews
+  for insert with check (
+    reviewer_id = auth.uid()
+    and public.is_studio_manager_or_above(auth.uid())
+    and exists (select 1 from public.orders o where o.id = order_id and o.status = 'pending_manager_review')
+  );
+
+drop policy if exists order_reviews_admin_all on public.order_reviews;
+create policy order_reviews_admin_all on public.order_reviews
+  for all using (public.is_super_admin(auth.uid())) with check (public.is_super_admin(auth.uid()));
+
+-- Every policy that referenced is_manager(uuid) has been dropped/replaced above — safe to
+-- drop it now.
+drop function if exists public.is_manager(uuid);
+
+-- ── designer order assignment (see migrations/012_designer_assignment.sql)
+-- ─────────────────────────────────────────────────────────────────────────
+
+alter table public.orders
+  add column if not exists assigned_designer_id uuid references public.profiles (id) on delete set null;
+
+create or replace function public.guard_order_transition()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  acting_manager boolean := public.is_studio_manager_or_above(auth.uid());
+  acting_customer boolean := old.customer_id = auth.uid();
+  acting_designer boolean := old.assigned_designer_id is not null and old.assigned_designer_id = auth.uid();
+  allowed boolean := false;
+begin
+  if public.is_super_admin(auth.uid()) then
+    return new;
+  end if;
+
+  new.customer_id := old.customer_id;
+  new.price := old.price;
+  new.currency := old.currency;
+  new.payment_status := old.payment_status;
+  new.created_at := old.created_at;
+
+  if acting_manager and old.status = 'pending_manager_review'
+     and new.status in ('changes_requested', 'pending_customer_approval', 'rejected') then
+    allowed := true;
+    new.ratified_at := old.ratified_at;
+
+  elsif acting_manager and old.status = 'pending_manager_review' and new.status = 'pending_manager_review' then
+    allowed := true;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := old.ratified_at;
+    new.assigned_designer_id := old.assigned_designer_id;
+
+  elsif (acting_customer or acting_designer) and old.status = 'changes_requested' and new.status = 'pending_manager_review' then
+    allowed := true;
+    new.artisan_id := old.artisan_id;
+    new.ratified_at := old.ratified_at;
+    new.assigned_designer_id := null;
+
+  elsif acting_customer and old.status = 'pending_customer_approval' and new.status in ('ratified', 'cancelled') then
+    allowed := true;
+    new.craft_id := old.craft_id;
+    new.artisan_id := old.artisan_id;
+    new.assigned_designer_id := old.assigned_designer_id;
+    new.ratified_at := case when new.status = 'ratified' then now() else old.ratified_at end;
+
+  elsif acting_customer and old.status = 'pending_manager_review' and new.status = 'cancelled' then
+    allowed := true;
+    new.craft_id := old.craft_id;
+    new.artisan_id := old.artisan_id;
+    new.assigned_designer_id := old.assigned_designer_id;
+    new.ratified_at := old.ratified_at;
+  end if;
+
+  if not allowed then
+    raise exception 'That status change is not allowed from %.', old.status;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop policy if exists orders_select on public.orders;
+create policy orders_select on public.orders
+  for select using (
+    customer_id = auth.uid()
+    or assigned_designer_id = auth.uid()
+    or public.is_studio_manager_or_above(auth.uid())
+  );
+
+drop policy if exists orders_update on public.orders;
+create policy orders_update on public.orders
+  for update
+  using (
+    customer_id = auth.uid()
+    or assigned_designer_id = auth.uid()
+    or public.is_studio_manager_or_above(auth.uid())
+  )
+  with check (
+    customer_id = auth.uid()
+    or assigned_designer_id = auth.uid()
+    or public.is_studio_manager_or_above(auth.uid())
+  );
+
+create or replace function public.notify_order_status_change()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if new.status = old.status and new.assigned_designer_id is not distinct from old.assigned_designer_id then
+    return new;
+  end if;
+  if new.status = 'changes_requested' and new.assigned_designer_id is not null then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.assigned_designer_id, new.id, 'A studio manager assigned you a design to rework.');
+  elsif new.status = 'changes_requested' then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.customer_id, new.id, 'A studio manager requested changes to your design — see their remarks and rework it.');
+  elsif new.status = 'pending_customer_approval' then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.customer_id, new.id, 'Your design passed feasibility review — confirm to move forward.');
+  elsif new.status = 'rejected' then
+    insert into public.notifications (user_id, order_id, message)
+    values (new.customer_id, new.id, 'Your production request was declined.');
+  end if;
+  return new;
+end;
+$$;

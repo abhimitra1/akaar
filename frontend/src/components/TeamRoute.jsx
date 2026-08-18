@@ -3,11 +3,8 @@ import LoadingScreen from './LoadingScreen.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { isStudioManagerOrAbove } from '../roles.js'
 
-// Gates /studio/orders on the studio role hierarchy (supabase/migrations/
-// 010_role_hierarchy.sql) — studio_manager, studio_admin, or a super admin standing in.
-// Was gated on the since-retired profiles.is_manager flag; that capability now lives in
-// the role column itself, see roles.js.
-export default function ManagerRoute({ children }) {
+// Gates /studio/team — studio_manager, studio_admin, or a super admin standing in.
+export default function TeamRoute({ children }) {
   const { isAuthenticated, loading, profileLoading, user } = useAuth()
   if (loading || profileLoading) return <LoadingScreen message="Loading..." />
   if (!isAuthenticated) return <Navigate to="/welcome" replace />

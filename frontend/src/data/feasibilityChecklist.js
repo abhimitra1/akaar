@@ -1,8 +1,8 @@
-// Structured manufacturing-feasibility criteria a manager checks before a co-created
-// design can move toward production — named directly after the constraints in PATHS' own
-// whitepaper (public/whitepaper.html, the craft-feasibility filter "wall thickness,
-// overhang, shrinkage, kiln envelope"). Declarative like data/adminTables.js, so
-// ManagerReviewPage's editable grid and CommissionDetailPage's read-only view of the same
+// Structured manufacturing-feasibility criteria a studio manager checks before a
+// co-created design can move toward production — named directly after the constraints in
+// PATHS' own whitepaper (public/whitepaper.html, the craft-feasibility filter "wall
+// thickness, overhang, shrinkage, kiln envelope"). Declarative like data/adminTables.js,
+// so ManagerReviewPage's editable grid and OrderDetailPage's read-only view of the same
 // review share one definition instead of duplicating criterion copy in two components.
 // Thresholds are intentionally not encoded here — that's manager judgment per piece, not
 // an automated rule.
@@ -35,8 +35,8 @@ export const FEASIBILITY_CRITERIA = [
 ]
 
 // 'na' rather than 'n/a' — this value round-trips through a CSS class name
-// (commission__pill--{status} in FeasibilityChecklist.jsx/Commission.css), where a
-// literal slash isn't a safe bare selector character.
+// (order__pill--{status} in FeasibilityChecklist.jsx/Order.css), where a literal slash
+// isn't a safe bare selector character.
 export const FEASIBILITY_STATUSES = ['ok', 'not_feasible', 'na']
 
 export const FEASIBILITY_STATUS_LABELS = {

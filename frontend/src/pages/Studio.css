@@ -1,0 +1,149 @@
+/* Shared content-area styles for pages rendered inside StudioLayout's <Outlet/> —
+   Overview/Team/DesignerQueue. Order review (ManagerPage/ManagerReviewPage) and Database
+   (AdminPage) keep their own existing stylesheets (Order.css, AdminPage.css/AdminTable.css)
+   since they predate this shell; this file only covers what's new here. Composes with
+   craft__btn/create__error etc. (imported alongside) rather than redefining them. */
+
+.studio-page__title {
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.studio-page__subtitle {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* ── overview stat cards ──────────────────────────────────────────────── */
+
+.studio-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.studio-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(60, 30, 10, 0.06);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.studio-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(60, 30, 10, 0.1);
+}
+
+.studio-stat__value {
+  color: var(--terracotta-900);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.studio-stat__label {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.studio-empty {
+  padding: 40px 20px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── roster / list table (Team, Designer Queue) ───────────────────────── */
+
+.studio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.studio-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(60, 30, 10, 0.05);
+}
+
+.studio-row__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-cream);
+  color: var(--terracotta-900);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.studio-row__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.studio-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.studio-row__meta {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.studio-row__role-select {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.studio-row__thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.studio-row__action {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.studio-page__error {
+  margin-bottom: 16px;
+}

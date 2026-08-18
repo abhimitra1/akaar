@@ -30,13 +30,13 @@ export default function CraftPage() {
   const [liked, setLiked] = useState(false)
   const [likeSubmitting, setLikeSubmitting] = useState(false)
 
-  // Most recent commission (production request) on this craft, owner-only — drives
-  // whether the action row below offers "Submit for Production" or "View Production
-  // Status". null while still loading/not applicable (guest, non-owner, no model yet).
-  const [commission, setCommission] = useState(null)
-  const [commissionLoading, setCommissionLoading] = useState(true)
-  const [submittingCommission, setSubmittingCommission] = useState(false)
-  const [commissionError, setCommissionError] = useState('')
+  // Most recent order (production request) on this craft, owner-only — drives whether the
+  // action row below offers "Submit for Production" or "View Production Status". null
+  // while still loading/not applicable (guest, non-owner, no model yet).
+  const [order, setOrder] = useState(null)
+  const [orderLoading, setOrderLoading] = useState(true)
+  const [submittingOrder, setSubmittingOrder] = useState(false)
+  const [orderError, setOrderError] = useState('')
 
   // "Explore More" strip at the end of the card — other public crafts, most recent first.
   const [exploreCrafts, setExploreCrafts] = useState([])
@@ -143,27 +143,27 @@ export default function CraftPage() {
     }
   }
 
-  // Opens a manufacturing-feasibility review on this craft (guard_commission_insert()
-  // requires model_key to already be set — see supabase/migrations/
-  // 009_manager_commissions.sql), separate from Publish above: this is "have it actually
-  // made", not "show it in the public gallery" — a craft can be published without ever
-  // being commissioned, or commissioned without being public.
+  // Opens a manufacturing-feasibility review on this craft (guard_order_insert() requires
+  // model_key to already be set — see supabase/migrations/011_rename_commissions_to_orders.sql),
+  // separate from Publish above: this is "have it actually made", not "show it in the
+  // public gallery" — a craft can be published without ever being ordered, or ordered
+  // without being public.
   const handleSubmitForProduction = async () => {
-    if (submittingCommission) return
-    setSubmittingCommission(true)
-    setCommissionError('')
+    if (submittingOrder) return
+    setSubmittingOrder(true)
+    setOrderError('')
     try {
       const { data, error: insertError } = await supabase
-        .from('commissions')
+        .from('orders')
         .insert({ craft_id: craft.id, customer_id: user.id })
         .select()
         .single()
       if (insertError) throw new Error(insertError.message)
-      navigate(`/commissions/${data.id}`)
+      navigate(`/orders/${data.id}`)
     } catch (err) {
-      setCommissionError(err.message || 'Something went wrong')
+      setOrderError(err.message || 'Something went wrong')
     } finally {
-      setSubmittingCommission(false)
+      setSubmittingOrder(false)
     }
   }
 
@@ -233,17 +233,17 @@ export default function CraftPage() {
   }, [craftId, user])
 
   // Owner-only, and only once the craft's own detail load below has resolved (needs
-  // craft.owner_id to know whether `user` even is the owner) — commissions_select's RLS
-  // would just return nothing for a non-owner anyway, but skipping the query entirely
-  // avoids a pointless request on every guest/visitor viewing a public craft.
+  // craft.owner_id to know whether `user` even is the owner) — orders_select's RLS would
+  // just return nothing for a non-owner anyway, but skipping the query entirely avoids a
+  // pointless request on every guest/visitor viewing a public craft.
   useEffect(() => {
     if (!user || !craft || craft.owner_id !== user.id) {
-      setCommissionLoading(false)
+      setOrderLoading(false)
       return
     }
     let cancelled = false
     supabase
-      .from('commissions')
+      .from('orders')
       .select('*')
       .eq('craft_id', craftId)
       .order('created_at', { ascending: false })
@@ -251,8 +251,8 @@ export default function CraftPage() {
       .maybeSingle()
       .then(({ data }) => {
         if (!cancelled) {
-          setCommission(data || null)
-          setCommissionLoading(false)
+          setOrder(data || null)
+          setOrderLoading(false)
         }
       })
     return () => {
@@ -381,11 +381,13 @@ export default function CraftPage() {
   }
 
   const isOwner = user && craft.owner_id === user.id
-  // Mirrors CreatePage's canCoCreate (and guard_craft_image_source() in schema.sql, the
-  // real enforcement) — visitors, artisans, and super admins can all co-create. Guests (no
-  // user yet) still see the button since most anonymous viewers are visitors by default;
-  // handleCoCreate sends them to log in first.
-  const canCoCreate = !user || user.is_super_admin || user.role === 'visitor' || user.role === 'artisan'
+  // guard_craft_image_source() (schema.sql) no longer restricts AI co-creation by role at
+  // all — every role in the studio hierarchy may co-create, only the original-photo
+  // upload path stays artisan-exclusive. Always true; kept as a named constant (rather
+  // than inlined into the JSX below) so it still reads as an intentional access decision,
+  // not an oversight. Guests (no user yet) get it too — handleCoCreate sends them to log
+  // in first.
+  const canCoCreate = true
 
   const getExploreThumbnail = (c) => (c.photos && c.photos.length > 0 ? c.photos[0] : null)
 
@@ -628,14 +630,14 @@ export default function CraftPage() {
                 {publishing ? 'Publishing…' : 'Publish'}
               </button>
             )}
-            {isOwner && hasModel && !commissionLoading && (
+            {isOwner && hasModel && !orderLoading && (
               <>
-                {commissionError && <p className="craft__publish-error">{commissionError}</p>}
-                {commission && !['rejected', 'cancelled'].includes(commission.status) ? (
+                {orderError && <p className="craft__publish-error">{orderError}</p>}
+                {order && !['rejected', 'cancelled'].includes(order.status) ? (
                   <button
                     type="button"
                     className="craft__btn craft__btn--ghost"
-                    onClick={() => navigate(`/commissions/${commission.id}`)}
+                    onClick={() => navigate(`/orders/${order.id}`)}
                   >
                     View Production Status
                   </button>
@@ -644,9 +646,9 @@ export default function CraftPage() {
                     type="button"
                     className="craft__btn craft__btn--ghost"
                     onClick={handleSubmitForProduction}
-                    disabled={submittingCommission}
+                    disabled={submittingOrder}
                   >
-                    {submittingCommission ? 'Submitting…' : 'Submit for Production'}
+                    {submittingOrder ? 'Submitting…' : 'Submit for Production'}
                   </button>
                 )}
               </>

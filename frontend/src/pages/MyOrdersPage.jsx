@@ -4,16 +4,15 @@ import { supabase } from '../supabaseClient.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import AppNav from '../components/AppNav.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
-import CommissionStatusBadge from '../components/CommissionStatusBadge.jsx'
+import OrderStatusBadge from '../components/OrderStatusBadge.jsx'
 import '../pages/Home.css'
 import '../pages/Library.css'
-import './Commission.css'
+import './Order.css'
 
-// My Commissions: every "make this design into a physical piece" request the signed-in
-// user has submitted, newest first — same list shape as LibraryPage, but scoped to
-// commissions rather than crafts. Detail/decision UI lives at /commissions/:commissionId
-// (CommissionDetailPage).
-export default function MyCommissionsPage() {
+// My Orders: every "make this design into a physical piece" request the signed-in user
+// has submitted, newest first — same list shape as LibraryPage, but scoped to orders
+// rather than crafts. Detail/decision UI lives at /orders/:orderId (OrderDetailPage).
+export default function MyOrdersPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [rows, setRows] = useState([])
@@ -25,8 +24,8 @@ export default function MyCommissionsPage() {
     if (!user) return
     let cancelled = false
     const load = async () => {
-      const { data: commissions, error: dbError } = await supabase
-        .from('commissions')
+      const { data: orders, error: dbError } = await supabase
+        .from('orders')
         .select('*')
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
@@ -36,9 +35,9 @@ export default function MyCommissionsPage() {
         setLoading(false)
         return
       }
-      setRows(commissions || [])
+      setRows(orders || [])
 
-      const craftIds = [...new Set((commissions || []).map((c) => c.craft_id))]
+      const craftIds = [...new Set((orders || []).map((o) => o.craft_id))]
       if (craftIds.length > 0) {
         const { data: crafts } = await supabase.from('crafts').select('*').in('id', craftIds)
         if (!cancelled && crafts) setCraftsById(Object.fromEntries(crafts.map((c) => [c.id, c])))
@@ -53,13 +52,13 @@ export default function MyCommissionsPage() {
 
   return (
     <div className="home">
-      <AppNav active="commissions" />
+      <AppNav active="orders" />
 
       <section className="home__content">
-        <h1 className="home__title">My Commissions</h1>
+        <h1 className="home__title">My Orders</h1>
 
         {loading ? (
-          <LoadingScreen message="Loading your commissions..." inline />
+          <LoadingScreen message="Loading your orders..." inline />
         ) : (
           <>
             {error && <p className="explore__error">{error}</p>}
@@ -77,7 +76,7 @@ export default function MyCommissionsPage() {
                   const craft = craftsById[row.craft_id]
                   const thumb = craft?.photos?.[0]
                   return (
-                    <article key={row.id} className="home__recent-row" onClick={() => navigate(`/commissions/${row.id}`)}>
+                    <article key={row.id} className="home__recent-row" onClick={() => navigate(`/orders/${row.id}`)}>
                       <div className="home__recent-thumbnail-wrapper">
                         {thumb ? (
                           <img src={thumb} alt={craft?.title || 'Untitled'} className="home__recent-thumbnail" loading="lazy" />
@@ -89,7 +88,7 @@ export default function MyCommissionsPage() {
                         <h3 className="home__recent-title">{craft?.title || 'Untitled'}</h3>
                         <p className="home__recent-subtitle">Submitted {new Date(row.created_at).toLocaleDateString()}</p>
                       </div>
-                      <CommissionStatusBadge status={row.status} />
+                      <OrderStatusBadge status={row.status} />
                     </article>
                   )
                 })}

@@ -26,12 +26,12 @@ export default function ProcessingPage() {
   const { jobId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  // Carried from CreatePage (see its own reworkCommissionId comment) through to
-  // MetadataPage below — this page never reads/writes it, just relays it onward once
-  // reconstruction finishes. Fixed for this page's whole lifetime (set once on mount,
-  // never changes while polling the same job), so it's fine to read directly off
-  // location.state rather than needing its own state/effect dependency.
-  const reworkCommissionId = location.state?.reworkCommissionId || null
+  // Carried from CreatePage (see its own reworkOrderId comment) through to MetadataPage
+  // below — this page never reads/writes it, just relays it onward once reconstruction
+  // finishes. Fixed for this page's whole lifetime (set once on mount, never changes
+  // while polling the same job), so it's fine to read directly off location.state rather
+  // than needing its own state/effect dependency.
+  const reworkOrderId = location.state?.reworkOrderId || null
   const reworkReturnTo = location.state?.reworkReturnTo || null
 
   const [progress, setProgress] = useState(0)
@@ -66,7 +66,7 @@ export default function ProcessingPage() {
             () =>
               navigate(
                 `/craft/${data.craft_id}/metadata`,
-                reworkCommissionId ? { state: { reworkCommissionId, reworkReturnTo } } : undefined
+                reworkOrderId ? { state: { reworkOrderId, reworkReturnTo } } : undefined
               ),
             1000
           )

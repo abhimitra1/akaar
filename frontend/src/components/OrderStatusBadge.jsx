@@ -1,6 +1,6 @@
-// Shared status pill for commissions.status — used by ManagerPage/ManagerReviewPage
-// (manager side) and MyCommissionsPage/CommissionDetailPage (customer side), so the two
-// sides of the same workflow always describe a given status the same way.
+// Shared status pill for orders.status — used by ManagerPage/ManagerReviewPage/
+// DesignerQueuePage (studio side) and MyOrdersPage/OrderDetailPage (customer side), so
+// every side of the same workflow always describes a given status the same way.
 const STATUS_LABELS = {
   pending_manager_review: 'In review',
   changes_requested: 'Changes requested',
@@ -26,7 +26,7 @@ const STATUS_TONE = {
   cancelled: 'failed',
 }
 
-export default function CommissionStatusBadge({ status, className = '' }) {
+export default function OrderStatusBadge({ status, className = '' }) {
   const tone = STATUS_TONE[status] || 'processing'
   return (
     <span className={`library__badge library__badge--${tone} ${className}`}>
