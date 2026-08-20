@@ -27,11 +27,14 @@ export default function AcceptTermsPage() {
     setSubmitting(true)
     setError('')
     try {
-      const { error: updateError } = await supabase
+      const { data: updated, error: updateError } = await supabase
         .from('profiles')
         .update({ terms_accepted_at: new Date().toISOString() })
         .eq('id', user.id)
+        .select('terms_accepted_at')
+        .single()
       if (updateError) throw new Error(updateError.message)
+      if (!updated?.terms_accepted_at) throw new Error('Could not save — please try again.')
 
       await refreshProfile()
       navigate('/')

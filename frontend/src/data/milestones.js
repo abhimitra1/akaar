@@ -20,7 +20,7 @@ export const MILESTONES = [
     status: 'in-progress',
     stage: 'Stage 3',
     title: 'Twinning & Ratifying',
-    desc: 'The design freezes into a twin at real-world scale and can be published. Formal artisan commissioning and payment-at-approval is still ahead.',
+    desc: 'The design freezes into a twin at real-world scale and can be published. Manager review and customer ratification now run end-to-end; formal artisan commissioning and payment-at-approval are still ahead.',
   },
   {
     status: 'done',
@@ -32,7 +32,7 @@ export const MILESTONES = [
     status: 'upcoming',
     stage: 'Stage 5',
     title: 'Re-casting & Crafting',
-    desc: 'The human-only zone: remaking the piece by hand against the AR reference. Not yet connected to a working artisan cluster.',
+    desc: 'The human-only zone: remaking the piece by hand against the AR reference. Studio staff roles now exist, but artisans are not yet part of that workflow — not yet connected to a working artisan cluster.',
   },
   {
     status: 'upcoming',

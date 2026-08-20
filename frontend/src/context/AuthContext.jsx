@@ -119,7 +119,9 @@ export function AuthProvider({ children }) {
   // auth event.
   const refreshProfile = useCallback(async () => {
     if (!session) return
+    setProfileLoading(true)
     setProfile(await fetchProfile(session.user.id))
+    setProfileLoading(false)
   }, [session])
 
   const user = profile
