@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import LearningLoopRing from '../components/LearningLoopRing'
+import PresentationDeck from '../components/PresentationDeck'
 import { LEARNING_LOOP_PHASES } from '../data/learningLoop'
 import { MILESTONES } from '../data/milestones'
+import { PRESENTATION_SLIDES } from '../data/presentationSlides'
 import './Policy.css'
 import './About.css'
 
@@ -18,6 +21,7 @@ const MILESTONE_STATUS_LABEL = {
 // adds only the hero/credits bits Policy doesn't need.
 export default function AboutPage() {
   const navigate = useNavigate()
+  const [presentationOpen, setPresentationOpen] = useState(false)
 
   return (
     <div className="policy">
@@ -170,7 +174,24 @@ export default function AboutPage() {
             colors? See <Link to="/branding">Branding</Link>.
           </p>
         </section>
+
+        <section className="policy__section">
+          <h2>Presentation</h2>
+          <p>The full concept note — pillars, the six-stage journey, artisan value, and the team — as a slide deck.</p>
+          <button type="button" className="about__presentation-btn" onClick={() => setPresentationOpen(true)}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            View Presentation
+          </button>
+        </section>
       </div>
+
+      <PresentationDeck
+        open={presentationOpen}
+        onClose={() => setPresentationOpen(false)}
+        slides={PRESENTATION_SLIDES}
+      />
     </div>
   )
 }

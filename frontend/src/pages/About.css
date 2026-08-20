@@ -36,6 +36,25 @@
   background: #7d3800;
 }
 
+.about__presentation-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--terracotta-900);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.about__presentation-btn:hover {
+  background: #7d3800;
+}
+
 .about__credits {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,427 @@
+.pdeck__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  background: var(--mark-ink);
+  animation: pdeck-fade-in 0.15s ease;
+}
+
+/* When the overlay itself is the fullscreen element, it fills the display exactly — no extra
+   styling needed, but Safari/Chrome both paint a black backdrop behind fullscreen elements by
+   default, so keep our own background explicit rather than relying on that. */
+:fullscreen.pdeck__overlay,
+:-webkit-full-screen.pdeck__overlay {
+  background: var(--mark-ink);
+}
+
+@keyframes pdeck-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pdeck__progress {
+  height: 3px;
+  flex: 0 0 auto;
+  background: var(--mark-ring);
+  transition: width 0.25s ease;
+}
+
+.pdeck__topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.pdeck__counter {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--mark-cream);
+  opacity: 0.7;
+}
+
+.pdeck__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(246, 239, 228, 0.08);
+  color: var(--mark-cream);
+  cursor: pointer;
+}
+
+.pdeck__icon-btn:hover {
+  background: rgba(246, 239, 228, 0.16);
+}
+
+.pdeck__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+}
+
+.pdeck__slide {
+  width: 100%;
+  max-width: 880px;
+  margin: auto;
+  padding: 40px 48px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+.pdeck__slide--dark {
+  background: transparent;
+  color: var(--mark-cream);
+  box-shadow: none;
+  padding: 24px 24px 40px;
+  text-align: center;
+}
+
+.pdeck__eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--terracotta-900);
+}
+
+.pdeck__eyebrow--dark {
+  color: var(--mark-gold);
+}
+
+.pdeck__title {
+  margin: 0 0 12px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.pdeck__intro {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 640px;
+}
+
+.pdeck__cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.pdeck__cards--cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.pdeck__card {
+  border: 1px solid var(--outline-cream);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  background: var(--surface-container-low);
+}
+
+.pdeck__card h3 {
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pdeck__card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.pdeck__card-tag {
+  display: block;
+  margin-top: 8px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  color: var(--terracotta-900);
+}
+
+.pdeck__note {
+  margin: 20px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-cream);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+.pdeck__table-wrap {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.pdeck__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.pdeck__table caption {
+  caption-side: top;
+  text-align: left;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.pdeck__table th,
+.pdeck__table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--outline-cream);
+  white-space: nowrap;
+}
+
+.pdeck__table th {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.pdeck__table th:last-child,
+.pdeck__table td:last-child {
+  color: var(--terracotta-900);
+  font-weight: 600;
+}
+
+/* Cover / team slides — flush with the overlay's own dark ground rather than a floating card,
+   the way a deck's title/closing slide usually reads differently from its body slides. */
+.pdeck__cover-title {
+  margin: 0 auto 16px;
+  max-width: 620px;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--mark-cream);
+}
+
+.pdeck__cover-title--team {
+  font-size: 28px;
+}
+
+.pdeck__cover-body {
+  margin: 0 auto;
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--mark-cream);
+  opacity: 0.85;
+}
+
+.pdeck__flow {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  margin: 28px 0;
+  flex-wrap: wrap;
+}
+
+.pdeck__flow-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdeck__flow-step {
+  width: 190px;
+  padding: 14px 16px;
+  border: 1px solid rgba(246, 239, 228, 0.24);
+  border-radius: var(--radius-lg);
+  text-align: left;
+}
+
+.pdeck__flow-step p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mark-cream);
+  opacity: 0.75;
+}
+
+.pdeck__flow-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mark-ring);
+}
+
+.pdeck__flow-arrow {
+  color: var(--mark-gold);
+  font-size: 16px;
+  flex: 0 0 auto;
+}
+
+.pdeck__cover-footer {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--mark-cream);
+  opacity: 0.6;
+}
+
+.pdeck__cover-credit {
+  margin: 20px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--mark-gold);
+  opacity: 0.9;
+}
+
+.pdeck__team {
+  list-style: none;
+  margin: 24px auto 0;
+  padding: 0;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pdeck__team li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(246, 239, 228, 0.16);
+}
+
+.pdeck__team li:last-child {
+  border-bottom: none;
+}
+
+.pdeck__team-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mark-cream);
+}
+
+.pdeck__team-role {
+  font-size: 12.5px;
+  color: var(--mark-cream);
+  opacity: 0.65;
+}
+
+.pdeck__bottombar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 12px 16px 20px;
+}
+
+.pdeck__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(246, 239, 228, 0.24);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--mark-cream);
+  cursor: pointer;
+}
+
+.pdeck__nav-btn:hover:not(:disabled) {
+  background: rgba(246, 239, 228, 0.1);
+}
+
+.pdeck__nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pdeck__dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pdeck__dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(246, 239, 228, 0.28);
+  cursor: pointer;
+}
+
+.pdeck__dot--active {
+  width: 16px;
+  border-radius: var(--radius-full);
+  background: var(--mark-ring);
+}
+
+@media (max-width: 640px) {
+  .pdeck__slide {
+    padding: 28px 20px;
+  }
+
+  .pdeck__title {
+    font-size: 21px;
+  }
+
+  .pdeck__cover-title {
+    font-size: 24px;
+  }
+
+  .pdeck__cards,
+  .pdeck__cards--cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .pdeck__flow-step {
+    width: 100%;
+  }
+
+  .pdeck__flow-item {
+    flex-direction: column;
+  }
+
+  .pdeck__flow-arrow {
+    transform: rotate(90deg);
+  }
+}
