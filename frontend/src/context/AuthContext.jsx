@@ -18,12 +18,29 @@ function withTimeout(promise, fallback) {
   ])
 }
 
+// Google sign-up is a full-page redirect to the provider and back, so there's no moment
+// between "user checked the box on SignUpPage" and "session exists" to write
+// terms_accepted_at directly — this flag carries that intent across the redirect. Only
+// SignUpPage's Google button sets it (SignInPage's never does), so a plain Google sign-in
+// by an existing/unaccepted account never gets silently stamped as consenting.
+const GOOGLE_TERMS_INTENT_KEY = 'paths_google_terms_intent'
+
 async function fetchProfile(userId) {
   const { data, error } = await withTimeout(
     supabase.from('profiles').select('*').eq('id', userId).single(),
     { data: null, error: 'profile fetch timed out' },
   )
   if (error) return null
+  if (data && !data.terms_accepted_at && localStorage.getItem(GOOGLE_TERMS_INTENT_KEY)) {
+    localStorage.removeItem(GOOGLE_TERMS_INTENT_KEY)
+    const { data: updated } = await supabase
+      .from('profiles')
+      .update({ terms_accepted_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select('*')
+      .single()
+    if (updated) return updated
+  }
   return data
 }
 
@@ -34,9 +51,7 @@ export function AuthProvider({ children }) {
   // True whenever a profile fetch is in flight — separate from `loading` (initial session
   // check only) because onAuthStateChange fires again later (token refresh, sign-in) without
   // going through that initial flow. While this is true, `user` below may be the {id, email}
-  // fallback rather than the real profile — ProfileGate.jsx must not decide "needs terms" /
-  // "needs profile" off that partial shape, or a user who already accepted terms briefly
-  // reads as `terms_accepted_at` missing and gets bounced to /accept-terms for no reason.
+  // fallback rather than the real profile.
   const [profileLoading, setProfileLoading] = useState(true)
 
   useEffect(() => {
@@ -85,27 +100,39 @@ export function AuthProvider({ children }) {
     return data
   }, [])
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async ({ acceptedTerms = false } = {}) => {
     // Full-page redirect to Google, then back to redirectTo — supabase-js picks up the
     // session from the URL automatically on load, firing onAuthStateChange above. No
     // separate callback route needed. Profile row comes from the same handle_new_user()
     // trigger as email signup; Google's metadata just won't fill institution/department
     // (role is never taken from metadata either way — see handle_new_user() in schema.sql).
+    if (acceptedTerms) {
+      localStorage.setItem(GOOGLE_TERMS_INTENT_KEY, '1')
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
-    if (error) throw new Error(error.message)
+    if (error) {
+      localStorage.removeItem(GOOGLE_TERMS_INTENT_KEY)
+      throw new Error(error.message)
+    }
   }, [])
 
   const signup = useCallback(async (fields) => {
-    const { email, password, full_name, institution, department } = fields
+    const { email, password, full_name, institution, department, acceptedTerms } = fields
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name, institution, department } },
     })
     if (error) throw new Error(error.message)
+    if (acceptedTerms && data.user) {
+      await supabase
+        .from('profiles')
+        .update({ terms_accepted_at: new Date().toISOString() })
+        .eq('id', data.user.id)
+    }
     return data
   }, [])
 

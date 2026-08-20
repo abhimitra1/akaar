@@ -636,36 +636,6 @@
   white-space: nowrap;
 }
 
-/* AcceptTermsPage. */
-.create__terms-summary {
-  margin: 0 0 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.create__terms-summary a {
-  color: var(--terracotta-900);
-  font-weight: 600;
-}
-
-.create__terms-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.create__terms-checkbox input {
-  flex: 0 0 auto;
-  margin-top: 2px;
-  width: 18px;
-  height: 18px;
-  accent-color: var(--terracotta-900);
-}
-
 @media (min-width: 768px) {
   .create {
     min-height: 100vh;

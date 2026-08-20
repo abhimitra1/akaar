@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
 import './Policy.css'
 
-// Public page (no ProtectedRoute) — readable before signing up, linked from SignUpPage and
-// AcceptTermsPage, and re-readable anytime from AccountPage. Combines the Privacy Policy and
+// Public page (no ProtectedRoute) — readable before signing up, linked from SignUpPage, and
+// re-readable anytime from AccountPage. Combines the Privacy Policy and
 // AI Usage Policy into one page since, for this app, they're tightly linked: most of what
 // there is to say about privacy here is about what happens to a photo/prompt once it's sent
 // to InstantMesh/Fooocus.

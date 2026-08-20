@@ -14,6 +14,7 @@ export default function SignUpPage() {
     institution: '',
     department: '',
   })
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -22,10 +23,11 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!termsAccepted) return
     setError('')
     setLoading(true)
     try {
-      await signup(form)
+      await signup({ ...form, acceptedTerms: termsAccepted })
       navigate('/')
     } catch (err) {
       setError(err.message || 'Sign up failed')
@@ -35,10 +37,12 @@ export default function SignUpPage() {
   }
 
   const handleGoogle = async () => {
+    if (!termsAccepted) return
     setError('')
     setGoogleLoading(true)
     try {
-      await loginWithGoogle() // redirects away; picks up the session from the URL on return
+      // redirects away; picks up the session from the URL on return
+      await loginWithGoogle({ acceptedTerms: termsAccepted })
     } catch (err) {
       setError(err.message || 'Google sign-in failed')
       setGoogleLoading(false)
@@ -117,7 +121,33 @@ export default function SignUpPage() {
             <input name="department" value={form.department} onChange={handleChange} />
           </label>
 
-          <button type="submit" className="signup__submit" disabled={loading}>
+          <section className="signup__terms">
+            <p className="signup__terms-summary">
+              PATHS uses AI (InstantMesh for 3D reconstruction, Fooocus for AI-assisted
+              redesign) to turn your photos into digital twins. Every photo and prompt you
+              submit is automatically screened — content that isn't craft/art-related, or
+              that's sexual, violent, or otherwise inappropriate (including anything
+              involving minors), is rejected and never processed. Full details in the{' '}
+              <Link to="/policy" target="_blank" rel="noopener noreferrer">
+                Privacy Policy &amp; AI Usage Policy
+              </Link>
+              . General rules of use are in our{' '}
+              <Link to="/terms" target="_blank" rel="noopener noreferrer">
+                Terms &amp; Conditions
+              </Link>
+              .
+            </p>
+            <label className="signup__terms-checkbox">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <span>I have read and accept the Privacy Policy and AI Usage Policy.</span>
+            </label>
+          </section>
+
+          <button type="submit" className="signup__submit" disabled={loading || !termsAccepted}>
             {loading ? 'Sending…' : 'Create account'}
           </button>
 
@@ -129,7 +159,7 @@ export default function SignUpPage() {
             type="button"
             className="signup__google"
             onClick={handleGoogle}
-            disabled={googleLoading}
+            disabled={googleLoading || !termsAccepted}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
@@ -143,13 +173,6 @@ export default function SignUpPage() {
 
         <footer className="signup__footer">
           <Link to="/signin">Already have an account? Sign in</Link>
-          <p className="signup__terms-note">
-            After signing up you'll be asked to accept our{' '}
-            <Link to="/policy" target="_blank" rel="noopener noreferrer">
-              Privacy Policy &amp; AI Usage Policy
-            </Link>
-            .
-          </p>
         </footer>
       </div>
     </div>

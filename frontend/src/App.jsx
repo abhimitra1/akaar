@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminRoute from './components/AdminRoute.jsx'
 import DesignerRoute from './components/DesignerRoute.jsx'
 import ManagerRoute from './components/ManagerRoute.jsx'
-import ProfileGate from './components/ProfileGate.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import StudioLayout from './components/StudioLayout.jsx'
 import StudioRoute from './components/StudioRoute.jsx'
@@ -10,7 +9,6 @@ import TeamRoute from './components/TeamRoute.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { supabaseConfigured } from './supabaseClient.js'
 import AboutPage from './pages/AboutPage.jsx'
-import AcceptTermsPage from './pages/AcceptTermsPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import BrandingPage from './pages/BrandingPage.jsx'
@@ -54,151 +52,141 @@ function App() {
 
   return (
     <AuthProvider>
-      <ProfileGate>
-        <Routes>
-          <Route path="/welcome" element={<WelcomePage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/signin" element={<SignInPage />} />
-          <Route path="/" element={<HomePage />} />
-          {/* Public — readable before signing up (linked from SignUpPage/AcceptTermsPage). */}
-          <Route path="/policy" element={<PolicyPage />} />
-          {/* Public — About/Branding/Terms, linked from AppNav's desktop sidebar + AccountPage's footer. */}
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/branding" element={<BrandingPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route
-            path="/accept-terms"
-            element={
-              <ProtectedRoute>
-                <AcceptTermsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/library"
-            element={
-              <ProtectedRoute>
-                <LibraryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/account"
-            element={
-              <ProtectedRoute>
-                <AccountPage />
-              </ProtectedRoute>
-            }
-          />
+      <Routes>
+        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/" element={<HomePage />} />
+        {/* Public — readable before signing up (linked from SignUpPage). */}
+        <Route path="/policy" element={<PolicyPage />} />
+        {/* Public — About/Branding/Terms, linked from AppNav's desktop sidebar + AccountPage's footer. */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/branding" element={<BrandingPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route
+          path="/library"
+          element={
+            <ProtectedRoute>
+              <LibraryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AccountPage />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Studio panel — persistent-sidebar shell (StudioLayout) for every staff-facing
-              surface: order review, team roster, designer assignments, raw-table admin.
-              StudioRoute gates entry to the whole subtree (any role with at least one
-              section to see); each section is additionally gated by its own existing
-              guard for defense in depth — RLS underneath both is the real boundary. */}
+        {/* Studio panel — persistent-sidebar shell (StudioLayout) for every staff-facing
+            surface: order review, team roster, designer assignments, raw-table admin.
+            StudioRoute gates entry to the whole subtree (any role with at least one
+            section to see); each section is additionally gated by its own existing
+            guard for defense in depth — RLS underneath both is the real boundary. */}
+        <Route
+          path="/studio"
+          element={
+            <StudioRoute>
+              <StudioLayout />
+            </StudioRoute>
+          }
+        >
+          <Route index element={<StudioOverviewPage />} />
           <Route
-            path="/studio"
+            path="orders"
             element={
-              <StudioRoute>
-                <StudioLayout />
-              </StudioRoute>
+              <ManagerRoute>
+                <ManagerPage />
+              </ManagerRoute>
             }
-          >
-            <Route index element={<StudioOverviewPage />} />
-            <Route
-              path="orders"
-              element={
-                <ManagerRoute>
-                  <ManagerPage />
-                </ManagerRoute>
-              }
-            />
-            <Route
-              path="orders/:orderId"
-              element={
-                <ManagerRoute>
-                  <ManagerReviewPage />
-                </ManagerRoute>
-              }
-            />
-            <Route
-              path="team"
-              element={
-                <TeamRoute>
-                  <TeamPage />
-                </TeamRoute>
-              }
-            />
-            <Route
-              path="designer-queue"
-              element={
-                <DesignerRoute>
-                  <DesignerQueuePage />
-                </DesignerRoute>
-              }
-            />
-            <Route
-              path="database"
-              element={
-                <AdminRoute>
-                  <AdminPage />
-                </AdminRoute>
-              }
-            />
-          </Route>
-          {/* Retired standalone route, kept as a redirect for anyone with it bookmarked. */}
-          <Route path="/admin" element={<Navigate to="/studio/database" replace />} />
+          />
+          <Route
+            path="orders/:orderId"
+            element={
+              <ManagerRoute>
+                <ManagerReviewPage />
+              </ManagerRoute>
+            }
+          />
+          <Route
+            path="team"
+            element={
+              <TeamRoute>
+                <TeamPage />
+              </TeamRoute>
+            }
+          />
+          <Route
+            path="designer-queue"
+            element={
+              <DesignerRoute>
+                <DesignerQueuePage />
+              </DesignerRoute>
+            }
+          />
+          <Route
+            path="database"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
+            }
+          />
+        </Route>
+        {/* Retired standalone route, kept as a redirect for anyone with it bookmarked. */}
+        <Route path="/admin" element={<Navigate to="/studio/database" replace />} />
 
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <MyOrdersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders/:orderId"
-            element={
-              <ProtectedRoute>
-                <OrderDetailPage />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Guest-accessible per AGENTS.md §3 Phase 1 (browse/search doesn't require sign-in). */}
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route
-            path="/create"
-            element={
-              <ProtectedRoute>
-                <CreatePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/processing/:jobId"
-            element={
-              <ProtectedRoute>
-                <ProcessingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/craft/:craftId/metadata"
-            element={
-              <ProtectedRoute>
-                <MetadataPage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Guest-accessible per AGENTS.md §3 Phase 1 (view/3D/AR doesn't require sign-in) —
-              CraftPage itself already treats `user` as optional (isOwner gates Edit/Publish;
-              RLS already hides anything a guest shouldn't see). Was incorrectly wrapped in
-              ProtectedRoute, which bounced guests to /welcome before they could view anything. */}
-          <Route path="/craft/:craftId" element={<CraftPage />} />
-        </Routes>
-      </ProfileGate>
+        {/* Guest-accessible per AGENTS.md §3 Phase 1 (browse/search doesn't require sign-in). */}
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route
+          path="/create"
+          element={
+            <ProtectedRoute>
+              <CreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/processing/:jobId"
+          element={
+            <ProtectedRoute>
+              <ProcessingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/craft/:craftId/metadata"
+          element={
+            <ProtectedRoute>
+              <MetadataPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Guest-accessible per AGENTS.md §3 Phase 1 (view/3D/AR doesn't require sign-in) —
+            CraftPage itself already treats `user` as optional (isOwner gates Edit/Publish;
+            RLS already hides anything a guest shouldn't see). Was incorrectly wrapped in
+            ProtectedRoute, which bounced guests to /welcome before they could view anything. */}
+        <Route path="/craft/:craftId" element={<CraftPage />} />
+      </Routes>
     </AuthProvider>
   )
 }

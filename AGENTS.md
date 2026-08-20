@@ -2516,3 +2516,56 @@ project — everything before was build-checks + direct API calls).
   the mark renders inline with the title without crowding it at every width — mobile-first CSS
   (base rule is the narrowest case; `min-width: 768px`/`1024px` queries only make `create__title`
   bigger, never smaller, so the tightest fit is the unmodified base 20px case); commit if asked.
+
+### 2026-08-20 — Step: Remove standalone Accept Terms page, move consent into Sign Up
+- **Command:** user reported the `/accept-terms` interstitial (`AcceptTermsPage.jsx`) as still
+  broken on a fresh device/browser after signup ("this page is giving me headache") and asked to
+  remove it entirely, moving its consent checkbox into the Sign Up page instead.
+- **Root cause of the recurring pain:** `ProfileGate.jsx` force-redirected every authenticated
+  user with `profiles.terms_accepted_at IS NULL` to `/accept-terms` on every route, app-wide —
+  its own comments already documented a known edge case where already-accepted users could flash
+  through and get stuck. Rather than patch the redirect loop further, removed the whole
+  gate/interstitial pattern per the user's request.
+- **Fix:**
+  - `frontend/src/pages/SignUpPage.jsx` — added a required `termsAccepted` checkbox (the same
+    summary text + checkbox previously on `AcceptTermsPage`) between the Department field and the
+    submit buttons. Both "Create account" and "Continue with Google" are `disabled` until checked.
+  - `frontend/src/context/AuthContext.jsx` — `signup(fields)` now accepts `fields.acceptedTerms`
+    and, right after `supabase.auth.signUp()` succeeds, writes `profiles.terms_accepted_at`
+    directly (mirrors what `AcceptTermsPage` used to do, just inline instead of on a second
+    screen — confirmed emails are disabled project-wide since 2026-08-06, so a session/RLS
+    context exists immediately). `loginWithGoogle(opts)` now accepts `{ acceptedTerms }`; since
+    Google is a full-page redirect with no way to attach a synchronous write, consent intent is
+    stashed in `localStorage` (`paths_google_terms_intent`) before the redirect and consumed by
+    `fetchProfile()` the moment the post-OAuth profile loads back in, if `terms_accepted_at` is
+    still null. Only `SignUpPage`'s Google button sets this flag — `SignInPage`'s Google button
+    (existing users signing in) never does, so a plain sign-in is never silently recorded as
+    consent.
+  - Deleted `frontend/src/pages/AcceptTermsPage.jsx` and `frontend/src/components/ProfileGate.jsx`
+    outright (the latter had no other purpose — its only logic was the terms redirect).
+  - `frontend/src/App.jsx` — removed the `/accept-terms` route and the `<ProfileGate>` wrapper
+    around `<Routes>`.
+  - `frontend/src/pages/Create.css` → `frontend/src/pages/SignUp.css` — moved the
+    `.create__terms-summary`/`.create__terms-checkbox` styles (only ever used by
+    `AcceptTermsPage`) to `.signup__terms*`, replacing the old `.signup__terms-note` footer text.
+  - Stale comments referencing `AcceptTermsPage`/`ProfileGate` updated in `PolicyPage.jsx` and
+    `AuthContext.jsx`.
+  - **Scope decision, not asked but made explicitly and called out to the user:** existing
+    accounts with `terms_accepted_at` still null (from before this shipped, or anyone who signs
+    in via Google without ever visiting `/signup`) are no longer force-blocked anywhere — there is
+    no more retroactive enforcement mechanism. If the group project later needs to guarantee every
+    account has accepted the current terms, that needs a new, lighter-weight mechanism (e.g. a
+    dismissible banner), not the old full-page redirect gate.
+- **Verified:** `npm run build` passes clean, no new warnings. Grepped the whole `frontend/src`
+  tree for `AcceptTermsPage`/`ProfileGate`/`accept-terms`/`create__terms` — zero remaining
+  references. Drove the real dev server with a scripted Playwright session (`chromium-cli` wasn't
+  available in this environment, so used Playwright directly): navigated to `/signup`, confirmed
+  no console errors, confirmed both "Create account" and "Continue with Google" start `disabled`,
+  and confirmed checking the box enables both. Screenshot matches the intended layout — terms box
+  sits between the form fields and the two submit buttons. **Not verified:** an actual live
+  Supabase round-trip (real email signup + real Google OAuth signup) confirming
+  `terms_accepted_at` actually lands in the `profiles` row in both paths — no live Supabase
+  session was exercised this run, only the rendered UI/gating logic.
+- **In progress:** — (awaiting next command)
+- **Next:** user to test both signup paths for real (email/password and Google) and confirm
+  `terms_accepted_at` gets set on the `profiles` row in each case; commit if asked.
